@@ -351,8 +351,8 @@ public class TaChartIndicatorBox {
                 Color.YELLOW,"DoubleEMA (20)", false, TaTypes.categories.DEFAULT);
 
         // DPO Indicator TODO: error because index can get to high
-       // addChartIndicator(new DPOIndicator(closePriceIndicator,10),
-         //       Color.YELLOW,"DPO (20)", false, TaTypes.categories.DEFAULT);
+        addChartIndicator(new indicators.DPOIndicator(closePriceIndicator,10),
+                Color.YELLOW,"DPO (20)", true, TaTypes.categories.DEFAULT);
 
         // Fisher Indicator
         addChartIndicator(new FisherIndicator(closePriceIndicator, 20),
@@ -458,16 +458,16 @@ public class TaChartIndicatorBox {
 
         // AccumulationDistributionIndicator
         addChartIndicator(new AccumulationDistributionIndicator(series),
-                Color.YELLOW,"Accumulation Distribution", false, TaTypes.categories.VOLUME);
+                Color.YELLOW,"Accumulation Distribution", true, TaTypes.categories.VOLUME);
 
         // AccumulationDistributionIndicator
         addChartIndicator(new ChaikinMoneyFlowIndicator(series,20),
-                Color.YELLOW,"Chaikin Money (20)", false, TaTypes.categories.VOLUME);
+                Color.YELLOW,"Chaikin Money (20)", true, TaTypes.categories.VOLUME);
 
 
         // AccumulationDistributionIndicator
         VWAPIndicator vwap = new VWAPIndicator(series, 20);
-        addChartIndicator(vwap, Color.YELLOW,"VWAP (20)", false, TaTypes.categories.VOLUME);
+        addChartIndicator(vwap, Color.YELLOW,"VWAP (20)", true, TaTypes.categories.VOLUME);
 
         // MVWAP + VWAP
         List<Indicator> ilVwap = new ArrayList<>();
