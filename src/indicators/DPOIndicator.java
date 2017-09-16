@@ -26,6 +26,6 @@ public class DPOIndicator extends CachedIndicator<Decimal> {
     }
 
     protected Decimal calculate(int index) {
-        return this.price.getValue(index).minus(this.sma.getValue(index - this.timeShift));
+        return price.getValue(index).minus(sma.getValue(index-timeShift));
     }
 }
