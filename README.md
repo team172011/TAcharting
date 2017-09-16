@@ -19,5 +19,5 @@
 ![Show Strategy](https://github.com/team172011/ta4j-charting/blob/master/src/data/screenshots/show_trading_record.png )
 
 ### Ta4j and jFreeChart
-* https://github.com/mdeverdelhan/ta4j
+* https://github.com/ta4j/ta4j/
 * https://github.com/jfree/jfreechart
