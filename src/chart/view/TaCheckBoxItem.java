@@ -17,7 +17,7 @@
  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package chart;
+package chart.view;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;

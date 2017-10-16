@@ -27,6 +27,7 @@ import eu.verdelhan.ta4j.TimeSeries;
 
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.URL;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -76,12 +77,12 @@ public class Loader {
         return getHourlyTimeSeries(pathToCsv, name);
     }
 
-    public static TimeSeries getDailyTimeSerie(String pathToCsv, String name){
+    public static TimeSeries getDailyTimeSerie(URL file, String name){
 
         List<Tick> ticks = new ArrayList<>();
         CSVReader reader;
         try {
-            reader = new CSVReader(new FileReader(pathToCsv));
+            reader = new CSVReader(new FileReader(file.getFile()));
             String[] line;
             reader.readNext();
             reader.readNext();

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="chart.view.IndicatorEntryView">
+  <grid id="27dc6" binding="rootPanel" layout-manager="GridBagLayout">
+    <constraints>
+      <xy x="20" y="20" width="715" height="400"/>
+    </constraints>
+    <properties/>
+    <border type="bevel-lowered"/>
+    <children>
+      <component id="86ecd" class="javax.swing.JButton" binding="btn_add">
+        <constraints>
+          <grid row="2" column="5" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+          <gridbag weightx="0.3" weighty="0.1"/>
+        </constraints>
+        <properties>
+          <font style="1"/>
+          <text value="Add"/>
+          <toolTipText value="Add this indicator to the current chart menu"/>
+        </properties>
+      </component>
+      <component id="51f90" class="javax.swing.JButton" binding="btn_save">
+        <constraints>
+          <grid row="2" column="0" row-span="1" col-span="5" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+          <gridbag weightx="0.3" weighty="0.1"/>
+        </constraints>
+        <properties>
+          <font style="1"/>
+          <text value="Save"/>
+          <toolTipText value="Save the current settings of this indicator permanently"/>
+        </properties>
+      </component>
+      <component id="7dff9" class="javax.swing.JLabel" binding="lbl_title">
+        <constraints>
+          <grid row="0" column="0" row-span="1" col-span="7" vsize-policy="0" hsize-policy="0" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+          <gridbag weightx="1.0" weighty="0.2"/>
+        </constraints>
+        <properties>
+          <background color="-1776412"/>
+          <font name="Cambria Math" size="20" style="1"/>
+          <text value="Label"/>
+        </properties>
+      </component>
+      <component id="71ba5" class="javax.swing.JButton" binding="btn_duplicate">
+        <constraints>
+          <grid row="2" column="6" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+          <gridbag weightx="0.3" weighty="0.1"/>
+        </constraints>
+        <properties>
+          <text value="Duplicate"/>
+          <toolTipText value="Duplicate this indicator to use two instances (E.g. two EMA indicators with different time frames and colors)"/>
+        </properties>
+      </component>
+      <grid id="e2c36" binding="settingsPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+        <constraints>
+          <grid row="1" column="0" row-span="1" col-span="7" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+          <gridbag weightx="1.0" weighty="0.7"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children/>
+      </grid>
+    </children>
+  </grid>
+</form>

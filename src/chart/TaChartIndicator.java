@@ -19,15 +19,18 @@
 
 package chart;
 
+import chart.types.IndicatorParameters;
 import eu.verdelhan.ta4j.Decimal;
 import eu.verdelhan.ta4j.Indicator;
-import eu.verdelhan.ta4j.indicators.AbstractIndicator;
+import eu.verdelhan.ta4j.Tick;
+import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
+import org.jfree.data.time.Second;
+import org.jfree.data.time.TimeSeriesCollection;
 
-import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
-import java.util.Random;
+
 /**
  * An Wrapper for the indicators displaying on a jfreeCharts chart panel.
  * An TaChartIndicator can consist of several ta4j-indiactors (e.g. bollinger bands...)
@@ -35,115 +38,64 @@ import java.util.Random;
 public class TaChartIndicator {
 
     private List<Indicator> indicators;
-    private List<Paint> indicatorPaints;
     private List<String> indicatorsNames;
+    private XYLineAndShapeRenderer renderer;
+
     private String generalName;
     private boolean isSubchart;
 
-    private TaTypes.categories categorie = TaTypes.categories.DEFAULT;
-    private TaCheckBoxItem menuEntry;
+    private IndicatorParameters.TaCategory category = IndicatorParameters.TaCategory.DEFAULT;
 
-    /**Simple Constructor to add indicator to main chart*/
-    public TaChartIndicator(Indicator indicator){
-        this(indicator, getRandomColor(), indicator.toString(), false, TaTypes.categories.DEFAULT);
-    }
-
-    /**Simple Constructor to add TaChart to main or as a sub chart*/
-    public TaChartIndicator(Indicator indicator, boolean isSubchart) {
-        this(indicator, getRandomColor(), indicator.toString(), isSubchart, TaTypes.categories.DEFAULT);
-    }
-
-    /**Simple Constructor to add TaChart to main or as a sub chart*/
-    public TaChartIndicator(Indicator indicator, boolean isSubchart, TaTypes.categories c) {
-        this(indicator, getRandomColor(), indicator.toString(), isSubchart, c);
+    public TaChartIndicator(Indicator indicator, String name, boolean isSubchart, IndicatorParameters.TaCategory c){
+        this(indicator,name, new XYLineAndShapeRenderer(), isSubchart,c);
     }
 
     /**
-     * Constructor for creating a chart indicator that is just one ta4j-indicator
-     * @param indicator indicator that is needed for plotting the chart indicator
-     * @param paint the paint object for plotting the indicator (e.g. the color)
-     * @param name the name of the indicator (e.g. MAC)
-     * @param isSubchart flag if the chart indicator should be in a sub chart and not on the main chart
+     * Constructor for creating a TaChartIndicator instance for just one ta4j indicator
+     * @param indicator the ta4j indicator
+     * @param name the name of the indicator (with parameters)
+     * @param renderer the renderer for line, shape etc.
+     * @param isSubchart true if the TaChartIndicator should be plotted as subchart
+     * @param c the category of the indicator in the menu of this application
      */
-    public TaChartIndicator(Indicator indicator, Paint paint, String name, boolean isSubchart, TaTypes.categories c){
+    public TaChartIndicator(Indicator indicator, String name, XYLineAndShapeRenderer renderer, boolean isSubchart, IndicatorParameters.TaCategory c){
         indicators = new ArrayList<>();
-        indicatorPaints = new ArrayList<>();
         indicatorsNames = new ArrayList<>();
-
-        this.generalName = name;
         indicators.add(indicator);
-        indicatorPaints.add(paint);
         indicatorsNames.add(name);
+        generalName = name;
+        this.renderer = renderer;
         this.isSubchart = isSubchart;
-        menuEntry = new TaCheckBoxItem(generalName);
-        this.categorie = c;
+        category = c;
     }
 
-    /**Simple Constructor to add indicator (that consists of several ta4j indicator) to main chart*/
-    public TaChartIndicator(List<Indicator> indicators){
-        this(indicators, getRandomColor(indicators.size()), getSimpleName(indicators), indicators.get(0).toString(), false, TaTypes.categories.DEFAULT);
-    }
-
-    /**Simple Constructor to add indicator (that consists of several ta4j indicator) to main or sub chart*/
-    public TaChartIndicator(List<Indicator> indicators, boolean isSubchart){
-        this(indicators, getRandomColor(indicators.size()), getSimpleName(indicators), indicators.get(0).toString(), isSubchart, TaTypes.categories.DEFAULT);
-    }
-
-    /**Simple Constructor to add indicator (that consists of several ta4j indicator) to main or sub chart*/
-    public TaChartIndicator(List<Indicator> indicators, boolean isSubchart, TaTypes.categories c){
-        this(indicators, getRandomColor(indicators.size()), getSimpleName(indicators), indicators.get(0).toString(), isSubchart, c);
+    public TaChartIndicator(List<Indicator> indicators, List<String> names, String generalName, boolean isSubchart, IndicatorParameters.TaCategory c){
+        this(indicators,names,generalName,new XYLineAndShapeRenderer(false,false),isSubchart,c);
     }
 
     /**
-     * Constructor for creating a chart indicator that consists of several ta4j-indicators
-     * @param indicators a list of (sub) indicators that are needed for plotting the chart indicator
-     * @param paints color for evey sub indicator
-     * @param names name for every sub indicator (e.g. Upper Bollinger Band)
-     * @param generalName the name of the indicator (e.g. Bollinger Bands (20,2) )
-     * @param isSubchart flag if the chart indicator should be in a sub chart and not on the main chart
+     * Constructor for creating a TaChartIndicator instance for several ta4j indicator
+     * @param indicators the ta4j indicators
+     * @param names the names of the indicator (with parameters)
+     * @param renderer the renderer for lines, shapes etc.
+     * @param isSubchart true if the TaChartIndicators should be plotted as sub chart
+     * @param c the category of the TaChartIndicator in the menu of this application
      */
-    public TaChartIndicator(List<Indicator> indicators, List<Paint> paints, List<String> names, String generalName, boolean isSubchart, TaTypes.categories c){
-        if(indicators.size() != paints.size() || paints.size() != names.size())
-            throw new IllegalArgumentException("Different number of indicator, size and/or names. Must be equal");
-        this.generalName = generalName;
+    public TaChartIndicator(List<Indicator> indicators, List<String> names, String generalName, XYLineAndShapeRenderer renderer, boolean isSubchart, IndicatorParameters.TaCategory c){
         this.indicators = indicators;
-        this.indicatorPaints = paints;
-        this.indicatorsNames = names;
-        this.menuEntry = new TaCheckBoxItem(generalName);
+        indicatorsNames = names;
+        this.generalName = generalName;
+        this.renderer = renderer;
         this.isSubchart = isSubchart;
-        this.categorie = c;
+        category = c;
     }
+
 
     public String getGeneralName(){
         return generalName;
     }
     public String getName(int index){
         return indicatorsNames.get(index);
-    }
-
-    public void setName(String name){
-        setName(name, 0);
-    }
-
-    /**
-     * Change the display name of the indicator at specific index
-     * @param name new name of the indicator
-     * @param index index of the indicator in this chart indicator
-     */
-    public void setName(String name, int index){
-        this.indicatorsNames.set(index, name);
-    }
-
-    public Paint getPaint(int index){
-        return indicatorPaints.get(index);
-    }
-
-    public void setPaint(Paint paint){
-        setPaint(paint, 0);
-    }
-
-    public void setPaint(Paint paint, int index){
-        this.indicatorPaints.set(index, paint);
     }
 
     public List<Indicator> getIndicatorList(){
@@ -157,19 +109,6 @@ public class TaChartIndicator {
         return indicators.get(index);
     }
 
-    public void setIndicator(AbstractIndicator<Decimal> indicator){
-        setIndicator(indicator, 0);
-    }
-
-    /**
-     * Change the indicator at the specific index
-     * @param indicator new indicator for this chart indicator
-     * @param index index of the old indicator that should be replaced
-     */
-    public void setIndicator(AbstractIndicator<Decimal> indicator, int index){
-        this.indicators.set(index, indicator);
-    }
-
 
     public boolean isSubchart(){
         return isSubchart;
@@ -179,24 +118,27 @@ public class TaChartIndicator {
         return  indicators.size();
     }
 
-    public JMenuItem getMenuEntry(){
-        return menuEntry;
+
+    public IndicatorParameters.TaCategory getCategory(){
+        return this.category;
     }
 
-    public TaTypes.categories getCategory(){
-        return this.categorie;
+    public TimeSeriesCollection getDataSet(){
+        TimeSeriesCollection dataset = new TimeSeriesCollection();
+        for(int index = 0; index< this.getIndicatorsCount(); index++){
+            Indicator<Decimal> indicator = this.getIndicator(index);
+            org.jfree.data.time.TimeSeries chartTimeSeries = new org.jfree.data.time.TimeSeries(this.getName(index));
+            for(int i = 0; i<indicator.getTimeSeries().getTickCount(); i++){
+                Tick t = indicator.getTimeSeries().getTick(i);
+                chartTimeSeries.add(new Second(new Date(t.getEndTime().toEpochSecond() * 1000)), indicator.getValue(i).toDouble());
+            }
+            dataset.addSeries(chartTimeSeries);
+        }
+        return dataset;
     }
 
-    private static Color getRandomColor(){
-        Random r = new Random();
-        return new Color(r.nextFloat(),r.nextFloat(),r.nextFloat());
-    }
-
-    private static List<Paint> getRandomColor(int num) {
-        List<Paint> colorList = new ArrayList<>();
-        for (int i = 0; i < num; i++)
-            colorList.add(getRandomColor());
-        return colorList;
+    public XYLineAndShapeRenderer getRenderer(){
+        return this.renderer;
     }
 
     private static List<String> getSimpleName(List<Indicator> indicators){

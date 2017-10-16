@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><indicatorProperties>
+    <!--Properties xml file for the indicators-->
+	<indicator identifier="EMAIndicator">
+		<description>
+			Exponential Moving Average
+		</description>
+		<instance category="DEFAULT" id="1">
+			<param name="Time Frame" type="Integer">20</param>
+            <param name="Color" type="TaColor">BLUE</param>
+            <param name="Shape" type="TaShape">SMALL_REC</param>
+            <param name="Stroke" type="TaStroke">SMALL_LINE</param>
+            <param name="Chart Type" type="TaChartType">OVERLAY</param>
+		</instance>
+		<instance category="DEFAULT" id="2">
+			<param name="Time Frame" type="Integer">100</param>
+            <param name="Color" type="TaColor">RED</param>
+            <param name="Shape" type="TaShape">NONE</param>
+            <param name="Stroke" type="TaStroke">SMALL_LINE</param>
+            <param name="Chart Type" type="TaChartType">OVERLAY</param>
+		</instance>
+	</indicator>
+	<indicator identifier="SMAIndicator">
+		<description>
+			Simple Moving Average
+		</description>
+		<instance category="DEFAULT" id="1">
+			<param name="Time Frame" type="Integer">50</param>
+            <param name="Color" type="TaColor">RED</param>
+            <param name="Shape" type="TaShape">NONE</param>
+            <param name="Stroke" type="TaStroke">SMALL_LINE</param>
+            <param name="Chart Type" type="TaChartType">OVERLAY</param>
+		</instance>
+		<instance category="DEFAULT" id="2">
+			<param name="Time Frame" type="Integer">30</param>
+            <param name="Color" type="TaColor">YELLOW</param>
+            <param name="Shape" type="TaShape">NONE</param>
+            <param name="Stroke" type="TaStroke">SMALL_LINE</param>
+            <param name="Chart Type" type="TaChartType">OVERLAY</param>
+		</instance>
+	</indicator>
+	<indicator identifier="CMOIndicator">
+        <description>
+        </description>
+        <instance category="DEFAULT" id="1">
+            <param name="Time Frame" type="Integer">14</param>
+            <param name="Color" type="TaColor">YELLOW</param>
+            <param name="Shape" type="TaShape">NONE</param>
+            <param name="Stroke" type="TaStroke">SMALL_LINE</param>
+            <param name="Chart Type" type="TaChartType">SUBCHART</param>
+        </instance>
+    </indicator>
+    <indicator identifier="AmountIndicator">
+        <description>
+            Amount Indicator
+        </description>
+        <instance category="HELPERS" id="11">
+            <param name="Color" type="TaColor">RED</param>
+            <param name="Shape" type="TaShape">NONE</param>
+            <param name="Stroke" type="TaStroke">BIG_DOTS</param>
+            <param name="Chart Type" type="TaChartType">SUBCHART</param>
+        </instance>
+    </indicator>
+    <indicator identifier="BollingerBands">
+        <description>
+            Bollinger Bands (and Bollinger Bands Width)
+        </description>
+    <instance category="BOLLINGER" id="1">
+            <param name="Time Frame" type="Integer">20</param>
+            <param name="Standard Deviation">14</param>
+            <param name="Color Middle Band" type="TaColor">YELLOW</param>
+            <param name="Shape Middle Band" type="TaShape">NONE</param>
+            <param name="Stroke Middle Band" type="TaStroke">SMALL_LINE</param>
+            <param name="Color Upper Band" type="TaColor">RED</param>
+            <param name="Shape Upper Band" type="TaShape">NONE</param>
+            <param name="Stroke Upper Band" type="TaStroke">SMALL_LINE</param>
+            <param name="Color Lower Band" type="TaColor">BLUE</param>
+            <param name="Shape Lower Band" type="TaShape">NONE</param>
+            <param name="Stroke Lower Band" type="TaStroke">SMALL_LINE</param>
+            <param name="Chart Type" type="TaChartType">OVERLAY</param>
+            <param name="Add Bollinger Bands Width" type="TaBoolean">TRUE</param>
+        </instance>
+    </indicator>
+    <indicator identifier="PercentBIIndicator">
+        <description>
+        </description>
+        <instance category="BOLLINGER" id="1">
+            <param name="Time Frame" type="Integer">14</param>
+            <param name="K Multiplier" type="Integer">14</param>
+            <param name="Color" type="TaColor">YELLOW</param>
+            <param name="Shape" type="TaShape">NONE</param>
+            <param name="Stroke" type="TaStroke">SMALL_LINE</param>
+            <param name="Chart Type" type="TaChartType">SUBCHART</param>
+        </instance>
+    </indicator>
+    <indicator identifier="RSIIndicator">
+        <description>
+        </description>
+        <instance category="DEFAULT" id="1">
+            <param name="Time Frame" type="Integer">14</param>
+            <param name="Color" type="TaColor">BLUE</param>
+            <param name="Shape" type="TaShape">NONE</param>
+            <param name="Stroke" type="TaStroke">SMALL_LINE</param>
+            <param name="Chart Type" type="TaChartType">SUBCHART</param>
+        </instance>
+    </indicator>
+    <indicator identifier="SmoothedRSIIndicator">
+        <description>
+        </description>
+        <instance category="DEFAULT" id="1">
+            <param name="Time Frame" type="Integer">14</param>
+            <param name="Color" type="TaColor">RED</param>
+            <param name="Shape" type="TaShape">NONE</param>
+            <param name="Stroke" type="TaStroke">SMALL_LINE</param>
+            <param name="Chart Type" type="TaChartType">SUBCHART</param>
+        </instance>
+    </indicator>
+    <indicator identifier="PVIIndicator">
+        <description>
+            Positive Volume Index
+        </description>
+        <instance category="VOLUME" id="1">
+            <param name="Color" type="TaColor">RED</param>
+            <param name="Shape" type="TaShape">NONE</param>
+            <param name="Stroke" type="TaStroke">SMALL_LINE</param>
+            <param name="Chart Type" type="TaChartType">SUBCHART</param>
+        </instance>
+    </indicator>
+    <indicator identifier="NVIIndicator">
+        <description>
+            Negative Volume Index
+        </description>
+        <instance category="VOLUME" id="1">
+            <param name="Color" type="TaColor">RED</param>
+            <param name="Shape" type="TaShape">NONE</param>
+            <param name="Stroke" type="TaStroke">SMALL_LINE</param>
+            <param name="Chart Type" type="TaChartType">SUBCHART</param>
+        </instance>
+    </indicator>
+    <indicator identifier="OnBalanceVolumeIndicator">
+        <description>
+            On Balanced Volumen Indicator
+        </description>
+        <instance category="VOLUME" id="1">
+            <param name="Color" type="TaColor">RED</param>
+            <param name="Shape" type="TaShape">NONE</param>
+            <param name="Stroke" type="TaStroke">SMALL_LINE</param>
+            <param name="Chart Type" type="TaChartType">SUBCHART</param>
+        </instance>
+    </indicator>
+    <indicator identifier="VWAPIndicator">
+        <description>
+            Volume Weighted Average Price
+        </description>
+        <instance category="VOLUME" id="1">
+            <param name="Time Frame" type="Integer">14</param>
+            <param name="Color" type="TaColor">GREEN</param>
+            <param name="Shape" type="TaShape">NONE</param>
+            <param name="Stroke" type="TaStroke">SMALL_LINE</param>
+            <param name="Chart Type" type="TaChartType">SUBCHART</param>
+        </instance>
+    </indicator>
+    <indicator identifier="MACDIndicator">
+        <description>
+            Moving Average Convergence Divergence
+        </description>
+        <instance category="DEFAULT" id="1">
+            <param name="Time Frame Short" type="Integer">12</param>
+            <param name="Time Frame Long" type="Integer">26</param>
+            <param name="Color" type="TaColor">GREEN</param>
+            <param name="Shape" type="TaShape">NONE</param>
+            <param name="Stroke" type="TaStroke">SMALL_LINE</param>
+            <param name="Chart Type" type="TaChartType">SUBCHART</param>
+            <param name="Add Signal Line" type="TaBoolean">TRUE</param>
+            <param name="Time Frame Signal Line" type="Integer">9</param>
+            <param name="Color Signal Line" type="TaColor">RED</param>
+            <param name="Shape Signal Line" type="TaShape">NONE</param>
+            <param name="Stroke Signal Line" type="TaStroke">SMALL_LINE</param>
+        </instance>
+    <instance category="DEFAULT" id="2">
+            <param name="Time Frame Short" type="Integer">10</param>
+            <param name="Time Frame Long" type="Integer">50</param>
+            <param name="Color" type="TaColor">GREEN</param>
+            <param name="Shape" type="TaShape">NONE</param>
+            <param name="Stroke" type="TaStroke">SMALL_LINE</param>
+            <param name="Chart Type" type="TaChartType">SUBCHART</param>
+            <param name="Add Signal Line" type="TaBoolean">FALSE</param>
+            <param name="Time Frame Signal Line" type="Integer">5</param>
+            <param name="Color Signal Line" type="TaColor">RED</param>
+            <param name="Shape Signal Line" type="TaShape">NONE</param>
+            <param name="Stroke Signal Line" type="TaStroke">SMALL_LINE</param>
+        </instance>
+    </indicator>
+    <indicator identifier="AverageDirectionalMovementUpDown">
+        <description>
+            Average Directional Movement Up and Down(ADX)
+        </description>
+        <instance category="HELPERS" id="1">
+            <param name="Time Frame Up" type="Integer">14</param>
+            <param name="Time Frame Down" type="Integer">14</param>
+            <param name="Color Up" type="TaColor">GREEN</param>
+            <param name="Color Down" type="TaColor">RED</param>
+            <param name="Shape Up" type="TaShape">NONE</param>
+            <param name="Shape Down" type="TaShape">NONE</param>
+            <param name="Stroke Up" type="TaStroke">SMALL_LINE</param>
+            <param name="Stroke Down" type="TaStroke">SMALL_LINE</param>
+            <param name="Chart Type" type="TaChartType">SUBCHART</param>
+        </instance>
+    </indicator>
+    <indicator identifier="TrueRangeIndicator">
+        <description>
+            True Range Indicator
+        </description>
+        <instance category="HELPERS" id="1">
+            <param name="Color" type="TaColor">GREEN</param>
+            <param name="Shape" type="TaShape">NONE</param>
+            <param name="Stroke" type="TaStroke">SMALL_LINE</param>
+            <param name="Chart Type" type="TaChartType">SUBCHART</param>
+        </instance>
+    </indicator>
+    <indicator identifier="Keltner">
+        <description>
+            Keltner Channels
+        </description>
+        <instance category="KELTNER" id="1">
+            <param name="Time Frame" type="Integer">20</param>
+            <param name="Time Frame ATR" type="Integer">10</param>
+            <param name="Ratio" type="Decimal">3</param>
+            <param name="Color Middle" type="TaColor">GREEN</param>
+            <param name="Color Upper" type="TaColor">GREEN</param>
+            <param name="Color Lower" type="TaColor">GREEN</param>
+            <param name="Shape Middle" type="TaShape">NONE</param>
+            <param name="Shape Upper" type="TaShape">NONE</param>
+            <param name="Shape Lower" type="TaShape">NONE</param>
+            <param name="Stroke Middle" type="TaStroke">SMALL_LINE</param>
+            <param name="Stroke Upper" type="TaStroke">SMALL_LINE</param>
+            <param name="Stroke Lower" type="TaStroke">SMALL_LINE</param>
+            <param name="Chart Type" type="TaChartType">OVERLAY</param>
+        </instance>
+    </indicator>
+    <indicator identifier="AroonUpDown">
+        <description>
+            Aroon Up and Down Indicator
+        </description>
+        <instance category="HELPERS" id="1">
+            <param name="Time Frame Up" type="Integer">25</param>
+            <param name="Time Frame Down" type="Integer">25</param>
+            <param name="Color Up" type="TaColor">GREEN</param>
+            <param name="Color Down" type="TaColor">RED</param>
+            <param name="Shape Up" type="TaShape">NONE</param>
+            <param name="Shape Down" type="TaShape">NONE</param>
+            <param name="Stroke Up" type="TaStroke">SMALL_LINE</param>
+            <param name="Stroke Down" type="TaStroke">SMALL_LINE</param>
+            <param name="Chart Type" type="TaChartType">SUBCHART</param>
+        </instance>
+    </indicator>
+
+
+
+</indicatorProperties>

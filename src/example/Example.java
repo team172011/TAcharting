@@ -21,23 +21,41 @@ package example;
 
 import chart.TaChart;
 import chart.TaChartIndicatorBox;
-import chart.TaTypes;
+import chart.types.IndicatorParameters.TaCategory;
+import chart.types.IndicatorParameters.TaShape;
 import eu.verdelhan.ta4j.*;
 import eu.verdelhan.ta4j.indicators.EMAIndicator;
 import eu.verdelhan.ta4j.indicators.helpers.ClosePriceIndicator;
 import eu.verdelhan.ta4j.trading.rules.CrossedDownIndicatorRule;
 import eu.verdelhan.ta4j.trading.rules.CrossedUpIndicatorRule;
+import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 
+import javax.swing.*;
 import java.awt.*;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Example {
+    public TimeSeries series;
 
     public static void main(String[] args){
 
+
+        Example example1 = new Example();
+    }
+
+    public Example(){
         // get a time series
-        TimeSeries series = Loader.getDailyTimeSerie("C:\\Users\\simon\\Java_Projekte\\ta4j-charting\\src\\data\\aapl_daily.csv", "APPL");
+        ClassLoader cl = getClass().getClassLoader();
+        URL file = cl.getResource("data/fb_daily.csv");
+        series = Loader.getDailyTimeSerie(file, "fb");
+
+        createChart();
+
+    }
+
+    public void createChart() {
 
         // define indicators
         ClosePriceIndicator cp = new ClosePriceIndicator(series);
@@ -47,36 +65,50 @@ public class Example {
         // build strategy
         Rule entry = new CrossedUpIndicatorRule(ema20,ema60);
         Rule exit = new CrossedDownIndicatorRule(ema20, ema60);
-        BaseStrategy strategy = new BaseStrategy(entry,exit);
+        BaseStrategy strategyLong = new BaseStrategy(entry,exit);
+        BaseStrategy strategyShort = new BaseStrategy(exit, entry);
 
         // initialize and add your individual indicators to chart
-        TaChartIndicatorBox chartIndicatorBox = new TaChartIndicatorBox();
-        chartIndicatorBox.initAllIndicators(series); // add all ta4j indicators to the box
-        chartIndicatorBox.addChartIndicator(ema20, Color.GREEN,"myEMA Short (20)", false, TaTypes.categories.DEFAULT);
-        chartIndicatorBox.addChartIndicator(ema60, Color.RED,"myEMA Long (60)", false, TaTypes.categories.DEFAULT);
+        TaChartIndicatorBox chartIndicatorBox = new TaChartIndicatorBox(series);
+        //chartIndicatorBox.initIndicatorsFromPropertyFile(); // add all ta4j indicators to the box
+
+        XYLineAndShapeRenderer emaShortRenderer = new XYLineAndShapeRenderer(); // specify how the lines should be rendered
+        emaShortRenderer.setSeriesShape(0, TaShape.NONE.getShape());
+        emaShortRenderer.setSeriesPaint(0,Color.RED);
+
+        XYLineAndShapeRenderer emaLongRenderer = new XYLineAndShapeRenderer();
+        emaLongRenderer.setSeriesShape(0,TaShape.NONE.getShape());
+        emaLongRenderer.setSeriesPaint(0,Color.GREEN);
+
+        chartIndicatorBox.addChartIndicator("ema1",ema20, "myEMA Short (20)",emaShortRenderer, false, TaCategory.DEFAULT);
+        chartIndicatorBox.addChartIndicator("ema2",ema60, "myEMA Long (60)",emaLongRenderer, false, TaCategory.DEFAULT);
 
         // or add your whole strategy as
         List<Indicator> strategyIndicators = new ArrayList<>();
-        List<Paint> strategyColors = new ArrayList<>();
         List<String> names = new ArrayList<>();
         strategyIndicators.add(ema20);
         strategyIndicators.add(ema60);
-        strategyColors.add(Color.MAGENTA);
-        strategyColors.add(Color.YELLOW);
         names.add("myEma (20)");
         names.add("myEma (60)");
-        chartIndicatorBox.addChartIndicator(strategyIndicators,strategyColors,names,"my Strategy Ema Short/Long", false, TaTypes.categories.DEFAULT);
+        XYLineAndShapeRenderer strategieRenderer = new XYLineAndShapeRenderer();
+        strategieRenderer.setSeriesShape(0,TaShape.NONE.getShape()); // specify how the both lines should be rendered
+        strategieRenderer.setSeriesPaint(0,Color.RED);
+        strategieRenderer.setSeriesShape(1,TaShape.NONE.getShape());
+        strategieRenderer.setSeriesPaint(1,Color.GREEN);
+        chartIndicatorBox.addChartIndicator("Strategy1",strategyIndicators, names,"my Strategy Ema Short/Long",
+                strategieRenderer,false, TaCategory.DEFAULT);
 
-
-
-        // run the strategy
+        // run the strategies
         TimeSeriesManager manager = new TimeSeriesManager(series);
-        TradingRecord record = manager.run(strategy);
+        TradingRecord record = manager.run(strategyLong);
+        TradingRecord record2 = manager.run(strategyShort, Order.OrderType.SELL);
+        chartIndicatorBox.addTradingRecord("My Record Long", record);
+        chartIndicatorBox.addTradingRecord("My Record Short", record2);
 
         //plot series, trading record and other indicators
-        TaChart taChartPanel = new TaChart(series,record,chartIndicatorBox);
+        TaChart taChartPanel = new TaChart(series,chartIndicatorBox);
+        taChartPanel.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         taChartPanel.setVisible(true);
-
     }
 }
 

@@ -18,6 +18,7 @@
 
 package chart;
 
+import chart.view.TaChartMenuBar;
 import eu.verdelhan.ta4j.*;
 import eu.verdelhan.ta4j.Tick;
 import org.jfree.chart.ChartMouseEvent;
@@ -30,12 +31,10 @@ import org.jfree.chart.labels.CrosshairLabelGenerator;
 import org.jfree.chart.panel.CrosshairOverlay;
 import org.jfree.chart.plot.*;
 import org.jfree.chart.renderer.xy.CandlestickRenderer;
-import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.chart.title.LegendTitle;
+import org.jfree.data.Range;
 import org.jfree.data.general.DatasetUtilities;
 import org.jfree.data.time.Minute;
-import org.jfree.data.time.Second;
-import org.jfree.data.time.TimeSeriesCollection;
 import org.jfree.data.xy.DefaultHighLowDataset;
 import org.jfree.data.xy.OHLCDataset;
 import org.jfree.data.xy.XYDataset;
@@ -43,94 +42,232 @@ import org.jfree.ui.ApplicationFrame;
 import org.jfree.ui.RectangleAnchor;
 import org.jfree.ui.RectangleEdge;
 import org.jfree.ui.TextAnchor;
-import org.jfree.util.ShapeUtilities;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.geom.Rectangle2D;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 
 
-public class TaChart extends ApplicationFrame implements ChartMouseListener, ActionListener {
+public class TaChart extends ApplicationFrame implements ChartMouseListener {
 
     private TimeSeries series;
-    private List<TaChartIndicator> taChartIndicators;
-    private TradingRecord record;
-    static TaChartIndicatorBox chartIndicatorBox = new TaChartIndicatorBox();
+    private TaChartIndicatorBox chartIndicatorBox;
 
     // gui and plotting
-    private JMenuBar menuBar = new JMenuBar();
-    JMenu settings = new JMenu("Settings");
-    JMenu trading = new JMenu("TradingRecord");
-    TaCheckBoxItem showRecord = new TaCheckBoxItem("Show record");
+    private XYDataset candlestickData;
+    private Color plotBackground = Color.WHITE; // default colors for white theme
+    private Color panelBackground = Color.WHITE;
+    private Color frameBackground = Color.WHITE;
+    private Color chartBackground = Color.WHITE;
+    private Color legendBackground = Color.WHITE;
+    private Color subPlotNames = Color.BLACK;
+    private Color legendItemPaint = Color.BLACK;
 
+    private JFreeChart chart;
     private CombinedDomainXYPlot combinedXYPlot;
     private XYPlot mainPlot;
     private org.jfree.chart.ChartPanel chartPanel;
     private Crosshair xCrosshair;
     private Crosshair yCrosshair;
 
-    // mapping
-    private Map<JMenuItem, Integer> mapEntryToChart = new HashMap<>();
-    private Map<JMenuItem, XYPlot> mapEntryToXYPlot = new HashMap<>();
-    private List<Marker> markers;
-
-    public TaChart(TimeSeries series, TaChartIndicatorBox box){
-        this(series, null, box);
-    }
-
-
-    public TaChart(TimeSeries series, TradingRecord record, TaChartIndicatorBox box){
-        this(series,record,box.getTaChartIndicatorList());
-    }
+    private Map<TradingRecord, List<Marker>> mapTradingRecordMarker;
+    private List<XYPlot> currentSubPlots;
 
     /**
      * Constructor
      * @param series a ta4j time series
-     * @param record a ta4j trading record can be null
-     * @param indicatorList a list of ChartIndicators
+     * @param box a TaChartIndicatorBox
      */
-    public TaChart(TimeSeries series, TradingRecord record, List<TaChartIndicator> indicatorList){
-        super(series.getName());
-        this.series = series;
-        this.record = record;
-        this.taChartIndicators = indicatorList;
-        this.markers = new ArrayList<>();
-        prepare();
+    public TaChart(TimeSeries series, TaChartIndicatorBox box){
+        this(series,box,false);
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception ex) {
+        }
     }
 
-    public void prepare(){
+    public TaChart(TimeSeries series, TaChartIndicatorBox box, boolean darkTheme){
+        super("TaCharting "+series.getName());
+        mapTradingRecordMarker = new HashMap<>();
+        if (darkTheme){
+            setDarkTheme();
+        }
+        this.series = series;
+        this.chartIndicatorBox = box;
+        prepare();
 
-        createMainPlot(series);
-        createMenuEntriesAndSubPlots();
+    }
 
-        JFreeChart chart = new JFreeChart(series.getName(), combinedXYPlot);
-        chart.setBackgroundPaint(Color.BLACK);
+    private void setDarkTheme() {
+        plotBackground = Color.BLACK;
+        panelBackground = Color.BLACK;
+        frameBackground = Color.BLACK;
+        chartBackground = Color.BLACK;
+        legendBackground = Color.BLACK;
+        subPlotNames = Color.WHITE;
+        legendItemPaint = Color.WHITE;
+    }
 
-        chartPanel = new ChartPanel(chart);
-        chartPanel.addChartMouseListener(this);
-        chartPanel.addOverlay(createCrosshairOverlay());
+    private void prepare(){
+        this.candlestickData = createOHLCDataset(series);
+        this.mainPlot = createMainPlot(this.candlestickData, new ArrayList<>());
+        this.combinedXYPlot = createCombinedDomainXYPlot(mainPlot, new ArrayList<>());
+        this.currentSubPlots = new ArrayList<>();
+        JMenuBar menuBar = new TaChartMenuBar(chartIndicatorBox,this);
+        setJMenuBar(menuBar);
 
+        this.chart = new JFreeChart(series.getName(), combinedXYPlot);
+        this.chart.setBackgroundPaint(chartBackground);
+        this.chartPanel = new ChartPanel(chart);
+        this.chartPanel.addChartMouseListener(this);
+        this.chartPanel.addOverlay(createCrosshairOverlay());
+        this.chartPanel.setBackground(panelBackground);
         LegendTitle legend = chart.getLegend();
         legend.setPosition(RectangleEdge.RIGHT);
-        legend.setBackgroundPaint(Color.BLACK);
-        legend.setItemPaint(Color.GRAY);
-        legend.setItemFont(new Font("Arial", 1, 7));
+        legend.setItemFont(new Font("Arial", 1, 8));
+        legend.setItemPaint(legendItemPaint);
+        legend.setBackgroundPaint(legendBackground);
 
         setContentPane(chartPanel);
+        setBackground(frameBackground);
         pack();
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+    }
+
+    // searching for a better way... currently recreate all because it is not possible to clean remove a data set
+    public void rep(){
+        Dimension frameSize = getSize();
+        Color bg = chartPanel.getBackground();
+        Color frameBg= getBackground();
+        Paint chartBg = chart.getBackgroundPaint();
+        LegendTitle chartLegend = chart.getLegend();
+        Paint legendBg = chartLegend.getBackgroundPaint();
+        Paint legendItemPaint = chartLegend.getItemPaint();
+        Font legendItemFont = chartLegend.getItemFont();
+
+
+        this.chart = new JFreeChart(series.getName(), combinedXYPlot);
+        this.chart.setBackgroundPaint(chartBg);
+        this.chartPanel = new ChartPanel(chart);
+        this.chartPanel.addChartMouseListener(this);
+        this.chartPanel.addOverlay(createCrosshairOverlay());
+        LegendTitle legend = chart.getLegend();
+        legend.setPosition(RectangleEdge.RIGHT);
+        legend.setItemFont(legendItemFont);
+        legend.setBackgroundPaint(legendBg);
+        legend.setItemPaint(legendItemPaint);
+
+        setBackground(frameBg);
+        setSize(frameSize);
+        setContentPane(chartPanel);
+        revalidate();
+    }
+
+    //TODO summarize both methods to make sure that plotOverlay is called befor plotSubplots
+
+    /**
+     * plots or removes the trading record
+     * @param record the trading record
+     * @param on adds the record if true, else the record will be removed from plot
+     */
+    public void plotTradingRecord(TradingRecord record, boolean on){
+        if (on){
+            this.addEntryExitSignals(record);
+        } else  {
+            this.removeEntryExitSignals(record);
+
+        }
+
+    }
+
+    private void removeEntryExitSignals(TradingRecord record) {
+        List<Marker> markers = this.mapTradingRecordMarker.get(record);
+        for(Marker m: markers){
+            mainPlot.removeDomainMarker(m);
+        }
+        this.mapTradingRecordMarker.remove(record);
+    }
+
+    /**Adds entry and exits signals to the main plot.
+     * @param record the trading record
+     * */
+    private void addEntryExitSignals(TradingRecord record){
+        List<Trade> trades = record.getTrades();
+        Order.OrderType orderType = record.getLastExit().getType().complementType();
+        List<Marker> markers = new ArrayList<>();
+        Color entryColor = Color.GREEN;
+        Color exitColor = Color.RED;
+        RectangleAnchor entryAnchor = RectangleAnchor.TOP_LEFT;
+        RectangleAnchor exitAnchor = RectangleAnchor.BOTTOM_RIGHT;
+        if(orderType == Order.OrderType.SELL) {
+            entryColor = Color.RED;
+            exitColor = Color.GREEN;
+        }
+        for(Trade trade: trades){
+            double entry = new Minute(Date.from(series.getTick(trade.getEntry().getIndex()).getEndTime().toInstant())).getFirstMillisecond();
+            double exit = new Minute(Date.from(series.getTick(trade.getExit().getIndex()).getEndTime().toInstant())).getFirstMillisecond();
+
+            ValueMarker in = new ValueMarker(entry);
+            in.setLabel(orderType.toString());
+            in.setLabelPaint(Color.WHITE);
+            in.setLabelAnchor(entryAnchor);
+            in.setPaint(entryColor);
+            this.mainPlot.addDomainMarker(in);
+
+            ValueMarker out = new ValueMarker(exit);
+            out.setLabel(orderType.complementType().toString());
+            out.setLabelPaint(Color.WHITE);
+            out.setLabelAnchor(exitAnchor);
+            out.setPaint(exitColor);
+            this.mainPlot.addDomainMarker(out);
+
+            IntervalMarker imarker = new IntervalMarker(entry, exit, entryColor);
+            imarker.setAlpha(0.1f);
+            this.mainPlot.addDomainMarker(imarker);
+            markers.add(imarker);
+            markers.add(in);
+            markers.add(out);
+        }
+        this.mapTradingRecordMarker.put(record,markers);
+    }
+
+    //TODO summarize both methods to make sure that plotOverlay is called befor plotSubplots
+    // create active overlays
+    public void plotOverlays(List<String> indicatorIdentifiers) {
+        List<TaChartIndicator> overlays = new ArrayList<>();
+        for (String identifier: indicatorIdentifiers){
+            TaChartIndicator taChartIndicator = chartIndicatorBox.getChartIndicator(identifier);
+            overlays.add(taChartIndicator);
+        }
+
+        Range domainRange = this.mainPlot.getDomainAxis().getRange();
+        Range valueRange = this.mainPlot.getRangeAxis().getRange();
+        this.mainPlot = createMainPlot(this.candlestickData, overlays);
+        this.mainPlot.getDomainAxis().setRange(domainRange);
+        this.mainPlot.getRangeAxis().setRange(valueRange);
+        this.combinedXYPlot = recreateCombinedDomainXYPlot();
+        rep();
+    }
+
+    // create active subplots
+    public void plotSubPlots(List<String> indicatorIdentifiers){
+        List<TaChartIndicator> subPlots = new ArrayList<>();
+        for (String identifier: indicatorIdentifiers){
+            TaChartIndicator taChartIndicator = chartIndicatorBox.getChartIndicator(identifier);
+            subPlots.add(taChartIndicator);
+        }
+
+        this.combinedXYPlot = createCombinedDomainXYPlot(mainPlot, subPlots);
+        rep();
     }
 
     /**
      * Creating the xyPlot for the base candlestick chart
-     * @param series a ta4j time series
+     * @param dataset a XYDataset for the candlestick
      */
-    private void createMainPlot(TimeSeries series){
+    private XYPlot createMainPlot(XYDataset dataset, List<TaChartIndicator> overlays){
 
         TaChart.MyCandlestickRenderer renderer = new TaChart.MyCandlestickRenderer();
         renderer.setCandleWidth(2);
@@ -144,57 +281,78 @@ public class TaChart extends ApplicationFrame implements ChartMouseListener, Act
         dateAxis.setTickLabelPaint(Color.GRAY);
         dateAxis.setLabelPaint(Color.GRAY);
 
-        XYDataset dataset = createOHLCDataset(series);
-
         // XYPlot with candlesticks
-        mainPlot = new XYPlot(dataset, dateAxis, numberAxis, renderer);
-        mainPlot.setOrientation(PlotOrientation.VERTICAL);
-        mainPlot.setBackgroundPaint(Color.BLACK);
-        mainPlot.setRangeAxisLocation(AxisLocation.BOTTOM_OR_LEFT);
-
+        XYPlot plot = new XYPlot(dataset, dateAxis, numberAxis, renderer);
+        plot.setOrientation(PlotOrientation.VERTICAL);
+        plot.setRangeAxisLocation(AxisLocation.BOTTOM_OR_LEFT);
+        plot.setBackgroundPaint(plotBackground);
         float dash[]={1.0f};
         BasicStroke grid = new BasicStroke(0.1f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER,10.0f, dash, 0.0f);
-        mainPlot.setDomainGridlineStroke(grid);
-        mainPlot.setRangeGridlineStroke(grid);
+        plot.setDomainGridlineStroke(grid);
+        plot.setRangeGridlineStroke(grid);
+        for(TaChartIndicator taChartIndicator: overlays) {
+            int anonymID = plot.getDatasetCount();
+            plot.setDataset(anonymID, taChartIndicator.getDataSet());
+            plot.mapDatasetToRangeAxis(mainPlot.getDatasetCount(), 0);
+            plot.setRenderer(anonymID, taChartIndicator.getRenderer());
+            numberAxis.setAutoRangeIncludesZero(false);
+            plot.setDatasetRenderingOrder(DatasetRenderingOrder.FORWARD);
 
+        }
+        return plot;
+    }
+
+
+
+    @Override
+    public void chartMouseClicked(ChartMouseEvent chartMouseEvent) {
+        Rectangle2D dataArea = this.chartPanel.getScreenDataArea();
+        JFreeChart chart = chartMouseEvent.getChart();
+        CombinedDomainXYPlot plot = (CombinedDomainXYPlot) chart.getPlot();
+
+        List<XYPlot> subplots = (List<XYPlot>) plot.getSubplots();
+
+        ValueAxis xAxis = subplots.get(0).getDomainAxis();
+
+        double x = xAxis.java2DToValue(chartMouseEvent.getTrigger().getX(), dataArea,
+                RectangleEdge.BOTTOM);
+        double y = DatasetUtilities.findYValue(((XYPlot)plot.getSubplots().get(0)).getDataset(), 0, x);
+
+        XYTextAnnotation an = new XYTextAnnotation(x+" "+y, x, y);
+        an.setBackgroundPaint(Color.WHITE);
+        //mainPlot.addAnnotation(an);
+
+    }
+
+    private CombinedDomainXYPlot createCombinedDomainXYPlot(XYPlot plot, List<TaChartIndicator> subplots){
         // create the combined xy plot for this and the subplots
-        combinedXYPlot = new CombinedDomainXYPlot(mainPlot.getDomainAxis());
+        this.currentSubPlots = new ArrayList<>();
+        CombinedDomainXYPlot combinedXYPlot = new CombinedDomainXYPlot(plot.getDomainAxis());
+        combinedXYPlot.setGap(2);
+        combinedXYPlot.add(plot,11);
+        combinedXYPlot.setOrientation(PlotOrientation.VERTICAL);
+        combinedXYPlot.setBackgroundPaint(plotBackground);
+        for(TaChartIndicator taChartIndicator: subplots){
+            XYPlot subPlot = createSubplotforIndicators(taChartIndicator);
+            combinedXYPlot.add(subPlot);
+            currentSubPlots.add(subPlot);
+        }
+
+        return combinedXYPlot;
+    }
+
+    private CombinedDomainXYPlot recreateCombinedDomainXYPlot(){
+        CombinedDomainXYPlot combinedXYPlot = new CombinedDomainXYPlot(mainPlot.getDomainAxis());
         combinedXYPlot.setGap(2);
         combinedXYPlot.add(mainPlot,11);
         combinedXYPlot.setOrientation(PlotOrientation.VERTICAL);
-    }
-
-    /**
-     * create the menu entries and subplots for the indicators that are flagged as isSubplot == true
-     */
-    private void createMenuEntriesAndSubPlots(){
-
-        JMenu indicatorsEntry = new JMenu("Indicators");
-        List<JMenuItem> categoriesEntry = new ArrayList<>();
-        for(TaTypes.categories c : TaTypes.categories.values()){
-            indicatorsEntry.add(c.getMenueElement());
+        combinedXYPlot.setBackgroundPaint(plotBackground);
+        //TODO: loose mapping between TaChartIndicator and his plot
+        for(XYPlot p: currentSubPlots){
+            combinedXYPlot.add(p);
         }
 
-        for(TaChartIndicator ci : this.taChartIndicators){
-            ci.getMenuEntry().addActionListener(this);
-            if (ci.isSubchart()) {
-                XYPlot subPlot = createSubplotforIndicators(ci);
-                this.mapEntryToXYPlot.put(ci.getMenuEntry(), subPlot); // mapping between dataset id and menue entry
-            }
-            else {
-                int id = setChartTimeSeriesForChartIndicator(ci);
-                this.mapEntryToChart.put(ci.getMenuEntry(), id); // mapping between dataset id and menue entry
-            }
-            indicatorsEntry.getItem(ci.getCategory().getId()).add(ci.getMenuEntry());
-        }
-
-        this.trading.add(showRecord);
-        showRecord.addActionListener(this);
-
-        this.menuBar.add(settings);
-        this.menuBar.add(indicatorsEntry);
-        this.menuBar.add(trading);
-        setJMenuBar(menuBar);
+        return combinedXYPlot;
     }
 
     /**
@@ -204,24 +362,6 @@ public class TaChart extends ApplicationFrame implements ChartMouseListener, Act
      */
     private XYPlot createSubplotforIndicators(TaChartIndicator taChartIndicator){
 
-        TimeSeriesCollection dataset = new TimeSeriesCollection();
-        XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer();
-
-        for(int index = 0; index< taChartIndicator.getIndicatorsCount(); index++){
-
-            Indicator<Decimal> indicator = taChartIndicator.getIndicator(index);
-            if (!indicator.getTimeSeries().equals(this.series))
-                throw new IllegalStateException("Time series of indicator is another than time series of main chart!");
-            org.jfree.data.time.TimeSeries chartTimeSeries = new org.jfree.data.time.TimeSeries(taChartIndicator.getName(index));
-            for(int i = 0; i<indicator.getTimeSeries().getTickCount(); i++){
-                Tick t = indicator.getTimeSeries().getTick(i);
-                chartTimeSeries.add(new Second(new Date(t.getEndTime().toEpochSecond() * 1000)), indicator.getValue(i).toDouble());
-            }
-            renderer.setSeriesPaint(index, taChartIndicator.getPaint(index));
-            renderer.setSeriesShape(index, ShapeUtilities.createUpTriangle(0.1f));
-            dataset.addSeries(chartTimeSeries);
-        }
-
         NumberAxis numberAxis = new NumberAxis();
 
         numberAxis.setLabelFont(new Font("NumberAxisLabelFont",1,8));
@@ -230,21 +370,17 @@ public class TaChart extends ApplicationFrame implements ChartMouseListener, Act
         numberAxis.setTickUnit(new NumberTickUnit(0.5));
         numberAxis.setTickLabelFont(new Font("NumberAxisTickFont",1,8));
         numberAxis.setAutoTickUnitSelection(true);
-        XYPlot indicatorPlot = new XYPlot(dataset, mainPlot.getDomainAxis(), numberAxis, renderer);
-
+        XYPlot indicatorPlot = new XYPlot(taChartIndicator.getDataSet(), mainPlot.getDomainAxis(), numberAxis, taChartIndicator.getRenderer());
 
         double x = new Minute(Date.from(series.getTick(0).getEndTime().minusDays(50).toInstant())).getFirstMillisecond();
         double y = numberAxis.getLowerBound()+(numberAxis.getUpperBound()+numberAxis.getLowerBound())/1.1;
         XYTextAnnotation annotation = new XYTextAnnotation(taChartIndicator.getGeneralName(), x, y);
         annotation.setFont(new Font("SansSerif", Font.BOLD, 6));
-        annotation.setPaint(Color.WHITE);
+        annotation.setPaint(subPlotNames);
         annotation.setOutlineVisible(true);
-        annotation.setBackgroundPaint(Color.BLACK);
         annotation.setTextAnchor(TextAnchor.TOP_LEFT);
-
         indicatorPlot.addAnnotation(annotation);
-
-        indicatorPlot.setBackgroundPaint(Color.BLACK);
+        indicatorPlot.setBackgroundPaint(plotBackground);
         indicatorPlot.setRangeAxisLocation(AxisLocation.TOP_OR_LEFT);
         return indicatorPlot;
     }
@@ -308,158 +444,9 @@ public class TaChart extends ApplicationFrame implements ChartMouseListener, Act
      * @param taChartIndicator an TaChartIndicator that describes the attributes of the indicator(s) that should be plotted
      * @return id of the renderer and dataset for the main plot
      */
-    private int setChartTimeSeriesForChartIndicator(TaChartIndicator taChartIndicator){
-        TimeSeriesCollection dataset = new TimeSeriesCollection();
-        XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer();
-        // add indicator data to dataset
-        for(int index = 0; index< taChartIndicator.getIndicatorsCount(); index++){
-            Indicator<Decimal> indicator = taChartIndicator.getIndicator(index);
-            org.jfree.data.time.TimeSeries chartTimeSeries = new org.jfree.data.time.TimeSeries(taChartIndicator.getName(index));
-            if (!indicator.getTimeSeries().equals(this.series))
-                throw new IllegalStateException("Time series of indicator is another than time series of main chart!");
-            for(int i = 0; i<indicator.getTimeSeries().getTickCount(); i++){
-                Tick t = indicator.getTimeSeries().getTick(i);
-                chartTimeSeries.add(new Second(new Date(t.getEndTime().toEpochSecond() * 1000)), indicator.getValue(i).toDouble());
-            }
-            renderer.setSeriesPaint(index, taChartIndicator.getPaint(index));
-            renderer.setSeriesShape(index, ShapeUtilities.createUpTriangle(0.1f));
-            renderer.setSeriesVisible(index, false);
-            dataset.addSeries(chartTimeSeries);
-        }
-
+    private int createIdForOverlay(TaChartIndicator taChartIndicator){
         int id = mainPlot.getDatasetCount();
-        mainPlot.setDataset(id, dataset);
-        mainPlot.mapDatasetToRangeAxis(id, 0);
-
-        mainPlot.setRenderer(id, renderer);
-        NumberAxis numberAxis = (NumberAxis) mainPlot.getRangeAxis();
-        numberAxis.setAutoRangeIncludesZero(false);
-        mainPlot.setDatasetRenderingOrder(DatasetRenderingOrder.FORWARD);
-
         return id;
-    }
-
-    /**Adds entry and exits signals to the main plot.
-     * @param trades, List of trades with corresponding entry/exit signals
-     * @param orderType, the OrderType BUY or SELL
-     * */
-    public void addEntryExitSignals(List<Trade> trades, Order.OrderType orderType){
-        Color entryColor = Color.GREEN;
-        Color exitColor = Color.RED;
-        RectangleAnchor entryAnchor = RectangleAnchor.TOP_LEFT;
-        RectangleAnchor exitAnchor = RectangleAnchor.BOTTOM_RIGHT;
-        if(orderType == Order.OrderType.SELL) {
-            entryColor = Color.RED;
-            exitColor = Color.GREEN;
-        }
-        for(Trade trade: trades){
-            double entry = new Minute(Date.from(series.getTick(trade.getEntry().getIndex()).getEndTime().toInstant())).getFirstMillisecond();
-            double exit = new Minute(Date.from(series.getTick(trade.getExit().getIndex()).getEndTime().toInstant())).getFirstMillisecond();
-
-            ValueMarker in = new ValueMarker(entry);
-            in.setLabel(orderType.toString());
-            in.setLabelPaint(Color.WHITE);
-            in.setLabelAnchor(entryAnchor);
-            in.setPaint(entryColor);
-            mainPlot.addDomainMarker(in);
-
-            ValueMarker out = new ValueMarker(exit);
-            out.setLabel(orderType.complementType().toString());
-            out.setLabelPaint(Color.WHITE);
-            out.setLabelAnchor(exitAnchor);
-            out.setPaint(exitColor);
-            mainPlot.addDomainMarker(out);
-
-            IntervalMarker imarker = new IntervalMarker(entry, exit, entryColor);
-            imarker.setAlpha(0.1f);
-            mainPlot.addDomainMarker(imarker);
-            markers.add(in);
-            markers.add(out);
-            markers.add(imarker);
-        }
-    }
-
-
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        Object src = e.getSource();
-
-        if (src == this.showRecord){
-            if (showRecord.isSelected()) {
-                this.addEntryExitSignals(this.record.getTrades(), record.getLastExit().getType().complementType());
-                return;
-            }
-        if (!showRecord.isSelected()){
-            for(Marker m : this.markers){
-                mainPlot.removeDomainMarker(m);
-            }
-
-        }
-        }
-
-        for (TaChartIndicator in : this.taChartIndicators) {
-            if (src == in.getMenuEntry()) {
-                boolean show = in.getMenuEntry().isSelected();
-                if (!in.isSubchart()) {
-                    int id = mapEntryToChart.get(in.getMenuEntry());
-                    XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer) mainPlot.getRenderer(id);
-                    TimeSeriesCollection d = (TimeSeriesCollection) mainPlot.getDataset(id);
-                    for (int i = 0; i < d.getSeriesCount(); i++) {
-                        renderer.setSeriesVisible(i, show);
-                    }
-                } else {
-                    if(show) {
-                        combinedXYPlot.add(mapEntryToXYPlot.get(in.getMenuEntry()));
-                        combinedXYPlot.setOrientation(PlotOrientation.VERTICAL);
-
-                    }
-                    else {
-                        combinedXYPlot.remove(mapEntryToXYPlot.get(in.getMenuEntry()));
-                        combinedXYPlot.setOrientation(PlotOrientation.VERTICAL);
-                    }
-                }
-
-            }
-
-        }
-    }
-
-    @Override
-    public void chartMouseClicked(ChartMouseEvent chartMouseEvent) {
-        Rectangle2D dataArea = this.chartPanel.getScreenDataArea();
-        JFreeChart chart = chartMouseEvent.getChart();
-        CombinedDomainXYPlot plot = (CombinedDomainXYPlot) chart.getPlot();
-
-        List<XYPlot> subplots = (List<XYPlot>) plot.getSubplots();
-
-        ValueAxis xAxis = subplots.get(0).getDomainAxis();
-
-        double x = xAxis.java2DToValue(chartMouseEvent.getTrigger().getX(), dataArea,
-                RectangleEdge.BOTTOM);
-        double y = DatasetUtilities.findYValue(((XYPlot)plot.getSubplots().get(0)).getDataset(), 0, x);
-
-        XYTextAnnotation an = new XYTextAnnotation(x+" "+y, x, y);
-        an.setBackgroundPaint(Color.WHITE);
-        //mainPlot.addAnnotation(an);
-
-    }
-
-    @Override
-    public void chartMouseMoved(ChartMouseEvent chartMouseEvent) {
-        Rectangle2D dataArea = this.chartPanel.getScreenDataArea();
-        JFreeChart chart = chartMouseEvent.getChart();
-        CombinedDomainXYPlot plot = (CombinedDomainXYPlot) chart.getPlot();
-
-        List<XYPlot> subplots = (List<XYPlot>) plot.getSubplots();
-
-        DateAxis xAxis = (DateAxis) subplots.get(0).getDomainAxis();
-
-        double x = xAxis.java2DToValue(chartMouseEvent.getTrigger().getX(), dataArea, RectangleEdge.BOTTOM);
-        double y = DatasetUtilities.findYValue(((XYPlot)plot.getSubplots().get(0)).getDataset(), 0, x);
-
-        this.xCrosshair.setValue(x);
-        this.yCrosshair.setValue(y);
-
     }
 
     public class MyCandlestickRenderer extends CandlestickRenderer {
@@ -484,6 +471,24 @@ public class TaChart extends ApplicationFrame implements ChartMouseListener, Act
                 return getDownPaint();
             }
         }
+    }
+
+    @Override
+    public void chartMouseMoved(ChartMouseEvent chartMouseEvent) {
+        Rectangle2D dataArea = this.chartPanel.getScreenDataArea();
+        JFreeChart chart = chartMouseEvent.getChart();
+        CombinedDomainXYPlot plot = (CombinedDomainXYPlot) chart.getPlot();
+
+        List<XYPlot> subplots = (List<XYPlot>) plot.getSubplots();
+
+        DateAxis xAxis = (DateAxis) subplots.get(0).getDomainAxis();
+
+        double x = xAxis.java2DToValue(chartMouseEvent.getTrigger().getX(), dataArea, RectangleEdge.BOTTOM);
+        double y = DatasetUtilities.findYValue(((XYPlot)plot.getSubplots().get(0)).getDataset(), 0, x);
+
+        this.xCrosshair.setValue(x);
+        this.yCrosshair.setValue(y);
+
     }
 
     /**
