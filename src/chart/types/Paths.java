@@ -17,38 +17,11 @@
  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package chart;
+package chart.types;
 
-import javax.swing.*;
-
-public class TaTypes {
-
-
-    public enum categories{
-        DEFAULT(new JMenu("(default)"), 0),
-        BOLLINGER(new JMenu("Bollinger"), 1 ),
-        CANDELS(new JMenu("Candels"), 2),
-        HELPERS(new JMenu("Helpers"), 3),
-        ICHIMOKU(new JMenu("Ichimoku"), 4),
-        KELTNER(new JMenu("Keltner"), 5),
-        STATISTICS(new JMenu("Statistics"), 6),
-        VOLUME(new JMenu("Volume"), 7);
-
-
-        private JMenu item;
-        private int id;
-
-        categories(JMenu item, int id){
-            this.item = item;
-            this.id = id;
-        }
-
-        public JMenu getMenueElement(){
-            return item;
-        }
-
-        public int getId(){
-            return id;
-        }
-    }
+public  class Paths {
+    public final static String PROPERTIES_FILE = "indicatorParameters.xml";
 }
+
+
+

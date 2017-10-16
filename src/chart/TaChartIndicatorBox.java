@@ -19,156 +19,690 @@
 
 package chart;
 
+import chart.types.IndicatorParameters.*;
 import eu.verdelhan.ta4j.Decimal;
 import eu.verdelhan.ta4j.Indicator;
 import eu.verdelhan.ta4j.TimeSeries;
+import eu.verdelhan.ta4j.TradingRecord;
 import eu.verdelhan.ta4j.indicators.*;
 import eu.verdelhan.ta4j.indicators.bollinger.*;
-import eu.verdelhan.ta4j.indicators.candles.LowerShadowIndicator;
-import eu.verdelhan.ta4j.indicators.candles.RealBodyIndicator;
-import eu.verdelhan.ta4j.indicators.candles.UpperShadowIndicator;
 import eu.verdelhan.ta4j.indicators.helpers.*;
-import eu.verdelhan.ta4j.indicators.ichimoku.IchimokuKijunSenIndicator;
-import eu.verdelhan.ta4j.indicators.ichimoku.IchimokuSenkouSpanAIndicator;
-import eu.verdelhan.ta4j.indicators.ichimoku.IchimokuSenkouSpanBIndicator;
-import eu.verdelhan.ta4j.indicators.ichimoku.IchimokuTenkanSenIndicator;
 import eu.verdelhan.ta4j.indicators.keltner.KeltnerChannelLowerIndicator;
 import eu.verdelhan.ta4j.indicators.keltner.KeltnerChannelMiddleIndicator;
 import eu.verdelhan.ta4j.indicators.keltner.KeltnerChannelUpperIndicator;
-import eu.verdelhan.ta4j.indicators.statistics.*;
-import eu.verdelhan.ta4j.indicators.volume.*;
+import eu.verdelhan.ta4j.indicators.statistics.StandardDeviationIndicator;
+import eu.verdelhan.ta4j.indicators.volume.NVIIndicator;
+import eu.verdelhan.ta4j.indicators.volume.OnBalanceVolumeIndicator;
+import eu.verdelhan.ta4j.indicators.volume.PVIIndicator;
+import eu.verdelhan.ta4j.indicators.volume.VWAPIndicator;
+import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 
-import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
+import javax.xml.xpath.XPathException;
+import javax.xml.xpath.XPathExpressionException;
+import java.util.*;
 
-public class TaChartIndicatorBox {
-    List<TaChartIndicator> taChartIndicatorList;
+import static chart.types.IndicatorParameters.TaCategory.DEFAULT;
+import static chart.types.IndicatorParameters.TaCategory.HELPERS;
 
+// TODO: overload notifyObserver function to change just entries that are modified
+public class TaChartIndicatorBox extends Observable {
+    private Map<String,TaChartIndicator> chartIndicatorMap;
+    private Map<String, TradingRecord> tradingRecordMap;
+    private TaPropertiesManager parameter;
+
+    private TimeSeries series;
+    private ClosePriceIndicator closePriceIndicator;
 
     /**
      * Constructor
      */
-    public TaChartIndicatorBox(){
-        taChartIndicatorList = new ArrayList<>();
+    public TaChartIndicatorBox(TimeSeries series){
+        this.chartIndicatorMap = new HashMap<>();
+        this.tradingRecordMap = new HashMap<>();
+        this.series = series;
+        this.closePriceIndicator = new ClosePriceIndicator(series);
+        this.parameter = new TaPropertiesManager(this);
     }
 
     /**
-     * Creates and add all ta4j indicators with generic type Decimal to the box.
-     * @param series the time serie that will be plotted and analyzed.
+     * Store all indicators from properties file in this indicator box
      */
-    public void initAllIndicators(TimeSeries series){
+    public void initIndicatorsFromPropertyFile() {
+        List<String> indicatorIdentifierList = parameter.getAllKeys();
+        for (String indicatorIdentifier: indicatorIdentifierList){
+            try {
+                reloadIndicator(indicatorIdentifier);
+            } catch (XPathException xpe){
+                //TODO: handle exception
+                xpe.printStackTrace();
+            }
+        }
+    }
 
-        // closePrice
-        ClosePriceIndicator closePriceIndicator = new ClosePriceIndicator(series);
-        addChartIndicator(closePriceIndicator,false, TaTypes.categories.HELPERS);
+    public void addTradingRecord(String name, TradingRecord record){
+        this.tradingRecordMap.put(name,record);
+    }
 
-        // simple moving average
-        addChartIndicator(new SMAIndicator(closePriceIndicator, 20),Color.BLUE,"SMA (20)",false,
-                TaTypes.categories.DEFAULT);
+    public TradingRecord getTradingRecord(String name){
+        return this.tradingRecordMap.get(name);
+    }
 
-        // exponential moving average
-        addChartIndicator(new EMAIndicator(closePriceIndicator, 20),Color.BLUE,"EMA (20)",false,
-                TaTypes.categories.DEFAULT);
+    public Map<String,TradingRecord> getAllTradingRecords(){
+        return this.tradingRecordMap;
+    }
 
-        // TaChartIndicator that need several indicators
+    // simple moving average
+    private void loadSMAIndicator(String key) throws XPathException {
+        int smaTimeFrame = Integer.parseInt(parameter.getParameter(key,"Time Frame"));
+        TaColor color = TaColor.valueOf(parameter.getParameter(key, "Color"));
+        TaStroke stroke = TaStroke.valueOf(parameter.getParameter(key, "Stroke"));
+        TaShape shape = TaShape.valueOf(parameter.getParameter(key,"Shape"));
+        TaChartType chartType = parameter.getChartType(key);
+        TaCategory category = parameter.getCategory(key);
+
+        TaChartIndicator sma = new TaChartIndicator(new SMAIndicator(closePriceIndicator, smaTimeFrame),
+                String.format("%s (%s) (%s)",getIdentifier(key),getID(key),smaTimeFrame),
+                createRendere(color,stroke,shape),
+                chartType.toBoolean(),
+                category);
+        addChartIndicator(key, sma);
+    }
+
+    // exponential moving average
+    private void loadEMAIndicator(String key)throws XPathException {
+        int timeFrame = Integer.parseInt(parameter.getParameter(key,"Time Frame"));
+        TaColor color = TaColor.valueOf(parameter.getParameter(key, "Color"));
+        TaStroke stroke = TaStroke.valueOf(parameter.getParameter(key, "Stroke"));
+        TaShape shape = TaShape.valueOf(parameter.getParameter(key,"Shape"));
+        TaChartType chartType = parameter.getChartType(key);
+        TaCategory category = parameter.getCategory(key);
+
+        addChartIndicator(key, new EMAIndicator(closePriceIndicator, timeFrame),
+                String.format("%s [%s] (%s)",getIdentifier(key),getID(key),timeFrame),
+                createRendere(color, stroke, shape),
+                chartType.toBoolean(),
+                category);
+    }
+
+    //CCI
+    private void loadCCIIndicator(String key)throws XPathException{
+        int timeFrame = Integer.parseInt(parameter.getParameter(key,"Time Frame"));
+        TaColor color = TaColor.valueOf(parameter.getParameter(key, "Color"));
+        TaStroke stroke = TaStroke.valueOf(parameter.getParameter(key, "Stroke"));
+        TaShape shape = TaShape.valueOf(parameter.getParameter(key,"Shape"));
+        TaChartType chartType = parameter.getChartType(key);
+        TaCategory category = parameter.getCategory(key);
+
+        addChartIndicator(key, new CCIIndicator(series, timeFrame),
+                String.format("%s [%s] (%s)",getIdentifier(key),getID(key),timeFrame),
+                createRendere(color, stroke, shape),
+                chartType.toBoolean(),
+                category);
+    }
+
+    //CMO
+    private void loadCMOIndicator(String key)throws XPathException{
+        int timeFrame = Integer.parseInt(parameter.getParameter(key,"Time Frame"));
+        TaColor color = TaColor.valueOf(parameter.getParameter(key, "Color"));
+        TaStroke stroke = TaStroke.valueOf(parameter.getParameter(key, "Stroke"));
+        TaShape shape = TaShape.valueOf(parameter.getParameter(key,"Shape"));
+        TaChartType chartType = TaChartType.valueOf(parameter.getParameter(key, "Chart Type"));
+        TaCategory category = parameter.getCategory(key);
+
+        addChartIndicator(key, new CMOIndicator(closePriceIndicator, timeFrame),
+                String.format("%s [%s] (%s)",getIdentifier(key), getID(key), timeFrame),
+                createRendere(color, stroke, shape),
+                chartType.toBoolean(),
+                category);
+    }
+
+    // Bollinger Bands and the width
+    public void loadBollingerBands(String key) throws XPathException{
         List<Indicator> indicatorList = new ArrayList<>();
-        List<Paint> colorList = new ArrayList<>();
         List<String> namesList = new ArrayList<>();
+        XYLineAndShapeRenderer bbRenderer = new XYLineAndShapeRenderer();
+        int id = getID(key);
 
-        // Bollinger Bands
-        StandardDeviationIndicator standardDeviation = new StandardDeviationIndicator(closePriceIndicator, 20);
-        BollingerBandsMiddleIndicator bbm = new BollingerBandsMiddleIndicator(closePriceIndicator);
-        BollingerBandsUpperIndicator bbu = new BollingerBandsUpperIndicator(bbm, standardDeviation);
-        BollingerBandsLowerIndicator bbl = new BollingerBandsLowerIndicator(bbm, standardDeviation);
+        int timeFrame = Integer.parseInt(parameter.getParameter(key,"Time Frame"));
+
+        StandardDeviationIndicator sd = new StandardDeviationIndicator(closePriceIndicator, timeFrame);
+        EMAIndicator bollingerEMA = new EMAIndicator(closePriceIndicator,timeFrame);
+        TaColor color1 = TaColor.valueOf(parameter.getParameter(key, "Color Middle Band"));
+        TaStroke stroke1 = TaStroke.valueOf(parameter.getParameter(key, "Stroke Middle Band"));
+        TaShape shape1 = TaShape.valueOf(parameter.getParameter(key,"Shape Middle Band"));
+        TaColor color2 = TaColor.valueOf(parameter.getParameter(key, "Color Upper Band"));
+        TaStroke stroke2 = TaStroke.valueOf(parameter.getParameter(key, "Stroke Upper Band"));
+        TaShape shape2 = TaShape.valueOf(parameter.getParameter(key,"Shape Upper Band"));
+        TaColor color3 = TaColor.valueOf(parameter.getParameter(key, "Color Lower Band"));
+        TaStroke stroke3 = TaStroke.valueOf(parameter.getParameter(key, "Stroke Lower Band"));
+        TaShape shape3 = TaShape.valueOf(parameter.getParameter(key,"Shape Lower Band"));
+        TaChartType chartType = TaChartType.valueOf(parameter.getParameter(key, "Chart Type"));
+        TaCategory category = parameter.getCategory(key);
+        TaBoolean addWidth = TaBoolean.valueOf(parameter.getParameter(key, "Add Bollinger Bands Width"));
+
+        BollingerBandsMiddleIndicator bbm = new BollingerBandsMiddleIndicator(bollingerEMA);
+        BollingerBandsUpperIndicator bbu = new BollingerBandsUpperIndicator(bbm,sd);
+        BollingerBandsLowerIndicator bbl = new BollingerBandsLowerIndicator(bbm,sd);
 
         indicatorList.add(bbm);
         indicatorList.add(bbu);
         indicatorList.add(bbl);
 
-        colorList.add(Color.YELLOW);
-        colorList.add(Color.BLUE);
-        colorList.add(Color.BLUE);
+        namesList.add("Middle Band"+ timeFrame);
+        namesList.add("Upper Band ");
+        namesList.add("Lower Band ");
 
-        namesList.add("Middle Band");
-        namesList.add("Upper Band");
-        namesList.add("Lower Band");
-        addChartIndicator(indicatorList,colorList,namesList,"Bollinger Bands (20, 2)",false,
-                TaTypes.categories.BOLLINGER);
+        bbRenderer.setSeriesPaint(0, color1.getPaint());
+        bbRenderer.setSeriesStroke(0, stroke1.getStroke());
+        bbRenderer.setSeriesShape(0, shape1.getShape());
+        bbRenderer.setSeriesPaint(1, color2.getPaint());
+        bbRenderer.setSeriesStroke(1,stroke2.getStroke());
+        bbRenderer.setSeriesShape(1, shape2.getShape());
+        bbRenderer.setSeriesPaint(2, color3.getPaint());
+        bbRenderer.setSeriesStroke(2, stroke3.getStroke());
+        bbRenderer.setSeriesShape(2, shape3.getShape());
+        addChartIndicator(key,
+                indicatorList,
+                namesList,
+                String.format("Bollinger Bands [%s] (%s)",id,timeFrame),
+                bbRenderer,chartType.toBoolean(),
+                category);
+        if(addWidth.toBoolean()) {
+            addChartIndicator("BollingerBandsWidth_" + getID(key),
+                    new BollingerBandWidthIndicator(bbu, bbm, bbl),
+                    String.format("Bollinger Band Width [%s]", id),
+                    bbRenderer,
+                    TaChartType.SUBCHART.toBoolean(),
+                    category);
+        } else{
+            removeIndicator("BollingerBandsWidth_"+getID(key));
+        }
 
-        // Bollinger bands width
-        addChartIndicator(new BollingerBandWidthIndicator(bbu, bbm, bbl), Color.BLUE,"Bollinger Band Width", true,
-                TaTypes.categories.BOLLINGER);
+    }
 
-        //Percent BI
-        PercentBIndicator pbi = new PercentBIndicator(closePriceIndicator, 20, eu.verdelhan.ta4j.Decimal.TWO);
-        addChartIndicator(pbi  , Color.LIGHT_GRAY,"Percent BI (20)", true,
-                TaTypes.categories.BOLLINGER);
 
-        // Lower Shadown Indicator
-        addChartIndicator(new LowerShadowIndicator(series), true, TaTypes.categories.CANDELS);
+    public void loadPercentBIndicator(String key) throws XPathException{
+        int timeFrame =Integer.parseInt(parameter.getParameter(key, "Time Frame"));
+        Decimal k = Decimal.valueOf(parameter.getParameter(key,"K Multiplier"));
+        XYLineAndShapeRenderer renderer = createRendere(key, "Color", "Shape", "Stroke");
+        TaCategory category = parameter.getCategory(key);
+        TaChartType type = parameter.getChartType(key);
+        addChartIndicator(key,
+                new PercentBIndicator(closePriceIndicator, timeFrame, k),
+                String.format("%s [%s] (%s, %s)",getIdentifier(key),getID(key),timeFrame,k),
+                renderer,
+                type.toBoolean(),
+                category);
 
-        // Real Body Indicator
-        addChartIndicator(new RealBodyIndicator(series), true, TaTypes.categories.CANDELS);
+    }
 
-        //Upper Shadow Indicator
-        addChartIndicator(new UpperShadowIndicator(series), true, TaTypes.categories.CANDELS);
+    //Amount Indicator
+    public void loadAmountIndicator(String key) throws XPathExpressionException {
+        XYLineAndShapeRenderer renderer = createRendere(key, "Color", "Shape", "Stroke");
+        TaCategory category = parameter.getCategory(key);
+        TaChartType chartType = parameter.getChartType(key);
+        addChartIndicator(key,
+                new AmountIndicator(series),
+                String.format("Amount [%2]", getID(key)),
+                renderer,
+                chartType.toBoolean(),
+                category);
+    }
 
-        //Amount Indicator
-        addChartIndicator(new AmountIndicator(series), true, TaTypes.categories.HELPERS);
+    // RSI Indicator
+    public void loadRSIIndicator(String key) throws XPathExpressionException {
+        int timeFrame = Integer.parseInt(parameter.getParameter(key, "Time Frame"));
+        TaCategory category = parameter.getCategory(key);
+        TaChartType chartType = parameter.getChartType(key);
+        XYLineAndShapeRenderer renderer = createRendere(key, "Color", "Shape", "Stroke");
 
-        //Average Directional Movement Down and Up
+        addChartIndicator(key,
+                new RSIIndicator(closePriceIndicator, timeFrame),
+                String.format("%s [%s] (%s)",getIdentifier(key), getID(key),timeFrame),
+                renderer,
+                chartType.toBoolean(),
+                category);
+    }
+
+    // SmoothedRSIIndicator
+    public void loadSmoothedRSIIndicator(String key) throws XPathExpressionException {
+        int timeFrame = Integer.parseInt(parameter.getParameter(key, "Time Frame"));
+        TaCategory category = parameter.getCategory(key);
+        TaChartType chartType = parameter.getChartType(key);
+        XYLineAndShapeRenderer renderer = createRendere(key, "Color", "Shape", "Stroke");
+
+        addChartIndicator(key,
+                new RSIIndicator(closePriceIndicator, timeFrame),
+                String.format("%s [%s] (%s)",getIdentifier(key), getID(key),timeFrame),
+                renderer,
+                chartType.toBoolean(),
+                category);
+    }
+
+    // PVIIndicator
+    public void loadPVIIndicator(String key) throws XPathExpressionException {
+        int timeFrame = Integer.parseInt(parameter.getParameter(key, "Time Frame"));
+        TaCategory category = parameter.getCategory(key);
+        TaChartType chartType = parameter.getChartType(key);
+        XYLineAndShapeRenderer renderer = createRendere(key, "Color", "Shape", "Stroke");
+
+        addChartIndicator(key,
+                new PVIIndicator(series),
+                String.format("%s [%s]",getIdentifier(key), getID(key)),
+                renderer,
+                chartType.toBoolean(),
+                category);
+    }
+
+    // NVIIndicator
+    public void loadNVIIndicator(String key) throws XPathExpressionException {
+        TaCategory category = parameter.getCategory(key);
+        TaChartType chartType = parameter.getChartType(key);
+        XYLineAndShapeRenderer renderer = createRendere(key, "Color", "Shape", "Stroke");
+        addChartIndicator(key,
+                new NVIIndicator(series),
+                String.format("%s [%s]",getIdentifier(key), getID(key)),
+                renderer,
+                chartType.toBoolean(),
+                category);
+    }
+
+    // OnBalanceVolumeIndicator
+    public void loadOnBalanceVolumenIndicator(String key) throws XPathExpressionException {
+        TaCategory category = parameter.getCategory(key);
+        TaChartType chartType = parameter.getChartType(key);
+        XYLineAndShapeRenderer renderer = createRendere(key, "Color", "Shape", "Stroke");
+
+        addChartIndicator(key,
+                new OnBalanceVolumeIndicator(series),
+                String.format("%s [%s]",getIdentifier(key), getID(key)),
+                renderer,
+                chartType.toBoolean(),
+                category);
+    }
+
+    // VWAPIndicator
+    public void loadVWAPIndicator(String key) throws XPathExpressionException {
+        int timeFrame = Integer.parseInt(parameter.getParameter(key, "Time Frame"));
+        TaCategory category = parameter.getCategory(key);
+        TaChartType chartType = parameter.getChartType(key);
+        XYLineAndShapeRenderer renderer = createRendere(key, "Color", "Shape", "Stroke");
+
+        addChartIndicator(key,
+                new VWAPIndicator(series, timeFrame),
+                String.format("%s [%s] (%s)",getIdentifier(key), getID(key), timeFrame),
+                renderer,
+                chartType.toBoolean(),
+                category);
+    }
+
+    // MACD Indicator
+    public void loadMACDIndicator(String key) throws XPathExpressionException {
+        int timeFrameShort = Integer.parseInt(parameter.getParameter(key, "Time Frame Short"));
+        int timeFrameLong = Integer.parseInt(parameter.getParameter(key, "Time Frame Long"));
+        TaCategory category = parameter.getCategory(key);
+        TaChartType chartType = parameter.getChartType(key);
+        TaBoolean signalLine = TaBoolean.valueOf(parameter.getParameter(key, "Add Signal Line"));
+        XYLineAndShapeRenderer renderer = createRendere(key, "Color", "Shape", "Stroke");
+        MACDIndicator mcd = new MACDIndicator(closePriceIndicator, timeFrameShort, timeFrameLong);
+        if(!signalLine.toBoolean()){
+            addChartIndicator(key,
+                    mcd,
+                    String.format("%s [%s] (%s, %s)",getIdentifier(key), getID(key), timeFrameShort,timeFrameLong),
+                    renderer,
+                    chartType.toBoolean(),
+                    category);
+
+        } else{
+            int timeFrameSignal = Integer.parseInt(parameter.getParameter(key, "Time Frame Signal Line"));
+            List<String> names = new ArrayList<>();
+            List<Indicator> indicators = new ArrayList<>();
+            indicators.add(mcd);
+            indicators.add(new EMAIndicator(mcd, timeFrameSignal));
+            names.add(String.format("%s [%s] (%s, %s)",getIdentifier(key), getID(key), timeFrameShort,timeFrameLong));
+            names.add(String.format("Signal Line [%s] (%s)",getID(key),timeFrameSignal));
+            TaColor color = TaColor.valueOf(parameter.getParameter(key, "Color Signal Line"));
+            TaShape shape = TaShape.valueOf(parameter.getParameter(key, "Shape Signal Line"));
+            TaStroke stroke = TaStroke.valueOf(parameter.getParameter(key, "Stroke Signal Line"));
+            renderer.setSeriesPaint(1,color.getPaint());
+            renderer.setSeriesShape(1,shape.getShape());
+            renderer.setSeriesStroke(1, stroke.getStroke());
+            addChartIndicator(key,
+                    indicators,
+                    names,
+                    String.format("%s [%s] (%s, %s)",getIdentifier(key), getID(key), timeFrameShort,timeFrameLong),
+                    renderer,
+                    chartType.toBoolean(),
+                    category);
+        }
+
+
+
+    }
+
+    //Average Directional Movement Down and Up
+    public void loadAverageDirectionalMovementUP_DOWN(String key) throws XPathExpressionException {
+        TaColor color1 = TaColor.valueOf(parameter.getParameter(key, "Color Up"));
+        TaStroke stroke1 = TaStroke.valueOf(parameter.getParameter(key, "Stroke Up"));
+        TaShape shape1 = TaShape.valueOf(parameter.getParameter(key,"Shape Up"));
+        TaColor color2 = TaColor.valueOf(parameter.getParameter(key, "Color Down"));
+        TaStroke stroke2 = TaStroke.valueOf(parameter.getParameter(key, "Stroke Down"));
+        TaShape shape2 = TaShape.valueOf(parameter.getParameter(key,"Shape Down"));
+        TaChartType chartType = TaChartType.valueOf(parameter.getParameter(key, "Chart Type"));
+        TaCategory category = parameter.getCategory(key);
+        int timeFrameUp = Integer.parseInt(parameter.getParameter(key, "Time Frame Up"));
+        int timeFrameDown = Integer.parseInt(parameter.getParameter(key, "Time Frame Up"));
         List<Indicator> ilAdx = new ArrayList<>();
-        List<Paint> clAdx = new ArrayList<>();
         List<String> nlAdx = new ArrayList<>();
 
-        ilAdx.add(new AverageDirectionalMovementDownIndicator(series, 20));
-        ilAdx.add(new AverageDirectionalMovementUpIndicator(series, 20));
-        clAdx.add(Color.RED);
-        clAdx.add(Color.GREEN);
-        nlAdx.add("ADX Down (20)");
-        nlAdx.add("ADX UP (20)");
-        addChartIndicator(ilAdx,clAdx,nlAdx,"ADX UP/DOWN (20)",true, TaTypes.categories.HELPERS);
+        ilAdx.add(new AverageDirectionalMovementUpIndicator(series, timeFrameDown));
+        ilAdx.add(new AverageDirectionalMovementDownIndicator(series, timeFrameDown));
+        nlAdx.add("ADX UP "+timeFrameUp);
+        nlAdx.add("ADX Down "+timeFrameUp);
+        XYLineAndShapeRenderer adxRenderer = new XYLineAndShapeRenderer();
+        adxRenderer.setSeriesPaint(0, color1.getPaint());
+        adxRenderer.setSeriesStroke(0, stroke1.getStroke());
+        adxRenderer.setSeriesShape(0, shape1.getShape());
+        adxRenderer.setSeriesPaint(1, color2.getPaint());
+        adxRenderer.setSeriesStroke(1, stroke2.getStroke());
+        adxRenderer.setSeriesShape(1, shape2.getShape());
+        addChartIndicator(key,
+                ilAdx,
+                nlAdx,
+                String.format("%s [%s] (%s, %s)", getIdentifier(key), getID(key), timeFrameUp, timeFrameDown ),
+                adxRenderer,
+                chartType.toBoolean(),
+                category);
 
+    }
+
+    // True Range Indicator
+    public void loadTrueRangeIndicator(String key) throws XPathExpressionException {
+        XYLineAndShapeRenderer renderer = createRendere(key, "Color", "Shape", "Stroke");
+        TaChartType chartType = parameter.getChartType(key);
+        TaCategory category = parameter.getCategory(key);
+        addChartIndicator(key,
+                new TrueRangeIndicator(series),
+                String.format("%s [%s]",getIdentifier(key), getID(key)),
+                renderer,
+                chartType.toBoolean(),
+                category);
+
+    }
+
+    // Keltner channels
+    public void loadKeltner(String key) throws XPathException{
+
+        int timeFrame = Integer.parseInt(parameter.getParameter(key, "Time Frame"));
+        Decimal ratio = Decimal.valueOf(parameter.getParameter(key, "Ratio"));
+        int atr = Integer.parseInt(parameter.getParameter(key, "Time Frame ATR"));
+        TaColor colorU = TaColor.valueOf(parameter.getParameter(key, "Color Upper"));
+        TaStroke strokeU = TaStroke.valueOf(parameter.getParameter(key, "Stroke Upper"));
+        TaShape shapeU = TaShape.valueOf(parameter.getParameter(key,"Shape Upper"));
+        TaColor colorL = TaColor.valueOf(parameter.getParameter(key, "Color Lower"));
+        TaStroke strokeL = TaStroke.valueOf(parameter.getParameter(key, "Stroke Lower"));
+        TaShape shapeL = TaShape.valueOf(parameter.getParameter(key,"Shape Lower"));
+        TaChartType chartType = TaChartType.valueOf(parameter.getParameter(key, "Chart Type"));
+        TaCategory category = parameter.getCategory(key);
+
+        XYLineAndShapeRenderer renderer = createRendere(key, "Color Middle", "Shape Middle", "Stroke Middle");
+        renderer.setSeriesStroke(1, strokeU.getStroke());
+        renderer.setSeriesStroke(2, strokeL.getStroke());
+        renderer.setSeriesShape(1, shapeU.getShape());
+        renderer.setSeriesShape(2, shapeL.getShape());
+        renderer.setSeriesPaint(1, colorU.getPaint());
+        renderer.setSeriesPaint(2, colorL.getPaint());
+
+        KeltnerChannelMiddleIndicator kcM = new KeltnerChannelMiddleIndicator(series, timeFrame);
+        KeltnerChannelUpperIndicator kcU = new KeltnerChannelUpperIndicator(kcM,ratio,atr);
+        KeltnerChannelLowerIndicator kcL = new KeltnerChannelLowerIndicator(kcM,ratio,atr);
+
+        List<Indicator> ilKelt = new ArrayList<>();
+        List<String> nlKelt = new ArrayList<>();
+        ilKelt.add(kcL);
+        ilKelt.add(kcM);
+        ilKelt.add(kcU);
+        nlKelt.add("Keltner Lower");
+        nlKelt.add("Keltner Middle");
+        nlKelt.add("Keltner Upper");
+        addChartIndicator(key,
+                ilKelt,
+                nlKelt,
+                String.format("%s [%s] (%s, %s, %S)", getIdentifier(key), getID(key), timeFrame, ratio, atr),
+                renderer,
+                chartType.toBoolean(),
+                category);
+    }
+
+    // Arron Up/Down in one subplot
+    public void loadAroonUP_DOWN(String key) throws XPathException{
+        int arronUp = Integer.parseInt(parameter.getParameter(key, "Time Frame Up"));
+        int arronDown = Integer.parseInt(parameter.getParameter(key, "Time Frame Down"));
+        TaColor colorD = TaColor.valueOf(parameter.getParameter(key, "Color Down"));
+        TaStroke strokeD = TaStroke.valueOf(parameter.getParameter(key, "Stroke Down"));
+        TaShape shapeD = TaShape.valueOf(parameter.getParameter(key, "Shape Down"));
+        TaChartType chartType = parameter.getChartType(key);
+        TaCategory category = parameter.getCategory(key);
+
+        List<Indicator> ilAroon = new ArrayList<>();
+        List<String> nlAroon = new ArrayList<>();
+        ilAroon.add(new AroonDownIndicator(series, arronDown));
+        ilAroon.add(new AroonUpIndicator(series, arronUp));
+        nlAroon.add("Aroon Down "+arronDown);
+        nlAroon.add("Aroon Up "+arronUp);
+        XYLineAndShapeRenderer arronUpDownRenderer =createRendere(key, "Color Up", "Shape Up", "Stroke Up");
+
+        arronUpDownRenderer.setSeriesPaint(1, colorD.getPaint());
+        arronUpDownRenderer.setSeriesStroke(1, strokeD.getStroke());
+        arronUpDownRenderer.setSeriesShape(1, shapeD.getShape());
+
+        addChartIndicator(key,
+                ilAroon,
+                nlAroon,String.format("%s [%s] (%s, %s)",getIdentifier(key), getID(key),arronUp, arronDown),
+                arronUpDownRenderer,
+                chartType.toBoolean(),
+                category);
+    }
+
+/*
+
+
+
+
+
+
+    // Lower Shadown Indicator
+    public void loadLowerShadowIndicator(String identifier){
+        XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer();
+        renderer.setSeriesStroke(0, TaTypes.BIG_DOTS);
+        renderer.setSeriesPaint(0, Color.RED);
+        renderer.setSeriesShape(0, TaTypes.NONE);
+        addChartIndicator(identifier,new LowerShadowIndicator(series),"Lower Shadow",renderer, true, TaTypes.categories.CANDLES);
+    }
+
+    // MVWAP + VWAP
+    public void loadMVWAPIndicator(String identifier){
+        int params[] = {20,10};
+        params = parameter.getXIntFor(identifier, 2, params);
+        VWAPIndicator vwap = new VWAPIndicator(series,params[0]);
+
+        MVWAPIndicator mvwap = new MVWAPIndicator(vwap,params[1]);
+        List<Indicator> ilVwap = new ArrayList<>();
+        List<String> nlVwap = new ArrayList<>();
+        XYLineAndShapeRenderer wapRenderer = new XYLineAndShapeRenderer();
+        wapRenderer.setSeriesPaint(0, Color.MAGENTA);
+        wapRenderer.setSeriesStroke(0,TaTypes.SMALL_LINE);
+        wapRenderer.setSeriesShape(0, TaTypes.NONE);
+        wapRenderer.setSeriesPaint(1, Color.lightGray);
+        wapRenderer.setSeriesStroke(1,TaTypes.SMALL_LINE);
+        wapRenderer.setSeriesShape(1, TaTypes.NONE);
+        ilVwap.add(vwap);
+        ilVwap.add(mvwap);
+        nlVwap.add("VWAP "+params[0]);
+        nlVwap.add("MVWAP "+params[1]);
+        addChartIndicator(identifier, ilVwap, nlVwap,"MVWAP/VWAP ",wapRenderer,false, TaTypes.categories.VOLUME);
+    }
+
+    // Real Body Indicator
+    public void loadRealBodyIndicator(String identifier){
+        XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer();
+        renderer.setSeriesStroke(0, TaTypes.BIG_DOTS);
+        renderer.setSeriesPaint(0, Color.RED);
+        renderer.setSeriesShape(0, TaTypes.NONE);
+        addChartIndicator(identifier,new RealBodyIndicator(series), true, TaTypes.categories.CANDLES);
+
+    }
+
+    //Upper Shadow Indicator
+    public void loadUpperShadowIndicator(String identifier){
+        XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer();
+        renderer.setSeriesStroke(0, TaTypes.BIG_DOTS);
+        renderer.setSeriesPaint(0, Color.RED);
+        renderer.setSeriesShape(0, TaTypes.NONE);
+
+        addChartIndicator(identifier,new UpperShadowIndicator(series),"Upper Shadow", renderer, true, TaTypes.categories.CANDLES);
+    }
+
+    // TrailingStopLossIndicator
+    public void loadTraillingStopLossIndicator(String identifier){
+        double trailingStopLossTreshold = parameter.getOneDoubleFor(identifier,0.1);
+        addChartIndicator(identifier,new TrailingStopLossIndicator(closePriceIndicator,Decimal.valueOf(trailingStopLossTreshold)),
+                "Trailing Stop Loss "+trailingStopLossTreshold, false, TaTypes.categories.DEFAULT);
+    }
+
+
+    // Triple EMAIndicator
+    public void loadTrippleEMAIndicator(String identifier){
+        int trippleEmaTimeFrame = parameter.getOneIntFor(identifier,20);
+        addChartIndicator(identifier,new TripleEMAIndicator(closePriceIndicator, trippleEmaTimeFrame),
+                "Triple EMA "+trippleEmaTimeFrame, false, TaTypes.categories.DEFAULT);
+    }
+
+
+    // UlcerIndexIndicator
+    public void loadUlcerIndexIndicator(String identifier){
+        int UlcerIndexIndicator_1 = parameter.getOneIntFor(identifier,20);
+        addChartIndicator(identifier,new UlcerIndexIndicator(closePriceIndicator, UlcerIndexIndicator_1),
+                "Ulcer Index "+UlcerIndexIndicator_1, true, TaTypes.categories.DEFAULT);
+    }
+
+
+    // WMAIndicator
+    public void loadWMAIndicator(String identifier){
+        int WMAIndicator_1 = parameter.getOneIntFor(identifier,20);
+        addChartIndicator(identifier,new WMAIndicator(closePriceIndicator, WMAIndicator_1),
+                "WMA "+WMAIndicator_1, false, TaTypes.categories.DEFAULT);
+    }
+
+
+    // ZLEMAIndicator
+    public void loadZLEMAIndicator(String identifier){
+        int ZLEMAIndicator_1 = parameter.getOneIntFor(identifier, 20);
+        addChartIndicator(identifier, new ZLEMAIndicator(closePriceIndicator, ZLEMAIndicator_1),"ZLEMA "+ZLEMAIndicator_1, false, TaTypes.categories.DEFAULT);
+    }
+
+    // RAVI Indicator
+    public void loadRAVIIndicator(String identifier){
+        int[] raviPara = {7,65};
+        raviPara = parameter.getXIntFor("identifier", 2, raviPara);
+        addChartIndicator(identifier,new RAVIIndicator(closePriceIndicator, raviPara[0], raviPara[1]),
+                "RAVI "+raviPara[0]+","+raviPara[1], true, TaTypes.categories.DEFAULT);
+    }
+
+
+    // ROC Indicator
+    public void loadROCIndicator(String identifier){
+        int rocPara = parameter.getOneIntFor(identifier, 20);
+        addChartIndicator(identifier, new ROCIndicator(closePriceIndicator, rocPara),
+                "ROC cp "+rocPara, true, TaTypes.categories.DEFAULT);
+    }
+
+    // Fisher Indicator
+    public void loadFischerIndicator(String identifier) {
+        double[] fischerParams = {20, 0.33, 0.67};
+        fischerParams = parameter.getXDoubleFor(identifier, 3, fischerParams);
+        addChartIndicator(identifier, new FisherIndicator(closePriceIndicator, (int) fischerParams[0], Decimal.valueOf(fischerParams[1]), Decimal.valueOf(fischerParams[2])),
+                "Fisher cp" + fischerParams[0] + fischerParams[1] + fischerParams[2], true, TaTypes.categories.DEFAULT);
+    }
+    // HMA Indicator
+    public void loadHMAIndicator(String identifier) {
+        int hamaFrame = parameter.getOneIntFor(identifier, 20);
+        addChartIndicator(identifier,new HMAIndicator(closePriceIndicator, hamaFrame),
+                "HMA cp" + hamaFrame, false, TaTypes.categories.DEFAULT);
+    }
+
+    // KAMA Indicator
+    public void loadKAMAIndicator(String identifier){
+        int[] kamaParams = {10,2,50};
+        kamaParams = parameter.getXIntFor(identifier,3,kamaParams);
+        addChartIndicator(identifier,new KAMAIndicator(closePriceIndicator,kamaParams[0],kamaParams[1],kamaParams[2]),
+                "KAMA cp"+kamaParams[0]+" "+kamaParams[1]+" "+kamaParams[2], false, TaTypes.categories.DEFAULT);
+    }
+
+
+
+*/
+
+    /**
+     * Creates and add all ta4j indicators with generic type Decimal to the box.
+     * Use the parameter from the indicatorParameter.properties for indicator parameter
+     */
+    public void initAllIndicators(){
+
+        // closePrice
+
+        addChartIndicator("closePriceIndicator",closePriceIndicator,false, HELPERS);
+
+
+        /*
         // Average Gain indicator
-        addChartIndicator(new AverageGainIndicator(closePriceIndicator, 20), true,
+        int averGainTimeFrame = parameter.getOneIntFor("AverageGainIndicator_1",20);
+        addChartIndicator(new AverageGainIndicator(closePriceIndicator, averGainTimeFrame),"Average Gain"+averGainTimeFrame, true,
                 TaTypes.categories.HELPERS);
 
         // Average Loss indicator
-        addChartIndicator(new AverageLossIndicator(closePriceIndicator, 20), true,
+        int averLossTimeFrame = parameter.getOneIntFor("AverageLossIndicator_1",20);
+        addChartIndicator(new AverageLossIndicator(closePriceIndicator, averLossTimeFrame),"Average Gain "+averLossTimeFrame, true,
                 TaTypes.categories.HELPERS);
 
         // Average True Range indicator
-        addChartIndicator(new AverageTrueRangeIndicator(series, 20), true,
+        int averTrueRangeTimeFrame = parameter.getOneIntFor("AverageTrueRangeIndicator_1",20);
+        addChartIndicator("AverageTrueRangeIndicator",new AverageTrueRangeIndicator(series, averTrueRangeTimeFrame), true,
                 TaTypes.categories.HELPERS);
 
         // Close Location Value indicator
-        addChartIndicator(new CloseLocationValueIndicator(series), true,
+        addChartIndicator("CloseLocationValueIndicator",new CloseLocationValueIndicator(series), true,
                 TaTypes.categories.HELPERS);
 
         // Constant Indicator TODO: does not work, time series is null
         // buildChartIndicator(new ConstantIndicator(closePriceIndicator.getValue(0)),Color.RED,"Constant First CP", false);
 
         // Cumulated Gains Indicator
-        addChartIndicator(new CumulatedGainsIndicator(closePriceIndicator,20), true,
+        int cumulatedGainsFrame = parameter.getOneIntFor("CumulatedGainsIndicator_1",20);
+        addChartIndicator("CumulatedGainsIndicator_1",new CumulatedGainsIndicator(closePriceIndicator,cumulatedGainsFrame), true,
                 TaTypes.categories.HELPERS);
 
         // Cumulated Losses Indicator
-        addChartIndicator(new CumulatedLossesIndicator(closePriceIndicator,20), true,
+        addChartIndicator("CumulatedLossesIndicator",new CumulatedLossesIndicator(closePriceIndicator,20), true,
                 TaTypes.categories.HELPERS);
 
         // Directional Up and Down Indicator
-
+        int directUp = parameter.getOneIntFor("DirectionalUpIndicator_1",20);
+        int directDown = parameter.getOneIntFor("DirectionalDownIndicator_1",20);
         List<Indicator> ilDud = new ArrayList<>();
-        ilDud.add(new DirectionalDownIndicator(series,20));
-        ilDud.add(new DirectionalUpIndicator(series,20));
-        List<Paint> clDud = new ArrayList<>();
-        clDud.add(Color.RED);
-        clDud.add(Color.GREEN);
+        ilDud.add(new DirectionalDownIndicator(series,directUp));
+        ilDud.add(new DirectionalUpIndicator(series,directDown));
         List<String> nlDud = new ArrayList<>();
-        nlDud.add("Directional Down (20)");
-        nlDud.add("Directional Up (20)");
-        addChartIndicator(ilDud, clDud, nlDud, "Directional Up/Down (20)", true,
+        nlDud.add("Directional Down "+directDown);
+        nlDud.add("Directional Up "+directUp);
+        XYLineAndShapeRenderer directUpDownRenderer = new XYLineAndShapeRenderer();
+        directUpDownRenderer.setSeriesPaint(0, Color.RED);
+        directUpDownRenderer.setSeriesStroke(0, TaTypes.SMALL_LINE);
+        directUpDownRenderer.setSeriesShape(0, TaTypes.shape_smallRec );
+        directUpDownRenderer.setSeriesPaint(1, Color.GREEN);
+        directUpDownRenderer.setSeriesStroke(1,TaTypes.SMALL_LINE);
+        directUpDownRenderer.setSeriesShape(1, TaTypes.shape_smallRec);
+        addChartIndicator(ilDud, nlDud, "Directional Up/Down "+directUp+", "+directDown,directUpDownRenderer, true,
                 TaTypes.categories.HELPERS);
 
 
@@ -176,323 +710,296 @@ public class TaChartIndicatorBox {
         List<Indicator> ilDmud = new ArrayList<>();
         ilDmud.add(new DirectionalMovementDownIndicator(series));
         ilDmud.add(new DirectionalMovementUpIndicator(series));
-        List<Paint> clDmud = new ArrayList<>();
-        clDmud.add(Color.RED);
-        clDmud.add(Color.GREEN);
         List<String> nlmDud = new ArrayList<>();
         nlmDud.add("Directional Movement Down");
         nlmDud.add("Directional Movement Up");
-        addChartIndicator(ilDmud, clDmud, nlmDud, "Directional Movement Up/Down", true,
+
+        XYLineAndShapeRenderer dmudRenderer = new XYLineAndShapeRenderer();
+        dmudRenderer.setSeriesPaint(0, Color.RED);
+        dmudRenderer.setSeriesStroke(0, TaTypes.SMALL_LINE);
+        dmudRenderer.setSeriesShape(0, TaTypes.shape_smallRec );
+        dmudRenderer.setSeriesPaint(1, Color.GREEN);
+        dmudRenderer.setSeriesStroke(1,TaTypes.SMALL_LINE);
+        dmudRenderer.setSeriesShape(1, TaTypes.shape_smallRec);
+        addChartIndicator(ilDmud, nlmDud, "Directional Movement Up/Down", dmudRenderer,true,
                 TaTypes.categories.HELPERS);
 
         // Highest Value Indicator
-        addChartIndicator(new HighestValueIndicator(closePriceIndicator, 20),Color.CYAN, "Highest Value (20)",false, TaTypes.categories.HELPERS);
+        int highestValueT = parameter.getOneIntFor("highestValue_1",20);
+        addChartIndicator(new HighestValueIndicator(closePriceIndicator, highestValueT), "Highest Value "+highestValueT,false, TaTypes.categories.HELPERS);
 
         // Lowest Value Indicator
-        addChartIndicator(new LowestValueIndicator(closePriceIndicator, 20),Color.red,"Lowest Value (20)",false, TaTypes.categories.HELPERS);
+        int lowestValueT = parameter.getOneIntFor("lowestValue_1",20);
+        addChartIndicator(new LowestValueIndicator(closePriceIndicator, lowestValueT),"Lowest Value "+lowestValueT,false, TaTypes.categories.HELPERS);
 
         // Max Price Indicator
-        addChartIndicator(new MaxPriceIndicator(series),Color.orange,"Max Price Indicator",false, TaTypes.categories.HELPERS);
+        addChartIndicator(new MaxPriceIndicator(series),"Max Price Indicator",false, TaTypes.categories.HELPERS);
 
         // Mean Deviation Indicator
-        addChartIndicator(new MeanDeviationIndicator(closePriceIndicator, 20),Color.ORANGE,
-                "Mean Deciation (20)",false, TaTypes.categories.HELPERS);
+        int meanDevT = parameter.getOneIntFor("MeanDeviationIndicator_1",20);
+        addChartIndicator(new MeanDeviationIndicator(closePriceIndicator, meanDevT),
+                "Mean Deciation "+meanDevT,false, TaTypes.categories.HELPERS);
 
         // Mean Price Indicator
-        addChartIndicator(new MedianPriceIndicator(series),false, TaTypes.categories.HELPERS);
+        addChartIndicator("MedianPriceIndicator",new MedianPriceIndicator(series),false, TaTypes.categories.HELPERS);
 
         // Median Price Indicator
-        addChartIndicator(new MedianPriceIndicator(series),false, TaTypes.categories.HELPERS);
+        addChartIndicator("MedianPriceIndicator",new MedianPriceIndicator(series),false, TaTypes.categories.HELPERS);
 
         // Open price Indicator
-        addChartIndicator(new OpenPriceIndicator(series),false, TaTypes.categories.HELPERS);
+        addChartIndicator("OpenPriceIndicator",new OpenPriceIndicator(series),false, TaTypes.categories.HELPERS);
 
         // Previous Value Indicator
-        addChartIndicator(new PreviousValueIndicator(closePriceIndicator, 5), Color.RED,
-                "Previous Value (cp, 5)", false, TaTypes.categories.HELPERS);
+        int prevValT = parameter.getOneIntFor("PreviousValueIndicator_1",1);
+        addChartIndicator(new PreviousValueIndicator(closePriceIndicator, prevValT),
+                "Previous Value (cp, "+prevValT+")", false, TaTypes.categories.HELPERS);
 
         // Price Variantion Indicator
-        addChartIndicator(new PriceVariationIndicator(series),true, TaTypes.categories.HELPERS);
+        addChartIndicator("PriceVariationIndicator",new PriceVariationIndicator(series),true, TaTypes.categories.HELPERS);
+
+        // Smoothed Average Gain Indicator+
+        int meanDevTimeFrame = parameter.getOneIntFor("SmoothedAverageGainIndicator_1",20);
+        addChartIndicator("SmoothedAverageGainIndicator",new SmoothedAverageGainIndicator(closePriceIndicator,20),true, TaTypes.categories.HELPERS);
 
         // Smoothed Average Gain Indicator
-        addChartIndicator(new SmoothedAverageGainIndicator(closePriceIndicator,20),true, TaTypes.categories.HELPERS);
-
-        // Smoothed Average Gain Indicator
-        addChartIndicator(new SmoothedAverageLossIndicator(closePriceIndicator,20),true, TaTypes.categories.HELPERS);
+        addChartIndicator("SmoothedAverageLossIndicator",new SmoothedAverageLossIndicator(closePriceIndicator,20),true, TaTypes.categories.HELPERS);
 
         // Trade Count //TODO: integer does not work
         //addChartIndicator(new TradeCountIndicator(series),true, TaTypes.categories.HELPERS);
 
-        // True Range Indicator
-        addChartIndicator(new TrueRangeIndicator(series),true, TaTypes.categories.HELPERS);
-
         // Typical Price Indicator
-        addChartIndicator(new TypicalPriceIndicator(series),false, TaTypes.categories.HELPERS);
+        addChartIndicator("TypicalPriceIndicator",new TypicalPriceIndicator(series),false, TaTypes.categories.HELPERS);
 
         // Volume Indicator
-        addChartIndicator(new VolumeIndicator(series),true, TaTypes.categories.HELPERS);
+        addChartIndicator("VolumeIndicator",new VolumeIndicator(series),true, TaTypes.categories.HELPERS);
 
         //ichimoku
+        int kijunSenPara = parameter.getOneIntFor("IchimokuKijunSenIndicator_1",20);
+        int tenkanSenPara = parameter.getOneIntFor("IchimokuTenkanSenIndicator_1",26);
+        int spanB = parameter.getOneIntFor("IchimokuSenkouSpanBIndicator_1",56);
         List<Indicator> ilIchi = new ArrayList<>();
-        IchimokuKijunSenIndicator kijunSen = new IchimokuKijunSenIndicator(series, 26);
-        IchimokuTenkanSenIndicator tenkanSen = new IchimokuTenkanSenIndicator(series, 26);
+        IchimokuKijunSenIndicator kijunSen = new IchimokuKijunSenIndicator(series, kijunSenPara);
+        IchimokuTenkanSenIndicator tenkanSen = new IchimokuTenkanSenIndicator(series, tenkanSenPara);
 
         ilIchi.add(new IchimokuSenkouSpanAIndicator(series, tenkanSen, kijunSen));
-        ilIchi.add(new IchimokuSenkouSpanBIndicator(series, 52));
+        ilIchi.add(new IchimokuSenkouSpanBIndicator(series, spanB));
         ilIchi.add(kijunSen);
         ilIchi.add(tenkanSen);
-        List<Paint> clIchi = new ArrayList<>();
-        clIchi.add(Color.GREEN);
-        clIchi.add(Color.RED);
-        clIchi.add(Color.RED.brighter());
-        clIchi.add(Color.BLUE);
+        XYLineAndShapeRenderer ichiRenderer = new XYLineAndShapeRenderer();
+        ichiRenderer.setSeriesPaint(0, Color.GREEN);
+        ichiRenderer.setSeriesStroke(0, TaTypes.SMALL_LINE);
+        ichiRenderer.setSeriesShape(0, TaTypes.NONE );
+        ichiRenderer.setSeriesPaint(1, Color.RED);
+        ichiRenderer.setSeriesStroke(1,TaTypes.SMALL_LINE);
+        ichiRenderer.setSeriesShape(1, TaTypes.NONE);
+        ichiRenderer.setSeriesPaint(2, Color.RED.brighter());
+        ichiRenderer.setSeriesStroke(2,TaTypes.SMALL_LINE);
+        ichiRenderer.setSeriesShape(2, TaTypes.NONE);
+        ichiRenderer.setSeriesPaint(3, Color.BLUE);
+        ichiRenderer.setSeriesStroke(3,TaTypes.SMALL_LINE);
+        ichiRenderer.setSeriesShape(3, TaTypes.NONE);
         List<String> nlIchi = new ArrayList<>();
         nlIchi.add("Senkou Span A (TenkanSen, KijunSen)"); // no idea what i am doing^^
-        nlIchi.add("Senkou Span B (52) ");
-        nlIchi.add("KijunSen (26)");
-        nlIchi.add("TenkanSen (26) ");
-        addChartIndicator(ilIchi,clIchi,nlIchi,"Ichimoku All", false, TaTypes.categories.ICHIMOKU);
+        nlIchi.add("Senkou Span B "+spanB);
+        nlIchi.add("KijunSen "+kijunSenPara);
+        nlIchi.add("TenkanSen "+tenkanSenPara);
+        addChartIndicator(ilIchi,nlIchi,"Ichimoku All",ichiRenderer, false, TaTypes.categories.ICHIMOKU);
 
-        addChartIndicator(kijunSen, false, TaTypes.categories.ICHIMOKU);
-        addChartIndicator(tenkanSen, false, TaTypes.categories.ICHIMOKU);
+        addChartIndicator("IchimokuKijunSenIndicator_1",kijunSen, false, TaTypes.categories.ICHIMOKU);
+        addChartIndicator("IchimokuTenkanSenIndicator_1",tenkanSen, false, TaTypes.categories.ICHIMOKU);
 
-        //keltner
-        KeltnerChannelMiddleIndicator kcM = new KeltnerChannelMiddleIndicator(series,20);
-        KeltnerChannelLowerIndicator kcL = new KeltnerChannelLowerIndicator(kcM,Decimal.TWO,20);
-        KeltnerChannelUpperIndicator kcU = new KeltnerChannelUpperIndicator(kcM,Decimal.TWO,20);
 
-        List<Indicator> ilKelt = new ArrayList<>();
-        List<Paint> clKelt = new ArrayList<>();
-        List<String> nlKelt = new ArrayList<>();
-        ilKelt.add(kcL);
-        ilKelt.add(kcM);
-        ilKelt.add(kcU);
-        clKelt.add(Color.BLUE);
-        clKelt.add(Color.BLUE.brighter());
-        clKelt.add(Color.BLUE);
-        nlKelt.add("Keltner Lower");
-        nlKelt.add("Keltner Middle");
-        nlKelt.add("Keltner Uppet");
-        addChartIndicator(ilKelt, clKelt, nlKelt,"Keltner Channel (20, 2, 20)",false, TaTypes.categories.KELTNER);
-        addChartIndicator(kcM, Color.BLUE.brighter(),"Keltner Middle (2, 20)",false, TaTypes.categories.KELTNER);
-        addChartIndicator(kcU, Color.BLUE.brighter(),"Keltner Upper (2, 20)",false, TaTypes.categories.KELTNER);
-        addChartIndicator(kcL, Color.BLUE.brighter(),"Keltner Lower (2, 20)",false, TaTypes.categories.KELTNER);
 
         // Correlation Coefficient Indicator
-        addChartIndicator(new CorrelationCoefficientIndicator(closePriceIndicator,new MinPriceIndicator(series),20),
-                Color.RED, "Correlation Coefficient (cp, minP, 20),",true, TaTypes.categories.STATISTICS);
+        int correlationTimeFrame = parameter.getOneIntFor("CorrelationCoefficientIndicator_1",5);
+        addChartIndicator(new CorrelationCoefficientIndicator(closePriceIndicator, new MinPriceIndicator(series),correlationTimeFrame),
+           "Correlation Coefficient cp, minP"+correlationTimeFrame,true, TaTypes.categories.STATISTICS);
 
         // Covariance Indicator
+        int covarrianceTimeFrame = parameter.getOneIntFor("CovarianceIndicator_1",5);
         addChartIndicator(new CovarianceIndicator(closePriceIndicator,new MinPriceIndicator(series),20),
-                Color.RED, "Covariance Indicator (cp, minP, 20),",true, TaTypes.categories.STATISTICS);
+             "Covariance Indicator cp minP "+covarrianceTimeFrame,true, TaTypes.categories.STATISTICS);
 
         // Period Growth Rate Indicator
-        addChartIndicator(new PeriodicalGrowthRateIndicator(closePriceIndicator,20),Color.BLUE,"Period Growth Rate (cp, 20)",true, TaTypes.categories.STATISTICS);
+        int periodicalGrowthRateFrame = parameter.getOneIntFor("PeriodicalGrowthRateIndicator_1",5);
+        addChartIndicator(new PeriodicalGrowthRateIndicator(closePriceIndicator,periodicalGrowthRateFrame),"Period Growth Rate cp "+periodicalGrowthRateFrame,true, TaTypes.categories.STATISTICS);
 
         // Simple Linear Regression Indicator
-        addChartIndicator(new SimpleLinearRegressionIndicator(closePriceIndicator,5),Color.MAGENTA, "Simple Linear Regression(cp, 5)",true, TaTypes.categories.STATISTICS);
+        int simpleLinearRegressionTimeFrame = parameter.getOneIntFor("SimpleLinearRegressionIndicator_1",15);
+        addChartIndicator(new SimpleLinearRegressionIndicator(closePriceIndicator,simpleLinearRegressionTimeFrame), "Simple Linear Regression cp "+simpleLinearRegressionTimeFrame,false, TaTypes.categories.STATISTICS);
 
         // Standard Deviatation Indicator
-        addChartIndicator(new StandardDeviationIndicator(closePriceIndicator, 20),
-                Color.MAGENTA, "Standard Deviatation (cp, 20)", true, TaTypes.categories.STATISTICS);
+        int standardDeviationTimeFrame = parameter.getOneIntFor("StandardDeviationIndicator_1",15);
+        addChartIndicator(new StandardDeviationIndicator(closePriceIndicator, standardDeviationTimeFrame),
+               "Standard Deviatation cp "+standardDeviationTimeFrame, true, TaTypes.categories.STATISTICS);
 
-        addChartIndicator(new StandardErrorIndicator(closePriceIndicator,20), Color.RED,"Standard Error (cp, 20)", true, TaTypes.categories.STATISTICS);
+        //Standard Error Indicator
+        int standardErrorTimeFrame = parameter.getOneIntFor("standardErrorTimeFrame",5);
+        addChartIndicator(new StandardErrorIndicator(closePriceIndicator,standardErrorTimeFrame), "Standard Error cp "+standardErrorTimeFrame, true, TaTypes.categories.STATISTICS);
 
-        addChartIndicator(new VarianceIndicator(closePriceIndicator,20), Color.RED,"Variance (cp, 20)", true, TaTypes.categories.STATISTICS);
+        //VarianceIndicator
+        int varianceTimeFrame = parameter.getOneIntFor("VarianceIndicator_1",10);
+        addChartIndicator(new VarianceIndicator(closePriceIndicator,varianceTimeFrame),"Variance cp "+varianceTimeFrame, true, TaTypes.categories.STATISTICS);
 
         //Accerleration Deceleration Indicator
-        addChartIndicator(new AccelerationDecelerationIndicator(series,20,50), Color.YELLOW,"Accel. Decel.(20,50)", true, TaTypes.categories.DEFAULT);
+        int[] accDeDef = {20,50};
+        accDeDef = parameter.getXIntFor("AccelerationDecelerationIndicator_1",2,accDeDef);
+        addChartIndicator(new AccelerationDecelerationIndicator(series,20,50),"Accel. Decel. "+accDeDef[0]+" "+accDeDef[1], true, TaTypes.categories.DEFAULT);
 
-        // Arron Up/Down in one subplot
-        List<Indicator> ilAroon = new ArrayList<>();
-        List<Paint> clAroon = new ArrayList<>();
-        List<String> nlAroon = new ArrayList<>();
-        ilAroon.add(new AroonDownIndicator(series, 20));
-        ilAroon.add(new AroonUpIndicator(series, 20));
-        nlAroon.add("Aroon Down 20");
-        nlAroon.add("Aroon Up 20");
-        clAroon.add(Color.RED);
-        clAroon.add(Color.GREEN);
-        addChartIndicator(ilAroon,clAroon,nlAroon,"Aroon UP/DOWN (20)",true,
-                TaTypes.categories.DEFAULT);
+
 
         // Average Directional Movement
-        addChartIndicator(new AverageDirectionalMovementDownIndicator(series, 20),
-                Color.ORANGE,"ADX (20)",true, TaTypes.categories.DEFAULT);
+        int admTimeFrame = parameter.getOneIntFor("AverageDirectionalMovementIndicator_1",14);
+        AverageDirectionalMovementIndicator admd = new AverageDirectionalMovementIndicator(series, 14);
+        addChartIndicator(new AverageDirectionalMovementDownIndicator(series, admTimeFrame),
+                "ADX "+admTimeFrame,true, TaTypes.categories.DEFAULT);
 
         // Awesome Oscillator
-        addChartIndicator(new AwesomeOscillatorIndicator(closePriceIndicator),
-                Color.ORANGE,"Awesome Oscillator (5, 34)",true, TaTypes.categories.DEFAULT);
+        int[] awsDef = {5,34};
+        int[] awesomeOscillator= parameter.getXIntFor("AwesomeOscillatorIndicator_1",2,awsDef);
+        addChartIndicator(new AwesomeOscillatorIndicator(closePriceIndicator,awesomeOscillator[0],awesomeOscillator[1]),
+                "Awesome Oscillator cp "+awesomeOscillator[0]+" "+awesomeOscillator[1],true, TaTypes.categories.DEFAULT);
 
-        // CCIIndicator
-        addChartIndicator(new CCIIndicator(series, 20),
-                Color.ORANGE,"CCIIndicator (20)",true, TaTypes.categories.DEFAULT);
+
+
+        XYLineAndShapeRenderer chandLong = new XYLineAndShapeRenderer();
+        chandLong.setSeriesStroke(0,TaTypes.SMALL_LINE);
+        chandLong.setSeriesPaint(0,Color.GREEN);
+        chandLong.setSeriesShape(0, TaTypes.NONE);
 
         // ChandelierExitLongIndicator
-        addChartIndicator(new ChandelierExitLongIndicator(series), false);
+        addChartIndicator(new ChandelierExitLongIndicator(series),"Chandelier Exit Long", chandLong,false, TaTypes.categories.DEFAULT);
 
+        XYLineAndShapeRenderer chandShort = new XYLineAndShapeRenderer();
+        chandShort.setSeriesStroke(0,TaTypes.SMALL_LINE);
+        chandShort.setSeriesPaint(0,Color.RED);
+        chandShort.setSeriesShape(0, TaTypes.NONE);
         // ChandelierExitShortIndicator
-        addChartIndicator(new ChandelierExitShortIndicator(series), false);
+        addChartIndicator(new ChandelierExitShortIndicator(series),"Chandelier Exit Short",chandShort,false, TaTypes.categories.DEFAULT);
 
         // CMO Indicator
-        addChartIndicator(new CMOIndicator(closePriceIndicator,20),Color.GREEN,"CMO (cp, 20)",
+        int cmoTimeFrame = parameter.getOneIntFor("CMOIndicator_1",14);
+        addChartIndicator(new CMOIndicator(closePriceIndicator, cmoTimeFrame),"CMO cp "+cmoTimeFrame,
                 true, TaTypes.categories.DEFAULT);
 
         // Coppock Curve Indicator
-        addChartIndicator(new CoppockCurveIndicator(closePriceIndicator,14,11,10),
-                Color.GREEN,"Coppock Curve (14, 11, 10)", true, TaTypes.categories.DEFAULT);
+        int[]coppCurveDef = {14,11,10};
+        coppCurveDef = parameter.getXIntFor("CoppockCurveIndicator_1",3,coppCurveDef);
+        addChartIndicator(new CoppockCurveIndicator(closePriceIndicator,coppCurveDef[0],coppCurveDef[1],coppCurveDef[2]),
+                "Coppock Curve "+coppCurveDef[0]+" "+coppCurveDef[1]+" "+coppCurveDef[2], true, TaTypes.categories.DEFAULT);
 
         // Directional Movement Indicator
-        addChartIndicator(new DirectionalMovementIndicator(series, 20),
-                Color.GREEN,"Directional Movement (20)", true, TaTypes.categories.DEFAULT);
+        int directMoveTimeFrame = parameter.getOneIntFor("DirectionalMovementIndicator_1",14);
+        addChartIndicator(new DirectionalMovementIndicator(series, directMoveTimeFrame),
+                "Directional Movement "+directMoveTimeFrame, true, TaTypes.categories.DEFAULT);
 
         // Double EMA Indicator
-        addChartIndicator(new DoubleEMAIndicator(closePriceIndicator, 20),
-                Color.YELLOW,"DoubleEMA (20)", false, TaTypes.categories.DEFAULT);
+        int doubleEmaTimeFrame = parameter.getOneIntFor("DoubleEMAIndicator_1", 20);
+        addChartIndicator(new DoubleEMAIndicator(closePriceIndicator, doubleEmaTimeFrame),
+                "DoubleEMA cp "+doubleEmaTimeFrame, false, TaTypes.categories.DEFAULT);
 
-        // DPO Indicator TODO: error because index can get to high
-        addChartIndicator(new indicators.DPOIndicator(closePriceIndicator,10),
-                Color.YELLOW,"DPO (20)", true, TaTypes.categories.DEFAULT);
+        // DPO Indicator
+        /**
+         * @since since the repository moved to https://github.com/ta4j/ta4j/ this indicator has been fixed
+         */
+        /*
+        int dpoFrame = parameter.getOneIntFor("DPOIndicator_1",20);
+        addChartIndicator(new indicators.DPOIndicator(closePriceIndicator,20),
+                "DPO (20)", true, TaTypes.categories.DEFAULT);
 
-        // Fisher Indicator
-        addChartIndicator(new FisherIndicator(closePriceIndicator, 20),
-                Color.YELLOW,"Fisher (20, 0.33, 0.67)", true, TaTypes.categories.DEFAULT);
 
-        // HMA Indicator
-        addChartIndicator(new HMAIndicator(closePriceIndicator, 20),
-                Color.YELLOW,"HMA (cp, 20)", false, TaTypes.categories.DEFAULT);
-
-        // KAMA Indicator
-        addChartIndicator(new KAMAIndicator(closePriceIndicator,10,2,50),
-                Color.YELLOW,"KAMA (cp, 10, 2, 50)", false, TaTypes.categories.DEFAULT);
-
-        // MACD Indicator
-        addChartIndicator(new MACDIndicator(closePriceIndicator, 10,50 ),
-                Color.YELLOW,"MAC (cp, 10, 50)", true, TaTypes.categories.DEFAULT);
 
         // Mass Index Indicator
-        addChartIndicator(new MassIndexIndicator(series,20,10),
-                Color.YELLOW,"Mass Index Indicator (20, 10)", true, TaTypes.categories.DEFAULT);
+        int[] massParams = {20,10};
+        massParams = parameter.getXIntFor("MACDIndicator_1",2,macParams);
+        addChartIndicator(new MassIndexIndicator(series,massParams[0],massParams[1]),
+                "Mass Index Indicator "+massParams[0]+" "+massParams[1], true, TaTypes.categories.DEFAULT);
 
+        /**@since since the repository moved to https://github.com/ta4j/ta4j/ this indicator has been fixed*/
         // Parabolic Sar Indicator
-        addChartIndicator(new ParabolicSarIndicator(series, 20),
-                Color.YELLOW,"Parabolic Sar (20)", false, TaTypes.categories.DEFAULT);
+        /*
+        int parabolicTimeFrame = parameter.getOneIntFor("ParabolicSarIndicator_1", 20);
+        indicators.ParabolicSarIndicator nPara = new indicators.ParabolicSarIndicator(series);
+        XYLineAndShapeRenderer parabolicRenderer = new XYLineAndShapeRenderer();
+        parabolicRenderer.setSeriesPaint(0,Color.YELLOW);
+        parabolicRenderer.setSeriesStroke(0, TaTypes.BIG_DOTS);
+        addChartIndicator(nPara, "Parabolic Sar "+parabolicTimeFrame, parabolicRenderer, false, TaTypes.categories.DEFAULT);
 
         // PPO Indicator
+        int[] ppoDef = {10,50};
+        ppoDef = parameter.getXIntFor("PPOIndicator", 2, ppoDef);
         addChartIndicator(new PPOIndicator(closePriceIndicator, 10, 50),
-                Color.YELLOW,"PPO (10,50)", false, TaTypes.categories.DEFAULT);
+                "PPO (10,50)", false, TaTypes.categories.DEFAULT);
 
 
         // Random Walk High and Low
+        int rwHighTimeFrame = parameter.getOneIntFor("RandomWalkIndexHighIndicator_1",20);
+        int rwLowTimeFrame = parameter.getOneIntFor("RandomWalkIndexLowIndicator_1",20);
         List<Indicator> ilRw = new ArrayList<>();
         List<String> nlRw = new ArrayList<>();
-        List<Paint> clRw = new ArrayList<>();
 
-        ilRw.add(new RandomWalkIndexHighIndicator(series, 20));
-        ilRw.add(new RandomWalkIndexLowIndicator(series, 20));
-        nlRw.add("Random Walk High");
-        nlRw.add("Random Walk Low");
-        clRw.add(Color.GREEN);
-        clRw.add(Color.RED);
-        addChartIndicator(ilRw,clRw,nlRw,"Random Walk (20)", true, TaTypes.categories.DEFAULT);
-
-        // RAVI Indicator
-        addChartIndicator(new RAVIIndicator(closePriceIndicator, 20, 50),
-                Color.YELLOW,"RAVI (20,50)", true, TaTypes.categories.DEFAULT);
-
-        // ROC Indicator
-        addChartIndicator(new ROCIndicator(closePriceIndicator, 20),
-                Color.YELLOW,"ROC (20)", true, TaTypes.categories.DEFAULT);
-
-        // RSI Indicator
-        addChartIndicator(new RSIIndicator(closePriceIndicator, 20),
-                Color.YELLOW,"RSI (20)", true, TaTypes.categories.DEFAULT);
-
-        // SmoothedRSIIndicator
-        addChartIndicator(new SmoothedRSIIndicator(closePriceIndicator, 20),
-                Color.YELLOW,"SmoothedRSI (20)", true, TaTypes.categories.DEFAULT);
+        ilRw.add(new RandomWalkIndexHighIndicator(series, rwHighTimeFrame));
+        ilRw.add(new RandomWalkIndexLowIndicator(series, rwLowTimeFrame));
+        nlRw.add("Random Walk High " + rwHighTimeFrame);
+        nlRw.add("Random Walk Low " + rwLowTimeFrame );
+        XYLineAndShapeRenderer randWalkRenderer = new XYLineAndShapeRenderer();
+        randWalkRenderer.setSeriesPaint(0, Color.GREEN);
+        randWalkRenderer.setSeriesStroke(0,TaTypes.SMALL_LINE);
+        randWalkRenderer.setSeriesShape(0, TaTypes.NONE);
+        randWalkRenderer.setSeriesPaint(1, Color.RED);
+        randWalkRenderer.setSeriesStroke(1,TaTypes.SMALL_LINE);
+        randWalkRenderer.setSeriesShape(1, TaTypes.NONE);
+        addChartIndicator(ilRw,nlRw,"Random Walk "+rwHighTimeFrame+" "+rwLowTimeFrame,randWalkRenderer,true, TaTypes.categories.DEFAULT);
 
         // Stochastic RSI Indicator
+        int stochRsiPara = parameter.getOneIntFor("StochasticRSIIndicator_1", 20);
         addChartIndicator(new StochasticRSIIndicator(closePriceIndicator, 20),
-                Color.YELLOW,"Stochastic RSIIndicator (20)", true, TaTypes.categories.DEFAULT);
+                "Stochastic RSIIndicator cp "+stochRsiPara, true, TaTypes.categories.DEFAULT);
 
         // StochasticOscillatorKIndicator StochasticOscillatorDIndicator
         List<Indicator> ilStKd = new ArrayList<>();
         List<String> nlStKd = new ArrayList<>();
-        List<Paint> clStKd = new ArrayList<>();
-        StochasticOscillatorKIndicator stk = new StochasticOscillatorKIndicator(series, 20);
+        int stochOindicator = parameter.getOneIntFor("StochasticOscillatorKIndicator_1",20);
+        StochasticOscillatorKIndicator stk = new StochasticOscillatorKIndicator(series, stochOindicator);
         StochasticOscillatorDIndicator std = new StochasticOscillatorDIndicator(stk);
 
         ilStKd.add(stk);
         ilStKd.add(std);
-        nlStKd.add("Stoch. O. K");
+        nlStKd.add("Stoch. O. K "+stochOindicator);
         nlStKd.add("Stoch. O. D (K)");
-        clStKd.add(Color.YELLOW);
-        clStKd.add(Color.MAGENTA);
-        addChartIndicator(ilStKd, clStKd,nlStKd,"Stochastic Oscilator D K", true, TaTypes.categories.DEFAULT);
+        XYLineAndShapeRenderer osziRender = new XYLineAndShapeRenderer();
+        osziRender.setSeriesPaint(0, Color.BLUE);
+        osziRender.setSeriesStroke(0,TaTypes.SMALL_LINE);
+        osziRender.setSeriesShape(0, TaTypes.NONE);
+        osziRender.setSeriesPaint(1, Color.MAGENTA);
+        osziRender.setSeriesStroke(1,TaTypes.SMALL_LINE);
+        osziRender.setSeriesShape(1, TaTypes.NONE);
+        addChartIndicator(ilStKd,nlStKd,"Stochastic Oscilator D K "+stochOindicator,osziRender, true, TaTypes.categories.DEFAULT);
 
         addChartIndicator(new StochasticOscillatorDIndicator(closePriceIndicator),
-                Color.YELLOW,"Stochastic Oscillator D (cp)", true, TaTypes.categories.DEFAULT);
-        addChartIndicator(new StochasticOscillatorKIndicator(series, 20),
-                Color.YELLOW,"Stochastic Oscillator K (20)", true, TaTypes.categories.DEFAULT);
-
-        // TrailingStopLossIndicator
-        addChartIndicator(new TrailingStopLossIndicator(closePriceIndicator,Decimal.valueOf(0.1)),
-                Color.YELLOW,"Trailing Stop Loss (0.1)", false, TaTypes.categories.DEFAULT);
-
-        // Triple EMAIndicator
-        addChartIndicator(new TripleEMAIndicator(closePriceIndicator, 20),
-                Color.YELLOW,"Triple EMA (20)", false, TaTypes.categories.DEFAULT);
-
-        // UlcerIndexIndicator
-        addChartIndicator(new UlcerIndexIndicator(closePriceIndicator, 20),
-                Color.YELLOW,"Ulcer Index (20)", true, TaTypes.categories.DEFAULT);
-
-        // WMAIndicator
-        addChartIndicator(new WMAIndicator(closePriceIndicator, 20),
-                Color.YELLOW,"WMA (20)", false, TaTypes.categories.DEFAULT);
-
-        // ZLEMAIndicator
-        addChartIndicator(new ZLEMAIndicator(closePriceIndicator, 20),
-                Color.YELLOW,"ZLEMA (20)", false, TaTypes.categories.DEFAULT);
-
-        // AccumulationDistributionIndicator
-        addChartIndicator(new AccumulationDistributionIndicator(series),
-                Color.YELLOW,"Accumulation Distribution", true, TaTypes.categories.VOLUME);
-
-        // AccumulationDistributionIndicator
-        addChartIndicator(new ChaikinMoneyFlowIndicator(series,20),
-                Color.YELLOW,"Chaikin Money (20)", true, TaTypes.categories.VOLUME);
+                "Stochastic Oscillator D", true, TaTypes.categories.DEFAULT);
+        addChartIndicator(new StochasticOscillatorKIndicator(series, stochOindicator),
+                "Stochastic Oscillator K "+stochOindicator, true, TaTypes.categories.DEFAULT);
 
 
         // AccumulationDistributionIndicator
-        VWAPIndicator vwap = new VWAPIndicator(series, 20);
-        addChartIndicator(vwap, Color.YELLOW,"VWAP (20)", true, TaTypes.categories.VOLUME);
+        addChartIndicator(new AccumulationDistributionIndicator(series),"Accumulation Distribution", true, TaTypes.categories.VOLUME);
 
-        // MVWAP + VWAP
-        List<Indicator> ilVwap = new ArrayList<>();
-        List<String> nlVwap = new ArrayList<>();
-        List<Paint> clVwap = new ArrayList<>();
-
-        ilVwap.add(vwap);
-        ilVwap.add(new MVWAPIndicator(vwap,100));
-        nlVwap.add("VWAP (20)");
-        nlVwap.add("MVWAP (VMAP, 20)");
-        clVwap.add(Color.MAGENTA);
-        clVwap.add(Color.GREEN);
-        addChartIndicator(ilVwap,clVwap,nlVwap,"MVWAP+VWAP (20, 100)",true, TaTypes.categories.VOLUME);
-
-        // AccumulationDistributionIndicator
-        addChartIndicator(new NVIIndicator(series), Color.BLUE,"NVI", true, TaTypes.categories.VOLUME);
-
-        // OnBalanceVolumeIndicator
-        addChartIndicator(new OnBalanceVolumeIndicator(series),Color.BLUE,"On Balance Volume", true, TaTypes.categories.VOLUME);
-
-        // PVIIndicator
-        addChartIndicator(new PVIIndicator(series),Color.BLUE,"PVI", true, TaTypes.categories.VOLUME);
+        // Chaikin Money Flow Indicator
+        int ChaikinMoneyFlowIndicator_1 = parameter.getOneIntFor("ChaikinMoneyFlowIndicator_1",20);
+        addChartIndicator(new ChaikinMoneyFlowIndicator(series,ChaikinMoneyFlowIndicator_1),
+                "Chaikin Money "+ChaikinMoneyFlowIndicator_1, true, TaTypes.categories.VOLUME);
 
 
 
+        */
+
+    }
+
+    public void addChartIndicator(String identifier, List<Indicator> indicators, List<String> names, String generalName,XYLineAndShapeRenderer renderer, boolean isSubchart, TaCategory c){
+        chartIndicatorMap.put(identifier, new TaChartIndicator(indicators,names,generalName,renderer,isSubchart,c));
+        setChanged();
+        notifyObservers();
     }
 
     /**
@@ -501,7 +1008,9 @@ public class TaChartIndicatorBox {
      * @param isSubchart flag if indicator should be plotted on sub chart
      */
     public void addChartIndicator(Indicator indicator, boolean isSubchart){
-         taChartIndicatorList.add(new TaChartIndicator( indicator, isSubchart));
+         chartIndicatorMap.put(indicator.toString(),new TaChartIndicator(indicator, indicator.toString(), isSubchart, DEFAULT));
+        setChanged();
+        notifyObservers();
     }
 
     /**
@@ -510,8 +1019,10 @@ public class TaChartIndicatorBox {
      * @param isSubchart flag if indicator should be plotted on su bchart
      * @param c the category of the chart
      */
-    public void addChartIndicator(Indicator indicator, boolean isSubchart, TaTypes.categories c){
-        taChartIndicatorList.add(new TaChartIndicator( indicator, isSubchart, c));
+    public void addChartIndicator(String identifier, Indicator indicator, boolean isSubchart, TaCategory c){
+        chartIndicatorMap.put(identifier, new TaChartIndicator(indicator,indicator.toString(), isSubchart, c));
+        setChanged();
+        notifyObservers();
     }
 
     /**
@@ -519,53 +1030,242 @@ public class TaChartIndicatorBox {
      * @param indicator the ta4j indicator
      * @param isSubchart flag if indicator should be plotted on sub chart
      * @param name the name of the indicator that should be displayed
-     * @param paint the paint of the indicator on the chart
      * @param c the category of the chart
      */
-    public void addChartIndicator(Indicator indicator, Paint paint, String name, boolean isSubchart, TaTypes.categories c){
-        taChartIndicatorList.add(new TaChartIndicator(indicator, paint, name, isSubchart, c));
+    public void addChartIndicator(String identifier, Indicator indicator, String name, boolean isSubchart, TaCategory c){
+        chartIndicatorMap.put(identifier, new TaChartIndicator(indicator, name, isSubchart, c));
+        setChanged();
+        notifyObservers();
+    }
+
+    public void addChartIndicator(String identifier, Indicator indicator, String name,XYLineAndShapeRenderer renderer, boolean isSubchart, TaCategory c){
+        chartIndicatorMap.put(identifier, new TaChartIndicator(indicator, name, renderer, isSubchart, c));
+        setChanged();
+        notifyObservers();
     }
 
     /**
-     * Adds an chart indicator to the charts indicator list that consists of several ta4j indicators
-     * or a strategy
-     * @param indicator indicators for chart indicator or strategy
-     * @param isSubchart flag if indicator should be plotted on sub chart
+     * Adds an existing TaChartIndicator to the box
+     * @param taChartIndicator an TaChartIndicator
      */
-    public void addChartIndicator(List<Indicator>indicator, boolean isSubchart){
-        taChartIndicatorList.add(new TaChartIndicator(indicator, isSubchart));
+    public void addChartIndicator(String identifier, TaChartIndicator taChartIndicator){
+        chartIndicatorMap.put(identifier, taChartIndicator);
+        setChanged();
+        notifyObservers();
     }
 
-    /**
-     * Adds an chart indicator to the charts indicator list that consists of several ta4j indicators
-     * or a strategy
-     * @param indicator indicators for chart indicator or strategy
-     * @param isSubchart flag if indicator should be plotted on sub chart
-     * @param c the category of the chart indicator
-     */
-    public void addChartIndicator(List<Indicator>indicator, boolean isSubchart, TaTypes.categories c){
-        taChartIndicatorList.add(new TaChartIndicator(indicator, isSubchart, c));
-    }
-
-    /**
-     * Adds an chart indicator to the charts indicator list that consists of several ta4j indicators
-     * or a strategy
-     * @param indicator a list of indicators for a chart indicator or a strategy
-     * @param paint a list of paint objects the describe the chart indicators
-     * @param name a list of names that describe the indicators of the chart indicator/strategy
-     * @param generalName the name of the indicator that should be displayed
-     * @param isSubchart flag if indicator should be plotted on sub chart
-     * @param c fthe category of the chart indicator
-     */
-    public void addChartIndicator(List<Indicator> indicator, List<Paint> paint, List<String> name, String generalName, boolean isSubchart, TaTypes.categories c){
-        taChartIndicatorList.add(new TaChartIndicator(indicator, paint, name, generalName, isSubchart, c));
+    public void removeIndicator(String key){
+        this.chartIndicatorMap.remove(key);
     }
 
     /**
      * Get all indicators that are stored in this box
      * @return all ChartIndicators that are stored in this box
      */
-    public List<TaChartIndicator> getTaChartIndicatorList() {
-        return taChartIndicatorList;
+    public Map<String, TaChartIndicator> getChartIndicatorMap() {
+        return chartIndicatorMap;
     }
+
+    /**
+     * Returns the indicator that is stored for the identifier
+     * @param identifier the identifier of the indicator (display identifier/general identifier/properties identifier)
+     * @return the indicator that is stored for the identifier
+     */
+    public TaChartIndicator getChartIndicator(String identifier){
+        return this.chartIndicatorMap.get(identifier);
+    }
+
+    public TaPropertiesManager getPropertiesManager(){
+        return this.parameter;
+    }
+
+    //TODO: implement public initXXXIndicator(Object params..) functions for creating "subindicators" e.g. keltner, bollinger..
+    /**
+     * Reloads the indicator from the properties file
+     * @param key
+     */
+    public void reloadIndicator(String key) throws IllegalArgumentException, XPathException{
+        String indicatorName = key.split("_")[0];
+
+        switch (indicatorName){
+            case "SMAIndicator": {
+                loadSMAIndicator(key);
+                break;
+            }
+            case "CCIIndicator":{
+                loadCCIIndicator(key);
+                break;
+            }
+            case "EMAIndicator":{
+                loadEMAIndicator(key);
+                break;
+            }
+            case "CMOIndicator":{
+                loadCMOIndicator(key);
+                break;
+            }
+            case "BollingerBands": {
+                loadBollingerBands(key);
+                break;
+            }
+            case "PercentBIIndicator":{
+                loadPercentBIndicator(key);
+                break;
+            }
+            case "AmountIndicator":{
+                loadAmountIndicator(key);
+                break;
+            }
+
+            case "RSIIndicator":{
+                loadRSIIndicator(key);
+                break;
+            }
+            case "SmoothedRSIIndicator":{
+                loadSmoothedRSIIndicator(key);
+                break;
+            }
+
+            case "PVIIndicator":{
+                loadPVIIndicator(key);
+                break;
+            }
+            case "NVIIndicator":{
+                loadNVIIndicator(key);
+                break;
+            }
+            case "OnBalanceVolumenIndicator":{
+                loadOnBalanceVolumenIndicator(key);
+                break;
+            }
+            case "MACDIndicator":{
+                loadMACDIndicator(key);
+                break;
+            }
+            case "AverageDirectionalMovementUpDown":{
+                loadAverageDirectionalMovementUP_DOWN(key);
+                break;
+            }
+            case "TrueRangeIndicator":{
+                loadTrueRangeIndicator(key);
+                break;
+            }
+            case "AroonUpDown":{
+                loadAroonUP_DOWN(key);
+                break;
+            }
+            case "Keltner":{
+                loadKeltner(key);
+                break;
+            }
+/*
+            case "LowerShadowIndicator":{
+                loadLowerShadowIndicator(key);
+                break;
+            }
+            case "MVWAPIndicator":{
+                loadMVWAPIndicator(key);
+                break;
+            }
+            case "RealBodyIndicator":{
+                loadRealBodyIndicator(key);
+                break;
+            }
+            case "UpperShadowIndicator":{
+                loadUpperShadowIndicator(key);
+                break;
+            }
+
+
+            case "TrailingStopLossIndicator":{
+                loadTraillingStopLossIndicator(key);
+                break;
+            }
+            case "TripleEMAIndicator":{
+                loadTrippleEMAIndicator(key);
+                break;
+            }
+            case "UlcerIndexIndicator":{
+                loadUlcerIndexIndicator(key);
+                break;
+            }
+            case "WMAIndicator":{
+                loadWMAIndicator(key);
+                break;
+            }
+            case "ZLEMAIndicator":{
+                loadZLEMAIndicator(key);
+                break;
+            }
+            case "RAVIIndicator":{
+                loadRAVIIndicator(key);
+                break;
+            }
+            case "ROCIndicator":{
+                loadROCIndicator(key);
+                break;
+            }
+            case "HMAIndicator":{
+                loadHMAIndicator(key);
+                break;
+            }
+            case "FischerIndicator":{
+                loadFischerIndicator(key);
+                break;
+            }
+            case "KAMAIndicator":{
+                loadKAMAIndicator(key);
+                break;
+            }
+*/
+            default:
+                throw new IllegalArgumentException(key+ "could not be loaded!");
+        }
+    }
+
+    /**
+     *
+     * @param key key of an indicator (instance)
+     * @return the id of an indiator instance
+     */
+    private int getID(String key) {
+        return Integer.parseInt(key.split("_")[1]);
+    }
+
+    /**
+     *
+     * @param key key of an indicator (instance)
+     * @return the identifier of xml indicator
+     */
+    private String getIdentifier(String key){
+        return key.split("_")[0];
+    }
+
+    //TODO: add more features in xml: lines, Based on indicator
+    //TODO: add createRenderer function for several lines
+    private XYLineAndShapeRenderer createRendere(TaColor color, TaStroke stroke, TaShape shape){
+        boolean sh = true;
+
+        if (shape.equals(TaShape.NONE)){
+            sh = false;
+        }
+
+        XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer(true,sh);
+        renderer.setSeriesStroke(0,stroke.getStroke());
+        if(sh){
+            renderer.setSeriesShape(0, shape.getShape());
+        }
+        renderer.setSeriesPaint(0, color.getPaint());
+
+        return renderer;
+    }
+
+
+    private XYLineAndShapeRenderer createRendere(String key, String color, String shape, String stroke) throws XPathExpressionException {
+        TaColor c = TaColor.valueOf(parameter.getParameter(key,color));
+        TaStroke st = TaStroke.valueOf(parameter.getParameter(key,stroke));
+        TaShape sh = TaShape.valueOf(parameter.getParameter(key,shape));
+        return createRendere(c,st,sh);
+    }
+
 }

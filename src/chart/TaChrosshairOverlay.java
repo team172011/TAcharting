@@ -62,7 +62,7 @@ public class TaChrosshairOverlay extends CrosshairOverlay{
             }
         }
 
-        /* TODO: add horizontal crosshair with correct value. Currently the subplots shift this value
+        /* TODO: add horizontal crosshair with correct value. Currently adding the subplots shift this value
         maybe something like yy-(v*(subplots.size()-1))
 
 
