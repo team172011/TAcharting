@@ -8,6 +8,8 @@
 
 ### White and black theme
 ![Show Chart](https://github.com/team172011/ta4j-charting/blob/master/src/data/screenshots/whiteTheme.PNG)
+### Fast and free zoom
+![Show Chart](https://github.com/team172011/ta4j-charting/blob/master/src/data/screenshots/zoom.png )
 ### Plot a candle sticks chart of a TimeSeries object
 ![Show Chart](https://github.com/team172011/ta4j-charting/blob/master/src/data/screenshots/show_graph.png )
 
