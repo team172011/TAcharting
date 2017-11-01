@@ -20,22 +20,22 @@
 package chart;
 
 import chart.types.IndicatorParameters.*;
-import eu.verdelhan.ta4j.Decimal;
-import eu.verdelhan.ta4j.Indicator;
-import eu.verdelhan.ta4j.TimeSeries;
-import eu.verdelhan.ta4j.TradingRecord;
-import eu.verdelhan.ta4j.indicators.*;
-import eu.verdelhan.ta4j.indicators.bollinger.*;
-import eu.verdelhan.ta4j.indicators.helpers.*;
-import eu.verdelhan.ta4j.indicators.keltner.KeltnerChannelLowerIndicator;
-import eu.verdelhan.ta4j.indicators.keltner.KeltnerChannelMiddleIndicator;
-import eu.verdelhan.ta4j.indicators.keltner.KeltnerChannelUpperIndicator;
-import eu.verdelhan.ta4j.indicators.statistics.StandardDeviationIndicator;
-import eu.verdelhan.ta4j.indicators.volume.NVIIndicator;
-import eu.verdelhan.ta4j.indicators.volume.OnBalanceVolumeIndicator;
-import eu.verdelhan.ta4j.indicators.volume.PVIIndicator;
-import eu.verdelhan.ta4j.indicators.volume.VWAPIndicator;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
+import org.ta4j.core.Decimal;
+import org.ta4j.core.Indicator;
+import org.ta4j.core.TimeSeries;
+import org.ta4j.core.TradingRecord;
+import org.ta4j.core.indicators.*;
+import org.ta4j.core.indicators.bollinger.*;
+import org.ta4j.core.indicators.candles.LowerShadowIndicator;
+import org.ta4j.core.indicators.candles.RealBodyIndicator;
+import org.ta4j.core.indicators.candles.UpperShadowIndicator;
+import org.ta4j.core.indicators.helpers.*;
+import org.ta4j.core.indicators.keltner.KeltnerChannelLowerIndicator;
+import org.ta4j.core.indicators.keltner.KeltnerChannelMiddleIndicator;
+import org.ta4j.core.indicators.keltner.KeltnerChannelUpperIndicator;
+import org.ta4j.core.indicators.statistics.StandardDeviationIndicator;
+import org.ta4j.core.indicators.volume.*;
 
 import javax.xml.xpath.XPathException;
 import javax.xml.xpath.XPathExpressionException;
@@ -62,21 +62,6 @@ public class TaChartIndicatorBox extends Observable {
         this.series = series;
         this.closePriceIndicator = new ClosePriceIndicator(series);
         this.parameter = new TaPropertiesManager(this);
-    }
-
-    /**
-     * Store all indicators from properties file in this indicator box
-     */
-    public void initIndicatorsFromPropertyFile() {
-        List<String> indicatorIdentifierList = parameter.getAllKeys();
-        for (String indicatorIdentifier: indicatorIdentifierList){
-            try {
-                reloadIndicator(indicatorIdentifier);
-            } catch (XPathException xpe){
-                //TODO: handle exception
-                xpe.printStackTrace();
-            }
-        }
     }
 
     public void addTradingRecord(String name, TradingRecord record){
@@ -243,7 +228,7 @@ public class TaChartIndicatorBox extends Observable {
         TaChartType chartType = parameter.getChartType(key);
         addChartIndicator(key,
                 new AmountIndicator(series),
-                String.format("Amount [%2]", getID(key)),
+                String.format("Amount [%s]", getID(key)),
                 renderer,
                 chartType.toBoolean(),
                 category);
@@ -281,7 +266,6 @@ public class TaChartIndicatorBox extends Observable {
 
     // PVIIndicator
     public void loadPVIIndicator(String key) throws XPathExpressionException {
-        int timeFrame = Integer.parseInt(parameter.getParameter(key, "Time Frame"));
         TaCategory category = parameter.getCategory(key);
         TaChartType chartType = parameter.getChartType(key);
         XYLineAndShapeRenderer renderer = createRendere(key, "Color", "Shape", "Stroke");
@@ -308,7 +292,7 @@ public class TaChartIndicatorBox extends Observable {
     }
 
     // OnBalanceVolumeIndicator
-    public void loadOnBalanceVolumenIndicator(String key) throws XPathExpressionException {
+    public void loadOnBalanceVolumeIndicator(String key) throws XPathExpressionException {
         TaCategory category = parameter.getCategory(key);
         TaChartType chartType = parameter.getChartType(key);
         XYLineAndShapeRenderer renderer = createRendere(key, "Color", "Shape", "Stroke");
@@ -504,144 +488,182 @@ public class TaChartIndicatorBox extends Observable {
                 category);
     }
 
-/*
-
-
-
-
-
-
     // Lower Shadown Indicator
-    public void loadLowerShadowIndicator(String identifier){
-        XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer();
-        renderer.setSeriesStroke(0, TaTypes.BIG_DOTS);
-        renderer.setSeriesPaint(0, Color.RED);
-        renderer.setSeriesShape(0, TaTypes.NONE);
-        addChartIndicator(identifier,new LowerShadowIndicator(series),"Lower Shadow",renderer, true, TaTypes.categories.CANDLES);
+    public  void loadLowerShadowIndicator(String key) throws XPathExpressionException {
+        XYLineAndShapeRenderer renderer = createRendere(key, "Color", "Shape", "Stroke");
+        TaCategory category = parameter.getCategory(key);
+        addChartIndicator(key,new LowerShadowIndicator(series),String.format("%s [%s]", getIdentifier(key), getID(key)),renderer, true, category);
+    }
+
+    // Upper Shadown Indicator
+    public  void loadUpperShadowIndicator(String key) throws XPathExpressionException {
+        XYLineAndShapeRenderer renderer = createRendere(key, "Color", "Shape", "Stroke");
+        TaCategory category = parameter.getCategory(key);
+        addChartIndicator(key,new UpperShadowIndicator(series),String.format("%s [%s]", getIdentifier(key), getID(key)),renderer, true, category);
+    }
+
+    // Upper Shadown Indicator
+    public  void loadRealBodyIndicator(String key) throws XPathExpressionException {
+        XYLineAndShapeRenderer renderer = createRendere(key, "Color", "Shape", "Stroke");
+        TaCategory category = parameter.getCategory(key);
+        addChartIndicator(key, new RealBodyIndicator(series),String.format("%s [%s]", getIdentifier(key), getID(key)),renderer, true, category);
     }
 
     // MVWAP + VWAP
-    public void loadMVWAPIndicator(String identifier){
-        int params[] = {20,10};
-        params = parameter.getXIntFor(identifier, 2, params);
-        VWAPIndicator vwap = new VWAPIndicator(series,params[0]);
+    public void loadMVWAPIndicator(String key) throws XPathException{
+        int timeFrameMVWAP = Integer.parseInt(parameter.getParameter(key, "Time Frame VWAP"));
+        int timeFrameVWAP = Integer.parseInt(parameter.getParameter(key, "Time Frame MVWAP"));
 
-        MVWAPIndicator mvwap = new MVWAPIndicator(vwap,params[1]);
+        VWAPIndicator vwap = new VWAPIndicator(series,timeFrameVWAP);
+        MVWAPIndicator mvwap = new MVWAPIndicator(vwap,timeFrameMVWAP);
+
         List<Indicator> ilVwap = new ArrayList<>();
         List<String> nlVwap = new ArrayList<>();
-        XYLineAndShapeRenderer wapRenderer = new XYLineAndShapeRenderer();
-        wapRenderer.setSeriesPaint(0, Color.MAGENTA);
-        wapRenderer.setSeriesStroke(0,TaTypes.SMALL_LINE);
-        wapRenderer.setSeriesShape(0, TaTypes.NONE);
-        wapRenderer.setSeriesPaint(1, Color.lightGray);
-        wapRenderer.setSeriesStroke(1,TaTypes.SMALL_LINE);
-        wapRenderer.setSeriesShape(1, TaTypes.NONE);
-        ilVwap.add(vwap);
+
+        XYLineAndShapeRenderer wapRenderer = createRendere(key, "Color MVWAP", "Shape MVWAP", "Stroke MVWAP");
+        TaColor vwapColor = TaColor.valueOf(parameter.getParameter(key, "Color VWAP"));
+        TaStroke vwapStroke = TaStroke.valueOf(parameter.getParameter(key, "Stroke VWAP"));
+        TaShape vwapShape = TaShape.valueOf(parameter.getParameter(key, "Shape VWAP"));
+        wapRenderer.setSeriesPaint(1, vwapColor.getPaint());
+        wapRenderer.setSeriesStroke(1, vwapStroke.getStroke());
+        wapRenderer.setSeriesShape(1, vwapShape.getShape());
+        TaCategory category = parameter.getCategory(key);
+        TaChartType chartType = parameter.getChartType(key);
         ilVwap.add(mvwap);
-        nlVwap.add("VWAP "+params[0]);
-        nlVwap.add("MVWAP "+params[1]);
-        addChartIndicator(identifier, ilVwap, nlVwap,"MVWAP/VWAP ",wapRenderer,false, TaTypes.categories.VOLUME);
-    }
-
-    // Real Body Indicator
-    public void loadRealBodyIndicator(String identifier){
-        XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer();
-        renderer.setSeriesStroke(0, TaTypes.BIG_DOTS);
-        renderer.setSeriesPaint(0, Color.RED);
-        renderer.setSeriesShape(0, TaTypes.NONE);
-        addChartIndicator(identifier,new RealBodyIndicator(series), true, TaTypes.categories.CANDLES);
-
-    }
-
-    //Upper Shadow Indicator
-    public void loadUpperShadowIndicator(String identifier){
-        XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer();
-        renderer.setSeriesStroke(0, TaTypes.BIG_DOTS);
-        renderer.setSeriesPaint(0, Color.RED);
-        renderer.setSeriesShape(0, TaTypes.NONE);
-
-        addChartIndicator(identifier,new UpperShadowIndicator(series),"Upper Shadow", renderer, true, TaTypes.categories.CANDLES);
+        ilVwap.add(vwap);
+        nlVwap.add(String.format("%s [%s] (%s)",getIdentifier(key), getID(key), timeFrameMVWAP));
+        nlVwap.add(String.format("%s [%s] (%s)","VWAP", getID(key), timeFrameVWAP));
+        addChartIndicator(key, ilVwap, nlVwap,"MVWAP/VWAP ",wapRenderer, chartType.toBoolean(), category);
     }
 
     // TrailingStopLossIndicator
-    public void loadTraillingStopLossIndicator(String identifier){
-        double trailingStopLossTreshold = parameter.getOneDoubleFor(identifier,0.1);
-        addChartIndicator(identifier,new TrailingStopLossIndicator(closePriceIndicator,Decimal.valueOf(trailingStopLossTreshold)),
-                "Trailing Stop Loss "+trailingStopLossTreshold, false, TaTypes.categories.DEFAULT);
-    }
+    public void loadTraillingStopLossIndicator(String key) throws XPathException{
+        Double threshold = Double.parseDouble(parameter.getParameter(key, "Threshold"));
 
+        TaChartType chartType = parameter.getChartType(key);
+        TaCategory category = parameter.getCategory(key);
+        XYLineAndShapeRenderer xyLineAndShapeRenderer = createRendere(key, "Color", "Shape", "Stroke");
+        addChartIndicator(key,
+                new TrailingStopLossIndicator(closePriceIndicator,Decimal.valueOf(threshold)),
+                String.format("%s [%s] (%s)", getIdentifier(key), getID(key), threshold),
+                xyLineAndShapeRenderer,
+                chartType.toBoolean(),
+                category);
+    }
 
     // Triple EMAIndicator
-    public void loadTrippleEMAIndicator(String identifier){
-        int trippleEmaTimeFrame = parameter.getOneIntFor(identifier,20);
-        addChartIndicator(identifier,new TripleEMAIndicator(closePriceIndicator, trippleEmaTimeFrame),
-                "Triple EMA "+trippleEmaTimeFrame, false, TaTypes.categories.DEFAULT);
+    public void loadTrippleEMAIndicator(String key) throws XPathException{
+        int timeFrame =Integer.parseInt(parameter.getParameter(key, "Time Frame"));
+
+        TaChartType chartType = parameter.getChartType(key);
+        TaCategory category = parameter.getCategory(key);
+        XYLineAndShapeRenderer xyLineAndShapeRenderer = createRendere(key, "Color", "Shape", "Stroke");
+        addChartIndicator(key,
+                new TripleEMAIndicator(closePriceIndicator, timeFrame),
+                String.format("%s [%s] (%s)", getIdentifier(key), getID(key), timeFrame),
+                xyLineAndShapeRenderer,
+                chartType.toBoolean(),
+                category);
     }
 
-
     // UlcerIndexIndicator
-    public void loadUlcerIndexIndicator(String identifier){
-        int UlcerIndexIndicator_1 = parameter.getOneIntFor(identifier,20);
-        addChartIndicator(identifier,new UlcerIndexIndicator(closePriceIndicator, UlcerIndexIndicator_1),
-                "Ulcer Index "+UlcerIndexIndicator_1, true, TaTypes.categories.DEFAULT);
+    public void loadUlcerIndexIndicator(String key) throws XPathException{
+        XYLineAndShapeRenderer renderer = createRendere(key, "Color", "Shape", "Stroke");
+        int timeFrame = Integer.parseInt(parameter.getParameter(key, "Time Frame"));
+        TaCategory category = parameter.getCategory(key);
+        TaChartType chartType = parameter.getChartType(key);
+        addChartIndicator(key, new UlcerIndexIndicator(closePriceIndicator, timeFrame),
+                String.format("%s [%s]", getIdentifier(key), getID(key)),renderer, chartType.toBoolean(), category);
     }
 
 
     // WMAIndicator
-    public void loadWMAIndicator(String identifier){
-        int WMAIndicator_1 = parameter.getOneIntFor(identifier,20);
-        addChartIndicator(identifier,new WMAIndicator(closePriceIndicator, WMAIndicator_1),
-                "WMA "+WMAIndicator_1, false, TaTypes.categories.DEFAULT);
+    public void loadWMAIndicator(String key) throws XPathException{
+        int timeFrame = Integer.parseInt(parameter.getParameter(key, "Time Frame"));
+        XYLineAndShapeRenderer renderer = createRendere(key, "Color", "Shape", "Stroke");
+        TaCategory category = parameter.getCategory(key);
+        TaChartType chartType = parameter.getChartType(key);
+        addChartIndicator(key, new WMAIndicator(closePriceIndicator, timeFrame),String.format("%s [%s] (%s)",
+                getIdentifier(key), getID(key), timeFrame),renderer, chartType.toBoolean(), category);
     }
 
 
     // ZLEMAIndicator
-    public void loadZLEMAIndicator(String identifier){
-        int ZLEMAIndicator_1 = parameter.getOneIntFor(identifier, 20);
-        addChartIndicator(identifier, new ZLEMAIndicator(closePriceIndicator, ZLEMAIndicator_1),"ZLEMA "+ZLEMAIndicator_1, false, TaTypes.categories.DEFAULT);
+    public void loadZLEMAIndicator(String key) throws XPathException{
+        int ZLEMAIndicator_1 = Integer.parseInt(parameter.getParameter(key, "Time Frame"));
+        XYLineAndShapeRenderer renderer = createRendere(key, "Color", "Shape", "Stroke");
+        TaCategory category = parameter.getCategory(key);
+        TaChartType chartType = parameter.getChartType(key);
+        addChartIndicator(key,
+                new ZLEMAIndicator(closePriceIndicator, ZLEMAIndicator_1),String.format("%s [%s] (%s)",
+                        getIdentifier(key), getID(key),ZLEMAIndicator_1), renderer, chartType.toBoolean(), category);
     }
 
+
+
+
     // RAVI Indicator
-    public void loadRAVIIndicator(String identifier){
-        int[] raviPara = {7,65};
-        raviPara = parameter.getXIntFor("identifier", 2, raviPara);
-        addChartIndicator(identifier,new RAVIIndicator(closePriceIndicator, raviPara[0], raviPara[1]),
-                "RAVI "+raviPara[0]+","+raviPara[1], true, TaTypes.categories.DEFAULT);
+    public void loadRAVIIndicator(String key) throws XPathException{
+        int timeFrameShort = Integer.parseInt(parameter.getParameter(key, "Time Frame Short"));
+        int timeFrameLong = Integer.parseInt(parameter.getParameter(key, "Time Frame Long"));
+        XYLineAndShapeRenderer renderer = createRendere(key, "Color", "Shape", "Stroke");
+        TaCategory category = parameter.getCategory(key);
+        TaChartType chartType = parameter.getChartType(key);
+
+        addChartIndicator(key,new RAVIIndicator(closePriceIndicator, timeFrameShort, timeFrameLong),
+                String.format("%s [%s] (%s, %s)", getIdentifier(key), getID(key),timeFrameShort,timeFrameLong),
+                renderer,chartType.toBoolean(), category);
     }
 
 
     // ROC Indicator
-    public void loadROCIndicator(String identifier){
-        int rocPara = parameter.getOneIntFor(identifier, 20);
-        addChartIndicator(identifier, new ROCIndicator(closePriceIndicator, rocPara),
-                "ROC cp "+rocPara, true, TaTypes.categories.DEFAULT);
+    public void loadROCIndicator(String key) throws XPathException{
+        int timeFrame = Integer.parseInt(parameter.getParameter(key, "Time Frame"));
+        XYLineAndShapeRenderer renderer = createRendere(key, "Color", "Shape", "Stroke");
+        TaCategory category = parameter.getCategory(key);
+        TaChartType chartType = parameter.getChartType(key);
+        addChartIndicator(key,
+                new ROCIndicator(closePriceIndicator, timeFrame),String.format("%s [%s] (%s)",
+                        getIdentifier(key), getID(key), timeFrame), renderer, chartType.toBoolean(), category);
     }
 
     // Fisher Indicator
-    public void loadFischerIndicator(String identifier) {
-        double[] fischerParams = {20, 0.33, 0.67};
-        fischerParams = parameter.getXDoubleFor(identifier, 3, fischerParams);
-        addChartIndicator(identifier, new FisherIndicator(closePriceIndicator, (int) fischerParams[0], Decimal.valueOf(fischerParams[1]), Decimal.valueOf(fischerParams[2])),
-                "Fisher cp" + fischerParams[0] + fischerParams[1] + fischerParams[2], true, TaTypes.categories.DEFAULT);
+    public void loadFischerIndicator(String key) throws XPathException{
+        int timeFrame = Integer.parseInt(parameter.getParameter(key, "Time Frame"));
+        double alpha = Double.parseDouble(parameter.getParameter(key, "Alpha"));
+        double beta = Double.parseDouble(parameter.getParameter(key, "Beta"));
+        TaCategory category = parameter.getCategory(key);
+        TaChartType chartType = parameter.getChartType(key);
+        addChartIndicator(key, new FisherIndicator(closePriceIndicator, timeFrame, Decimal.valueOf(alpha), Decimal.valueOf(beta)),
+                String.format("%s [%s] (%s, %s, %s)", getIdentifier(key), getID(key),timeFrame,alpha,beta),
+                chartType.toBoolean(), category);
     }
+
     // HMA Indicator
-    public void loadHMAIndicator(String identifier) {
-        int hamaFrame = parameter.getOneIntFor(identifier, 20);
-        addChartIndicator(identifier,new HMAIndicator(closePriceIndicator, hamaFrame),
-                "HMA cp" + hamaFrame, false, TaTypes.categories.DEFAULT);
+    public void loadHMAIndicator(String key) throws XPathException {
+        int timeFrame = Integer.parseInt(parameter.getParameter(key, "Time Frame"));
+        XYLineAndShapeRenderer renderer = createRendere(key, "Color", "Shape", "Stroke");
+        TaCategory category = parameter.getCategory(key);
+        TaChartType chartType = parameter.getChartType(key);
+        addChartIndicator(key, new HMAIndicator(closePriceIndicator, timeFrame),
+                String.format("%s [%s] (%s)",getIdentifier(key), getID(key), timeFrame), chartType.toBoolean(),
+                category);
     }
 
     // KAMA Indicator
-    public void loadKAMAIndicator(String identifier){
-        int[] kamaParams = {10,2,50};
-        kamaParams = parameter.getXIntFor(identifier,3,kamaParams);
-        addChartIndicator(identifier,new KAMAIndicator(closePriceIndicator,kamaParams[0],kamaParams[1],kamaParams[2]),
-                "KAMA cp"+kamaParams[0]+" "+kamaParams[1]+" "+kamaParams[2], false, TaTypes.categories.DEFAULT);
+    public void loadKAMAIndicator(String key) throws XPathException{
+        int timeFrameEffRatio = Integer.parseInt(parameter.getParameter(key, "Time Frame Effective Ratio"));
+        int timeFrameFast = Integer.parseInt(parameter.getParameter(key, "Time Frame Slow"));
+        int timeFrameSlow = Integer.parseInt(parameter.getParameter(key, "Time Frame Fast"));
+        XYLineAndShapeRenderer renderer = createRendere(key, "Color", "Shape", "Stroke");
+        TaCategory category = parameter.getCategory(key);
+        TaChartType chartType = parameter.getChartType(key);
+
+        addChartIndicator(key,new KAMAIndicator(closePriceIndicator,timeFrameEffRatio,timeFrameFast,timeFrameSlow),
+                String.format("%s [%s] (%s, %s, %s)",getIdentifier(key), getID(key), timeFrameEffRatio, timeFrameFast, timeFrameSlow),
+                chartType.toBoolean(), category);
     }
 
-
-
-*/
 
     /**
      * Creates and add all ta4j indicators with generic type Decimal to the box.
@@ -649,10 +671,17 @@ public class TaChartIndicatorBox extends Observable {
      */
     public void initAllIndicators(){
 
-        // closePrice
+        addChartIndicator("closePriceIndicator", closePriceIndicator, false, HELPERS);
 
-        addChartIndicator("closePriceIndicator",closePriceIndicator,false, HELPERS);
-
+        List<String> allKeys = parameter.getAllKeys();
+        for(String key: allKeys){
+            try {
+                reloadIndicator(key);
+            } catch (XPathException xpe){
+                //TODO: handle exception
+                xpe.printStackTrace();
+            }
+        }
 
         /*
         // Average Gain indicator
@@ -1134,8 +1163,8 @@ public class TaChartIndicatorBox extends Observable {
                 loadNVIIndicator(key);
                 break;
             }
-            case "OnBalanceVolumenIndicator":{
-                loadOnBalanceVolumenIndicator(key);
+            case "OnBalanceVolumeIndicator":{
+                loadOnBalanceVolumeIndicator(key);
                 break;
             }
             case "MACDIndicator":{
@@ -1158,7 +1187,7 @@ public class TaChartIndicatorBox extends Observable {
                 loadKeltner(key);
                 break;
             }
-/*
+
             case "LowerShadowIndicator":{
                 loadLowerShadowIndicator(key);
                 break;
@@ -1167,7 +1196,7 @@ public class TaChartIndicatorBox extends Observable {
                 loadMVWAPIndicator(key);
                 break;
             }
-            case "RealBodyIndicator":{
+             case "RealBodyIndicator":{
                 loadRealBodyIndicator(key);
                 break;
             }
@@ -1175,8 +1204,6 @@ public class TaChartIndicatorBox extends Observable {
                 loadUpperShadowIndicator(key);
                 break;
             }
-
-
             case "TrailingStopLossIndicator":{
                 loadTraillingStopLossIndicator(key);
                 break;
@@ -1185,8 +1212,12 @@ public class TaChartIndicatorBox extends Observable {
                 loadTrippleEMAIndicator(key);
                 break;
             }
-            case "UlcerIndexIndicator":{
+           case "UlcerIndexIndicator":{
                 loadUlcerIndexIndicator(key);
+                break;
+            }
+            case "VWAPIndicator":{
+                loadVWAPIndicator(key);
                 break;
             }
             case "WMAIndicator":{
@@ -1197,7 +1228,7 @@ public class TaChartIndicatorBox extends Observable {
                 loadZLEMAIndicator(key);
                 break;
             }
-            case "RAVIIndicator":{
+               case "RAVIIndicator":{
                 loadRAVIIndicator(key);
                 break;
             }
@@ -1209,7 +1240,7 @@ public class TaChartIndicatorBox extends Observable {
                 loadHMAIndicator(key);
                 break;
             }
-            case "FischerIndicator":{
+            case "FisherIndicator":{
                 loadFischerIndicator(key);
                 break;
             }
@@ -1217,9 +1248,9 @@ public class TaChartIndicatorBox extends Observable {
                 loadKAMAIndicator(key);
                 break;
             }
-*/
+
             default:
-                throw new IllegalArgumentException(key+ "could not be loaded!");
+                throw new IllegalArgumentException(key+ " could not be loaded!");
         }
     }
 
@@ -1242,7 +1273,7 @@ public class TaChartIndicatorBox extends Observable {
     }
 
     //TODO: add more features in xml: lines, Based on indicator
-    //TODO: add createRenderer function for several lines
+    //TODO: add createRenderer function for several lines like itchimoku needs
     private XYLineAndShapeRenderer createRendere(TaColor color, TaStroke stroke, TaShape shape){
         boolean sh = true;
 

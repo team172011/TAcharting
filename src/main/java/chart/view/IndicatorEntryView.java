@@ -34,6 +34,7 @@ import java.util.Map;
 
 
 public class IndicatorEntryView {
+
     private JButton btn_add;
     private JButton btn_save;
     private JPanel rootPanel;
@@ -45,7 +46,6 @@ public class IndicatorEntryView {
     private TaPropertiesManager propertiesManager;
 
     /**
-     *
      * Uses a gui form to create an entry for a specific indicator
      * @param key the key of the indicator
      * @param indicatorBox a TaChartIndicatorBox instance
@@ -187,7 +187,7 @@ public class IndicatorEntryView {
         public void actionPerformed(ActionEvent e) {
             try {
                 propertiesManager.duplicate(getKey());
-                JOptionPane.showMessageDialog(btn_save, "Duplicated! Please close and open again to see the duplicated Indicator");
+                JOptionPane.showMessageDialog(btn_save, "Duplicated! Please close and open again to see/add the duplicated Indicator");
             } catch (XPathException xpe){
                 JOptionPane.showMessageDialog(btn_save, "Could not duplicate indicator: "+xpe.toString());
             } catch (TransformerException e1) {

@@ -22,7 +22,7 @@ import chart.TaChart;
 import chart.TaChartIndicator;
 import chart.TaChartIndicatorBox;
 import chart.types.IndicatorParameters;
-import eu.verdelhan.ta4j.TradingRecord;
+import org.ta4j.core.TradingRecord;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -32,9 +32,7 @@ import java.util.*;
 public class TaChartMenuBar extends JMenuBar implements Observer{
 
     private JMenu tradingMenu;
-    private JMenu settingsMenu;
     private JMenu indicatorsMenu;
-    private JMenuItem notifications;
 
     private TaChart taChart;
     private TaChartIndicatorBox indicatorBox;
@@ -43,8 +41,8 @@ public class TaChartMenuBar extends JMenuBar implements Observer{
         this.taChart = taChart;
         this.indicatorBox = indicatorBox;
         indicatorBox.addObserver(this);
-        settingsMenu = new JMenu("Settings");
-        notifications = new JMenuItem("Indicator Parameters");
+        JMenu settingsMenu = new JMenu("Settings");
+        JMenuItem notifications = new JMenuItem("Add Indicators");
         tradingMenu = new JMenu("Trading Records");
         indicatorsMenu = new JMenu("Indicators");
         notifications.addActionListener(new NotificationsListener(indicatorBox, this));
@@ -56,7 +54,6 @@ public class TaChartMenuBar extends JMenuBar implements Observer{
     }
 
     public void updateMenuBar(TaChartIndicatorBox indicatorBox, TaChart taChart){
-        tradingMenu.removeAll();
         for (MenuElement element: indicatorsMenu.getSubElements()){
             ((JPopupMenu) element).removeAll();
         }
@@ -84,9 +81,11 @@ public class TaChartMenuBar extends JMenuBar implements Observer{
         }
 
         // add tradingRecords
+        tradingMenu.removeAll();
         Iterator<Map.Entry<String, TradingRecord>> itTrade = indicatorBox.getAllTradingRecords().entrySet().iterator();
         while(itTrade.hasNext()){
             Map.Entry<String, TradingRecord> recordEntry = itTrade.next();
+            taChart.plotTradingRecord(recordEntry.getValue(), false);
             TaCheckBoxItem entry = new TaCheckBoxItem(recordEntry.getKey());
             entry.addActionListener(new TradingRecordListener(taChart, entry, recordEntry.getValue()));
             this.tradingMenu.add(entry);
@@ -147,7 +146,6 @@ public class TaChartMenuBar extends JMenuBar implements Observer{
                     selectedIdentifiers.add(entry.getValue());
                 }
             }
-
             return selectedIdentifiers;
         }
     }

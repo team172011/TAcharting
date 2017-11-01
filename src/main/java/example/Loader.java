@@ -20,10 +20,10 @@
 package example;
 
 import com.opencsv.CSVReader;
-import eu.verdelhan.ta4j.BaseTick;
-import eu.verdelhan.ta4j.BaseTimeSeries;
-import eu.verdelhan.ta4j.Tick;
-import eu.verdelhan.ta4j.TimeSeries;
+import org.ta4j.core.BaseTick;
+import org.ta4j.core.BaseTimeSeries;
+import org.ta4j.core.Tick;
+import org.ta4j.core.TimeSeries;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -77,7 +77,7 @@ public class Loader {
         return getHourlyTimeSeries(pathToCsv, name);
     }
 
-    public static TimeSeries getDailyTimeSerie(URL file, String name){
+    public static TimeSeries getDailyTimeSeries(URL file, String name){
 
         List<Tick> ticks = new ArrayList<>();
         CSVReader reader;

@@ -19,8 +19,6 @@
 package chart;
 
 import chart.view.TaChartMenuBar;
-import eu.verdelhan.ta4j.*;
-import eu.verdelhan.ta4j.Tick;
 import org.jfree.chart.ChartMouseEvent;
 import org.jfree.chart.ChartMouseListener;
 import org.jfree.chart.ChartPanel;
@@ -42,6 +40,8 @@ import org.jfree.ui.ApplicationFrame;
 import org.jfree.ui.RectangleAnchor;
 import org.jfree.ui.RectangleEdge;
 import org.jfree.ui.TextAnchor;
+import org.ta4j.core.*;
+import org.ta4j.core.Tick;
 
 import javax.swing.*;
 import java.awt.*;
@@ -89,6 +89,12 @@ public class TaChart extends ApplicationFrame implements ChartMouseListener {
         }
     }
 
+    /**
+     * Constructor
+     * @param series a ta4j series
+     * @param box a TaChartIndicatorBox
+     * @param darkTheme true if dark theme should be used
+     */
     public TaChart(TimeSeries series, TaChartIndicatorBox box, boolean darkTheme){
         super("TaCharting "+series.getName());
         mapTradingRecordMarker = new HashMap<>();
@@ -137,22 +143,24 @@ public class TaChart extends ApplicationFrame implements ChartMouseListener {
     }
 
     // searching for a better way... currently recreate all because it is not possible to clean remove a data set
+    // from an existing chart
     public void rep(){
         Dimension frameSize = getSize();
-        Color bg = chartPanel.getBackground();
+        Color bg = this.chartPanel.getBackground();
         Color frameBg= getBackground();
-        Paint chartBg = chart.getBackgroundPaint();
-        LegendTitle chartLegend = chart.getLegend();
+        Paint chartBg = this.chart.getBackgroundPaint();
+        LegendTitle chartLegend = this.chart.getLegend();
         Paint legendBg = chartLegend.getBackgroundPaint();
         Paint legendItemPaint = chartLegend.getItemPaint();
         Font legendItemFont = chartLegend.getItemFont();
 
 
-        this.chart = new JFreeChart(series.getName(), combinedXYPlot);
+        this.chart = new JFreeChart(this.series.getName(), this.combinedXYPlot);
         this.chart.setBackgroundPaint(chartBg);
-        this.chartPanel = new ChartPanel(chart);
+        this.chartPanel = new ChartPanel(this.chart);
         this.chartPanel.addChartMouseListener(this);
         this.chartPanel.addOverlay(createCrosshairOverlay());
+        this.chartPanel.setBackground(bg);
         LegendTitle legend = chart.getLegend();
         legend.setPosition(RectangleEdge.RIGHT);
         legend.setItemFont(legendItemFont);
@@ -164,8 +172,6 @@ public class TaChart extends ApplicationFrame implements ChartMouseListener {
         setContentPane(chartPanel);
         revalidate();
     }
-
-    //TODO summarize both methods to make sure that plotOverlay is called befor plotSubplots
 
     /**
      * plots or removes the trading record
@@ -184,13 +190,16 @@ public class TaChart extends ApplicationFrame implements ChartMouseListener {
 
     private void removeEntryExitSignals(TradingRecord record) {
         List<Marker> markers = this.mapTradingRecordMarker.get(record);
-        for(Marker m: markers){
-            mainPlot.removeDomainMarker(m);
+        if (markers!= null) {
+            for (Marker m : markers) {
+                mainPlot.removeDomainMarker(m);
+            }
+            this.mapTradingRecordMarker.remove(record);
         }
-        this.mapTradingRecordMarker.remove(record);
     }
 
-    /**Adds entry and exits signals to the main plot.
+    /**
+     * Adds entry and exits signals to the main plot.
      * @param record the trading record
      * */
     private void addEntryExitSignals(TradingRecord record){
@@ -233,8 +242,11 @@ public class TaChart extends ApplicationFrame implements ChartMouseListener {
         this.mapTradingRecordMarker.put(record,markers);
     }
 
-    //TODO summarize both methods to make sure that plotOverlay is called befor plotSubplots
-    // create active overlays
+
+    /**
+     * Plots the corresponding indicators of the list of identifiers as overlays
+     * @param indicatorIdentifiers a list of identifiers e.g. "EMAIndicator_1"
+     */
     public void plotOverlays(List<String> indicatorIdentifiers) {
         List<TaChartIndicator> overlays = new ArrayList<>();
         for (String identifier: indicatorIdentifiers){
@@ -251,7 +263,10 @@ public class TaChart extends ApplicationFrame implements ChartMouseListener {
         rep();
     }
 
-    // create active subplots
+    /**
+     * Plots the corresponding indicators of the list of identifiers as subplots
+     * @param indicatorIdentifiers a list of identifiers e.g. "MACDIndicator_1"
+     */
     public void plotSubPlots(List<String> indicatorIdentifiers){
         List<TaChartIndicator> subPlots = new ArrayList<>();
         for (String identifier: indicatorIdentifiers){
@@ -413,7 +428,7 @@ public class TaChart extends ApplicationFrame implements ChartMouseListener {
      * Builds a JFreeChart OHLC dataset from a ta4j time series.
      * @param series a time series
      * @return an Open-High-Low-Close dataset
-     * from  ta4j/ta4j-examples/src/main/java/ta4jexamples/indicators/CandlestickChart.java
+     * See ta4j/ta4j-examples/src/main/java/ta4jexamples/indicators/CandlestickChart.java
      */
     private static OHLCDataset createOHLCDataset(TimeSeries series) {
         final int nbTicks = series.getTickCount();
@@ -439,15 +454,8 @@ public class TaChart extends ApplicationFrame implements ChartMouseListener {
     }
 
 
-    /**
-     * Create one or several XYDatasets to plot an indicator on the mainPlot
-     * @param taChartIndicator an TaChartIndicator that describes the attributes of the indicator(s) that should be plotted
-     * @return id of the renderer and dataset for the main plot
-     */
-    private int createIdForOverlay(TaChartIndicator taChartIndicator){
-        int id = mainPlot.getDatasetCount();
-        return id;
-    }
+
+
 
     public class MyCandlestickRenderer extends CandlestickRenderer {
 

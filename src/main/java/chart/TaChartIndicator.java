@@ -20,12 +20,12 @@
 package chart;
 
 import chart.types.IndicatorParameters;
-import eu.verdelhan.ta4j.Decimal;
-import eu.verdelhan.ta4j.Indicator;
-import eu.verdelhan.ta4j.Tick;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.time.Second;
 import org.jfree.data.time.TimeSeriesCollection;
+import org.ta4j.core.Decimal;
+import org.ta4j.core.Indicator;
+import org.ta4j.core.Tick;
 
 import java.util.ArrayList;
 import java.util.Date;

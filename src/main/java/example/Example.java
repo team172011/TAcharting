@@ -23,12 +23,12 @@ import chart.TaChart;
 import chart.TaChartIndicatorBox;
 import chart.types.IndicatorParameters.TaCategory;
 import chart.types.IndicatorParameters.TaShape;
-import eu.verdelhan.ta4j.*;
-import eu.verdelhan.ta4j.indicators.EMAIndicator;
-import eu.verdelhan.ta4j.indicators.helpers.ClosePriceIndicator;
-import eu.verdelhan.ta4j.trading.rules.CrossedDownIndicatorRule;
-import eu.verdelhan.ta4j.trading.rules.CrossedUpIndicatorRule;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
+import org.ta4j.core.*;
+import org.ta4j.core.indicators.EMAIndicator;
+import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
+import org.ta4j.core.trading.rules.CrossedDownIndicatorRule;
+import org.ta4j.core.trading.rules.CrossedUpIndicatorRule;
 
 import javax.swing.*;
 import java.awt.*;
@@ -48,8 +48,8 @@ public class Example {
     public Example(){
         // get a time series
         ClassLoader cl = getClass().getClassLoader();
-        URL file = cl.getResource("data/fb_daily.csv");
-        series = Loader.getDailyTimeSerie(file, "fb");
+        URL file = cl.getResource("fb_daily.csv");
+        series = Loader.getDailyTimeSeries(file, "fb");
 
         createChart();
 
@@ -62,7 +62,7 @@ public class Example {
         EMAIndicator ema20 = new EMAIndicator(cp,20);
         EMAIndicator ema60 = new EMAIndicator(cp, 60);
 
-        // build strategy
+        // build a strategy
         Rule entry = new CrossedUpIndicatorRule(ema20,ema60);
         Rule exit = new CrossedDownIndicatorRule(ema20, ema60);
         BaseStrategy strategyLong = new BaseStrategy(entry,exit);
@@ -70,7 +70,7 @@ public class Example {
 
         // initialize and add your individual indicators to chart
         TaChartIndicatorBox chartIndicatorBox = new TaChartIndicatorBox(series);
-        //chartIndicatorBox.initIndicatorsFromPropertyFile(); // add all ta4j indicators to the box
+        //chartIndicatorBox.initAllIndicators(); // add all ta4j indicators from properties file to the box/menu
 
         XYLineAndShapeRenderer emaShortRenderer = new XYLineAndShapeRenderer(); // specify how the lines should be rendered
         emaShortRenderer.setSeriesShape(0, TaShape.NONE.getShape());
@@ -98,7 +98,7 @@ public class Example {
         chartIndicatorBox.addChartIndicator("Strategy1",strategyIndicators, names,"my Strategy Ema Short/Long",
                 strategieRenderer,false, TaCategory.DEFAULT);
 
-        // run the strategies
+        // run the strategies and add strategies
         TimeSeriesManager manager = new TimeSeriesManager(series);
         TradingRecord record = manager.run(strategyLong);
         TradingRecord record2 = manager.run(strategyShort, Order.OrderType.SELL);
@@ -106,7 +106,7 @@ public class Example {
         chartIndicatorBox.addTradingRecord("My Record Short", record2);
 
         //plot series, trading record and other indicators
-        TaChart taChartPanel = new TaChart(series,chartIndicatorBox);
+        TaChart taChartPanel = new TaChart(series,chartIndicatorBox, true);
         taChartPanel.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         taChartPanel.setVisible(true);
     }

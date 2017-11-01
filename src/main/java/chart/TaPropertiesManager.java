@@ -65,7 +65,7 @@ public class TaPropertiesManager {
     }
 
     /**
-     * Load the property file (if there is any) and initialize the class variable this.properties
+     * Load the property file (if there is any) and initialize the class variables
      */
     private void loadParametersFile() {
         try {
@@ -89,6 +89,7 @@ public class TaPropertiesManager {
             transformer = transformerFactory.newTransformer();
             result = new StreamResult(propertiesFile);
         } catch (IOException e) {
+            //TODO: Exception handling
             e.printStackTrace();
         } catch (ParserConfigurationException e) {
             e.printStackTrace();
@@ -99,8 +100,6 @@ public class TaPropertiesManager {
         }
 
     }
-
-    //TODO: add color, shape, and stroke to xml as <param name="Color"> and implement methods
 
     /**
      * Reads a parameter from the parameter file

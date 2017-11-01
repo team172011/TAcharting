@@ -27,7 +27,8 @@ import java.awt.*;
 import java.util.List;
 
 /**
- * View for the indicators settings*/
+ * View for the entries of the indicator setting
+ */
 public class ParametersView extends JFrame {
 
     private TaPropertiesManager taParameter;
