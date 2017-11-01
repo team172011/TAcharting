@@ -1,5 +1,5 @@
 # ta4j-charting
-## A charting application to plott and analyse ta4j time series, indicators, strategies and trading records
+## A charting application for plotting and analysing time series, indicators, strategies and trading records
 
 * Includes all (Decimal based) Indicators from Ta4j.
 * Start at the [Wiki](https://github.com/team172011/ta4j-charting/wiki) or take a look at the [Example](https://github.com/team172011/ta4j-charting/blob/master/src/example/Example.java)
