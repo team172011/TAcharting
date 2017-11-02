@@ -24,6 +24,19 @@
         <groupId>org.ta4j</groupId>
         <artifactId>ta4j-core</artifactId>
         <version>0.10</version>
-    </dependency>
+    </dependency>    
+    <dependency>
+    <groupId>org.jfree</groupId>
+    	<artifactId>jfreechart</artifactId>
+    	<version>1.0.19</version>
+	</dependency>
+	<dependency>
+	    <groupId>com.opencsv</groupId>
+	    <artifactId>opencsv</artifactId>
+	    <version>4.0</version>
+	</dependency>
+	
+    
+    
 </dependencies>
 </project>
