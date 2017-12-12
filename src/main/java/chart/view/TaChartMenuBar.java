@@ -93,10 +93,9 @@ public class TaChartMenuBar extends JMenuBar implements Observer{
         this.repaint();
     }
 
-    //TODO: just remove/replace necessary elements
+    // TODO: just remove/replace necessary elements
     @Override
     public void update(Observable o, Object arg) {
-        System.out.println("Updated");
         updateMenuBar(indicatorBox, taChart);
     }
 

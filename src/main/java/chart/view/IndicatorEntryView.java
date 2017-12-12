@@ -55,9 +55,7 @@ public class IndicatorEntryView {
             this.indicatorBox = indicatorBox;
             this.propertiesManager = indicatorBox.getPropertiesManager();
             String[] keyPair = key.split("_");
-            lbl_title.setText(String.format("<html>%s (%s)<br> %s</html>", keyPair[0], keyPair[1], propertiesManager.getDescription(key)));
-            lbl_title.setFont(new Font("Dialog", Font.BOLD, 12));
-            lbl_title.setBorder(BorderFactory.createLineBorder(Color.BLACK,1,true));
+            lbl_title.setText(String.format("<html>   %s (%s)<br><font size=\"2\">   %s</font></html>", keyPair[0], keyPair[1], propertiesManager.getDescription(key)));
             Map mapNameParameter = propertiesManager.getParametersFor(key);
             Iterator<Map.Entry> it = mapNameParameter.entrySet().iterator();
             settingsPanel.setLayout(new GridLayout(mapNameParameter.size(),2));

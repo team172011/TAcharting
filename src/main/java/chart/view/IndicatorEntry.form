@@ -31,7 +31,7 @@
       </component>
       <component id="7dff9" class="javax.swing.JLabel" binding="lbl_title">
         <constraints>
-          <grid row="0" column="0" row-span="1" col-span="7" vsize-policy="0" hsize-policy="0" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+          <grid row="0" column="0" row-span="1" col-span="7" vsize-policy="0" hsize-policy="0" anchor="8" fill="2" indent="0" use-parent-layout="false"/>
           <gridbag weightx="1.0" weighty="0.2"/>
         </constraints>
         <properties>

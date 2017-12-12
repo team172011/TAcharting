@@ -661,9 +661,53 @@ public class TaChartIndicatorBox extends Observable {
 
         addChartIndicator(key,new KAMAIndicator(closePriceIndicator,timeFrameEffRatio,timeFrameFast,timeFrameSlow),
                 String.format("%s [%s] (%s, %s, %s)",getIdentifier(key), getID(key), timeFrameEffRatio, timeFrameFast, timeFrameSlow),
-                chartType.toBoolean(), category);
+                renderer,chartType.toBoolean(), category);
     }
 
+    // Previous Value Indicator
+    public void loadPreviousValueIndicator(String key) throws XPathException{
+        int timeFrame = Integer.parseInt(parameter.getParameter(key,"Time Frame"));
+        XYLineAndShapeRenderer renderer = createRendere(key, "Color", "Shape", "Stroke");
+        TaCategory category = parameter.getCategory(key);
+        addChartIndicator(key, new PreviousValueIndicator(closePriceIndicator, timeFrame),
+                String.format("%s [%s](%s)",getIdentifier(key), getID(key),timeFrame), renderer,
+                false, category);
+
+    }
+
+    // Stochastic RSI Indicator
+    public void loadStochasticRSIIndicator(String key) throws XPathExpressionException{
+        int timeFrame = Integer.parseInt(parameter.getParameter(key, "Time Frame"));
+        XYLineAndShapeRenderer renderer = createRendere(key, "Color", "Shape", "Stroke");
+        TaCategory category = parameter.getCategory(key);
+
+        addChartIndicator(key, new StochasticRSIIndicator(closePriceIndicator,timeFrame),
+                String.format("%s [%s](%s)",getIdentifier(key), getID(key),timeFrame), renderer,true,category);
+    }
+
+
+    // StochasticOscillatorKIndicator StochasticOscillatorDIndicator
+    public void loadStochasticOscillatorKIndicatorStochasticOscillatorDIndicator(String key) throws XPathExpressionException{
+        int timeFrame = Integer.parseInt(parameter.getParameter(key, "Time Frame"));
+        List<Indicator> indicators = new ArrayList<>();
+        List<String> names = new ArrayList<>();
+        XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer();
+        renderer.setSeriesPaint(0,parameter.getColorOf(key, "Color D"));
+        renderer.setSeriesShape(0, parameter.getShapeOf(key, "Shape D"));
+        renderer.setSeriesStroke(0,parameter.getStrokeOf(key, "Stroke D"));
+        renderer.setSeriesStroke(1,parameter.getStrokeOf(key, "Stroke K"));
+        renderer.setSeriesShape(1, parameter.getShapeOf(key, "Shape K"));
+        renderer.setSeriesPaint(1,parameter.getColorOf(key, "Color K"));
+        TaCategory category = parameter.getCategory(key);
+
+        StochasticOscillatorDIndicator stochD = new StochasticOscillatorDIndicator(closePriceIndicator);
+
+        indicators.add(stochD);
+        indicators.add(new StochasticOscillatorKIndicator(stochD,timeFrame,new MaxPriceIndicator(series), new MinPriceIndicator(series)));
+        names.add(String.format("%s [%s]", "Stoch. Oscillator D", getID(key)));
+        names.add(String.format("%s [%s](Stoch. Oscillator D, %s","Stoch. Oscillator K",getID(key),timeFrame));
+        addChartIndicator(key, indicators,names,String.format("Stoch. Oscillator K(%s, %s)","Stoch. Oscillator D",timeFrame),renderer,true,category);
+    }
 
     /**
      * Creates and add all ta4j indicators with generic type Decimal to the box.
@@ -778,10 +822,6 @@ public class TaChartIndicatorBox extends Observable {
         // Open price Indicator
         addChartIndicator("OpenPriceIndicator",new OpenPriceIndicator(series),false, TaTypes.categories.HELPERS);
 
-        // Previous Value Indicator
-        int prevValT = parameter.getOneIntFor("PreviousValueIndicator_1",1);
-        addChartIndicator(new PreviousValueIndicator(closePriceIndicator, prevValT),
-                "Previous Value (cp, "+prevValT+")", false, TaTypes.categories.HELPERS);
 
         // Price Variantion Indicator
         addChartIndicator("PriceVariationIndicator",new PriceVariationIndicator(series),true, TaTypes.categories.HELPERS);
@@ -980,35 +1020,6 @@ public class TaChartIndicatorBox extends Observable {
         randWalkRenderer.setSeriesShape(1, TaTypes.NONE);
         addChartIndicator(ilRw,nlRw,"Random Walk "+rwHighTimeFrame+" "+rwLowTimeFrame,randWalkRenderer,true, TaTypes.categories.DEFAULT);
 
-        // Stochastic RSI Indicator
-        int stochRsiPara = parameter.getOneIntFor("StochasticRSIIndicator_1", 20);
-        addChartIndicator(new StochasticRSIIndicator(closePriceIndicator, 20),
-                "Stochastic RSIIndicator cp "+stochRsiPara, true, TaTypes.categories.DEFAULT);
-
-        // StochasticOscillatorKIndicator StochasticOscillatorDIndicator
-        List<Indicator> ilStKd = new ArrayList<>();
-        List<String> nlStKd = new ArrayList<>();
-        int stochOindicator = parameter.getOneIntFor("StochasticOscillatorKIndicator_1",20);
-        StochasticOscillatorKIndicator stk = new StochasticOscillatorKIndicator(series, stochOindicator);
-        StochasticOscillatorDIndicator std = new StochasticOscillatorDIndicator(stk);
-
-        ilStKd.add(stk);
-        ilStKd.add(std);
-        nlStKd.add("Stoch. O. K "+stochOindicator);
-        nlStKd.add("Stoch. O. D (K)");
-        XYLineAndShapeRenderer osziRender = new XYLineAndShapeRenderer();
-        osziRender.setSeriesPaint(0, Color.BLUE);
-        osziRender.setSeriesStroke(0,TaTypes.SMALL_LINE);
-        osziRender.setSeriesShape(0, TaTypes.NONE);
-        osziRender.setSeriesPaint(1, Color.MAGENTA);
-        osziRender.setSeriesStroke(1,TaTypes.SMALL_LINE);
-        osziRender.setSeriesShape(1, TaTypes.NONE);
-        addChartIndicator(ilStKd,nlStKd,"Stochastic Oscilator D K "+stochOindicator,osziRender, true, TaTypes.categories.DEFAULT);
-
-        addChartIndicator(new StochasticOscillatorDIndicator(closePriceIndicator),
-                "Stochastic Oscillator D", true, TaTypes.categories.DEFAULT);
-        addChartIndicator(new StochasticOscillatorKIndicator(series, stochOindicator),
-                "Stochastic Oscillator K "+stochOindicator, true, TaTypes.categories.DEFAULT);
 
 
         // AccumulationDistributionIndicator
@@ -1246,6 +1257,18 @@ public class TaChartIndicatorBox extends Observable {
             }
             case "KAMAIndicator":{
                 loadKAMAIndicator(key);
+                break;
+            }
+            case "PreviousValueIndicator":{
+                loadPreviousValueIndicator(key);
+                break;
+            }
+            case "StochasticRSIIndicator":{
+                loadStochasticRSIIndicator(key);
+                break;
+            }
+            case "StochasticOscillatorK (OscillatorD)":{
+                loadStochasticOscillatorKIndicatorStochasticOscillatorDIndicator(key);
                 break;
             }
 

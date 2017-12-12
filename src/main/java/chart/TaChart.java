@@ -142,8 +142,8 @@ public class TaChart extends ApplicationFrame implements ChartMouseListener {
         pack();
     }
 
-    // searching for a better way... currently recreate all because it is not possible to clean remove a data set
-    // from an existing chart
+    // searching for a better way... currently recreate all charts and subplots because it is not possible to clean
+    // remove a data set from an existing chart
     public void rep(){
         Dimension frameSize = getSize();
         Color bg = this.chartPanel.getBackground();
@@ -156,6 +156,7 @@ public class TaChart extends ApplicationFrame implements ChartMouseListener {
 
 
         this.chart = new JFreeChart(this.series.getName(), this.combinedXYPlot);
+
         this.chart.setBackgroundPaint(chartBg);
         this.chartPanel = new ChartPanel(this.chart);
         this.chartPanel.addChartMouseListener(this);
@@ -180,9 +181,9 @@ public class TaChart extends ApplicationFrame implements ChartMouseListener {
      */
     public void plotTradingRecord(TradingRecord record, boolean on){
         if (on){
-            this.addEntryExitSignals(record);
+            addEntryExitSignals(record);
         } else  {
-            this.removeEntryExitSignals(record);
+            removeEntryExitSignals(record);
 
         }
 
@@ -206,14 +207,12 @@ public class TaChart extends ApplicationFrame implements ChartMouseListener {
         List<Trade> trades = record.getTrades();
         Order.OrderType orderType = record.getLastExit().getType().complementType();
         List<Marker> markers = new ArrayList<>();
-        Color entryColor = Color.GREEN;
-        Color exitColor = Color.RED;
         RectangleAnchor entryAnchor = RectangleAnchor.TOP_LEFT;
         RectangleAnchor exitAnchor = RectangleAnchor.BOTTOM_RIGHT;
-        if(orderType == Order.OrderType.SELL) {
-            entryColor = Color.RED;
-            exitColor = Color.GREEN;
-        }
+
+        Color entryColor = orderType==Order.OrderType.SELL ? Color.RED : Color.GREEN;
+        Color exitColor = orderType==Order.OrderType.SELL ? Color.GREEN: Color.RED;
+
         for(Trade trade: trades){
             double entry = new Minute(Date.from(series.getTick(trade.getEntry().getIndex()).getEndTime().toInstant())).getFirstMillisecond();
             double exit = new Minute(Date.from(series.getTick(trade.getExit().getIndex()).getEndTime().toInstant())).getFirstMillisecond();
@@ -239,7 +238,7 @@ public class TaChart extends ApplicationFrame implements ChartMouseListener {
             markers.add(in);
             markers.add(out);
         }
-        this.mapTradingRecordMarker.put(record,markers);
+        this.mapTradingRecordMarker.put(record, markers);
     }
 
 
@@ -358,7 +357,7 @@ public class TaChart extends ApplicationFrame implements ChartMouseListener {
 
     private CombinedDomainXYPlot recreateCombinedDomainXYPlot(){
         CombinedDomainXYPlot combinedXYPlot = new CombinedDomainXYPlot(mainPlot.getDomainAxis());
-        combinedXYPlot.setGap(2);
+        combinedXYPlot.setGap(0);
         combinedXYPlot.add(mainPlot,11);
         combinedXYPlot.setOrientation(PlotOrientation.VERTICAL);
         combinedXYPlot.setBackgroundPaint(plotBackground);
@@ -386,7 +385,6 @@ public class TaChart extends ApplicationFrame implements ChartMouseListener {
         numberAxis.setTickLabelFont(new Font("NumberAxisTickFont",1,8));
         numberAxis.setAutoTickUnitSelection(true);
         XYPlot indicatorPlot = new XYPlot(taChartIndicator.getDataSet(), mainPlot.getDomainAxis(), numberAxis, taChartIndicator.getRenderer());
-
         double x = new Minute(Date.from(series.getTick(0).getEndTime().minusDays(50).toInstant())).getFirstMillisecond();
         double y = numberAxis.getLowerBound()+(numberAxis.getUpperBound()+numberAxis.getLowerBound())/1.1;
         XYTextAnnotation annotation = new XYTextAnnotation(taChartIndicator.getGeneralName(), x, y);
@@ -397,6 +395,7 @@ public class TaChart extends ApplicationFrame implements ChartMouseListener {
         indicatorPlot.addAnnotation(annotation);
         indicatorPlot.setBackgroundPaint(plotBackground);
         indicatorPlot.setRangeAxisLocation(AxisLocation.TOP_OR_LEFT);
+
         return indicatorPlot;
     }
 
@@ -412,13 +411,14 @@ public class TaChart extends ApplicationFrame implements ChartMouseListener {
         this.xCrosshair.setLabelVisible(true);
         this.xCrosshair.setLabelBackgroundPaint(Color.WHITE);
         this.xCrosshair.setLabelGenerator(new TaXCrosshairLabelGenerator());
-        this.yCrosshair = new Crosshair(Double.NaN, Color.GRAY, new BasicStroke(0f));
-        this.yCrosshair.setLabelPaint(Color.GRAY);
 
         //TODO: shifts if subplots are added. Find way to calculate y+(sizeOfSubplots)*numSublots
+        this.yCrosshair = new Crosshair(Double.NaN, Color.GRAY, new BasicStroke(0f));
+        this.yCrosshair.setLabelPaint(Color.GRAY);
         this.yCrosshair.setLabelVisible(true);
         this.yCrosshair.setLabelBackgroundPaint(Color.WHITE);
-        this.yCrosshair.setVisible(false);
+        this.yCrosshair.setVisible(true);
+
         crosshairOverlay.addDomainCrosshair(xCrosshair);
         crosshairOverlay.addRangeCrosshair(yCrosshair);
         return crosshairOverlay;
@@ -490,7 +490,6 @@ public class TaChart extends ApplicationFrame implements ChartMouseListener {
         List<XYPlot> subplots = (List<XYPlot>) plot.getSubplots();
 
         DateAxis xAxis = (DateAxis) subplots.get(0).getDomainAxis();
-
         double x = xAxis.java2DToValue(chartMouseEvent.getTrigger().getX(), dataArea, RectangleEdge.BOTTOM);
         double y = DatasetUtilities.findYValue(((XYPlot)plot.getSubplots().get(0)).getDataset(), 0, x);
 
@@ -511,6 +510,72 @@ public class TaChart extends ApplicationFrame implements ChartMouseListener {
             Date itemDate = new Date(itemLong);
             return new SimpleDateFormat().format(itemDate);
         }
+    }
+
+
+    class TaChrosshairOverlay extends CrosshairOverlay {
+
+
+        @Override
+        public void paintOverlay(Graphics2D g2, ChartPanel chartPanel) {
+            Shape savedClip = g2.getClip();
+
+            /**use the complete ScreenDataArea for X-Crosshair paint*/
+            Rectangle2D dataArea = chartPanel.getScreenDataArea();
+
+            g2.clip(dataArea);
+            JFreeChart chart = chartPanel.getChart();
+            CombinedDomainXYPlot plot = (CombinedDomainXYPlot) chart.getPlot();
+            List<XYPlot> subplots = plot.getSubplots();
+
+            // paint domain crosshair -> "standard way" subplot(0) = main plot
+            ValueAxis xAxis = subplots.get(0).getDomainAxis();
+            RectangleEdge xAxisEdge = subplots.get(0).getDomainAxisEdge();
+            Iterator iterator = getDomainCrosshairs().iterator();
+            while (iterator.hasNext()) {
+                Crosshair ch = (Crosshair) iterator.next();
+                if (ch.isVisible()) {
+                    double x = ch.getValue();
+                    double xx = xAxis.valueToJava2D(x, dataArea, xAxisEdge);
+                    if (plot.getOrientation() == PlotOrientation.VERTICAL) {
+                        drawVerticalCrosshair(g2, dataArea, xx, ch);
+                    } else {
+                        drawHorizontalCrosshair(g2, dataArea, xx, ch);
+                    }
+                }
+            }
+
+
+            RectangleEdge yAxisEdge = subplots.get(0).getRangeAxisEdge();
+            ValueAxis yAxis = subplots.get(0).getRangeAxis();
+            iterator = this.getRangeCrosshairs().iterator();
+            /**Use just the subplot(0)=mainPlot ScreenDataArea for Y-Crosshair paint*/
+            Rectangle2D subDataArea = getMainPlotScreenDataArea(chartPanel);
+            while (iterator.hasNext()) {
+                Crosshair ch = (Crosshair) iterator.next();
+                if (ch.isVisible()) {
+                    double y = ch.getValue();
+
+                    double yy = yAxis.valueToJava2D(y, subDataArea, yAxisEdge);
+                    if (plot.getOrientation() == PlotOrientation.VERTICAL) {
+                        drawHorizontalCrosshair(g2, dataArea, yy, ch);
+                    } else {
+                        drawVerticalCrosshair(g2, dataArea, yy, ch);
+                    }
+                }
+            }
+                g2.setClip(savedClip);
+        }
+
+        public Rectangle2D getMainPlotScreenDataArea(ChartPanel chartPanel){
+            Rectangle2D area = chartPanel.getChartRenderingInfo().getPlotInfo().getSubplotInfo(0).getDataArea();
+            double x = area.getX()* chartPanel.getScaleX()+chartPanel.getInsets().left;
+            double y = area.getY()* chartPanel.getScaleY()+chartPanel.getInsets().top;
+            double w = area.getWidth()*chartPanel.getScaleX();
+            double h = area.getHeight()*chartPanel.getScaleY();
+            return new Rectangle2D.Double(x, y, w, h);
+        }
+
     }
 }
 

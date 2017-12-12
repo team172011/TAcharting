@@ -136,8 +136,12 @@ public class TaPropertiesManager {
 
     //TODO overload those with extra int id for further color, shape and stroke params
     public Shape getShapeOf(String key) throws XPathExpressionException {
+        return getShapeOf(key,"Shape");
+    }
+
+    public Shape getShapeOf(String key, String name) throws XPathExpressionException {
         Node node = getNodeForInstance(key);
-        String command = "./param[@name='Shape']";
+        String command = String.format("./param[@name='%s']",name);
         XPathExpression expr = xPath.compile(command);
         Node paramNode = (Node) expr.evaluate(node,XPathConstants.NODE);
         String shape = paramNode.getTextContent();
@@ -148,11 +152,19 @@ public class TaPropertiesManager {
 
     //TODO: add more colors
     public Paint getColorOf(String key) throws XPathExpressionException {
+        return getColorOf(key,"Color");
+    }
+
+    public Paint getColorOf(String key, String name) throws XPathExpressionException {
         Node node = getNodeForInstance(key);
-        String command = "./param[@name='Color']";
+        String command = String.format("./param[@name='%s']",name);
         XPathExpression expr = xPath.compile(command);
         Node paramNode = (Node) expr.evaluate(node,XPathConstants.NODE);
         String color = paramNode.getTextContent();
+        return swithString(color);
+    }
+
+    private Paint swithString(String color){
         switch (color){
             case "YELLOW":
                 return Color.YELLOW;
@@ -174,8 +186,12 @@ public class TaPropertiesManager {
      * @throws XPathExpressionException
      */
     public Stroke getStrokeOf(String key) throws XPathExpressionException {
+        return getStrokeOf(key, "Stroke");
+    }
+
+    public Stroke getStrokeOf(String key, String name) throws XPathExpressionException {
         Node node = getNodeForInstance(key);
-        String command = "./param[@name='Stroke']";
+        String command = String.format("./param[@name='%s']", name);
         XPathExpression expr = xPath.compile(command);
         Node paramNode = (Node) expr.evaluate(node,XPathConstants.NODE);
         String stroke = paramNode.getTextContent();
