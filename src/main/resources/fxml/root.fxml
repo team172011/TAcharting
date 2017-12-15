@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="chart.RootController">
+   <children>
+      <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <children>
+            <MenuBar>
+              <menus>
+                <Menu mnemonicParsing="false" text="Api">
+                    <items>
+                        <MenuItem mnemonicParsing="false" text="Yahoo" />
+                    </items>
+                  <items>
+                    <MenuItem mnemonicParsing="false" text="Google" />
+                  </items>
+                </Menu>
+                <Menu fx:id="indicatorsMenu" mnemonicParsing="false" text="Add Indicator">
+                   <items>
+                       <Menu  fx:id="strategy" mnemonicParsing="false" text="Strategy" />
+                       <Menu fx:id="custom" mnemonicParsing="false" text="Custom" />
+                       <Menu fx:id="def" mnemonicParsing="false" text="Default" />
+                       <Menu fx:id="bollinger" mnemonicParsing="false" text="Bollinger" />
+                       <Menu fx:id="helpers" mnemonicParsing="false" text="Helpers" />
+                       <Menu fx:id="ichimoku" mnemonicParsing="false" text="Ichimoku" />
+                       <Menu fx:id="statistics" mnemonicParsing="false" text="Statistics" />
+                       <Menu fx:id="candles" mnemonicParsing="false" text="Candles" />
+                       <Menu fx:id="volume" mnemonicParsing="false" text="Volume" />
+                       <Menu fx:id="keltner" mnemonicParsing="false" text="Keltner" />
+                   </items>
+                </Menu>
+                <Menu mnemonicParsing="false" fx:id="tradingRecords" text="Trading Records">
+                </Menu>
+                  <Menu mnemonicParsing="false" text="About" />
+              </menus>
+            </MenuBar>
+            <BorderPane fx:id="borderPane" VBox.vgrow="ALWAYS" />
+             <ToolBar fx:id="toolBar" opacity="0.58" prefHeight="39.0" prefWidth="600.0">
+                 <items>
+                     <Button fx:id="clearAll" mnemonicParsing="false" onAction="#clearToogelBar" text="Clear All" />
+                     <Separator orientation="VERTICAL" />
+                 </items>
+             </ToolBar>
+         </children>
+      </VBox>
+   </children>
+</AnchorPane>

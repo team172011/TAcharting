@@ -1,0 +1,23 @@
+
+
+/*Style for the (root) border Pane that holds title, parameters and vBox with buttons*/
+BorderPane {
+    -fx-background-color: rgba(255, 255, 255, .8);
+    -fx-border-color: rgb(0, 0, 0, .8);
+    -fx-border-width: 2px;
+    -fx-padding: 10;
+    -fx-spacing: 8;
+}
+
+/*Style for the labels of the parameters*/
+.plabel{
+    -fx-font: 10px "Arial";
+    -fx-color: green;
+    -fx-text-fill: black;
+    -fx-opacity: 0.6;
+}
+
+/*Title about the indicator box*/
+.title{
+        -fx-font: 18px "Arial";
+}

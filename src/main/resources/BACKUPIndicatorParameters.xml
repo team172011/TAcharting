@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?><indicatorProperties>
-    <!--Properties xml file for the indicators-->
+    <!--BACKUP Properties xml file for the indicators-->
     <indicator identifier="EMAIndicator">
         <description>
             Exponential Moving Average
@@ -11,13 +11,6 @@
             <param name="Stroke" type="TaStroke">SMALL_LINE</param>
             <param name="Chart Type" type="TaChartType">OVERLAY</param>
         </instance>
-        <instance category="DEFAULT" id="2">
-            <param name="Time Frame" type="Integer">60</param>
-            <param name="Color" type="TaColor">RED</param>
-            <param name="Shape" type="TaShape">NONE</param>
-            <param name="Stroke" type="TaStroke">SMALL_LINE</param>
-            <param name="Chart Type" type="TaChartType">OVERLAY</param>
-        </instance>
     </indicator>
     <indicator identifier="SMAIndicator">
         <description>
@@ -26,13 +19,6 @@
         <instance category="DEFAULT" id="1">
             <param name="Time Frame" type="Integer">50</param>
             <param name="Color" type="TaColor">RED</param>
-            <param name="Shape" type="TaShape">NONE</param>
-            <param name="Stroke" type="TaStroke">SMALL_LINE</param>
-            <param name="Chart Type" type="TaChartType">OVERLAY</param>
-        </instance>
-        <instance category="DEFAULT" id="2">
-            <param name="Time Frame" type="Integer">30</param>
-            <param name="Color" type="TaColor">YELLOW</param>
             <param name="Shape" type="TaShape">NONE</param>
             <param name="Stroke" type="TaStroke">SMALL_LINE</param>
             <param name="Chart Type" type="TaChartType">OVERLAY</param>
@@ -53,7 +39,7 @@
         <description>
             Amount Indicator
         </description>
-        <instance category="HELPERS" id="11">
+        <instance category="HELPERS" id="1">
             <param name="Color" type="TaColor">RED</param>
             <param name="Shape" type="TaShape">NONE</param>
             <param name="Stroke" type="TaStroke">BIG_DOTS</param>
@@ -426,6 +412,45 @@
             <param name="Shape" type="TaShape">NONE</param>
             <param name="Stroke" type="TaStroke">SMALL_LINE</param>
             <param name="Chart Type" type="TaChartType">SUBCHART</param>
+        </instance>
+    </indicator>
+    <indicator identifier="PreviousValueIndicator">
+        <description>
+            Previous Value Indicator
+        </description>
+        <instance category="HELPERS" id="1">
+            <param name="Time Frame" type="Integer">15</param>
+            <param name="Color" type="TaColor">RED</param>
+            <param name="Shape" type="TaShape">NONE</param>
+            <param name="Stroke" type="TaStroke">SMALL_LINE</param>
+            <param name="Chart Type" type="TaChartType">OVERLAY</param>
+        </instance>
+    </indicator>
+    <indicator identifier="StochasticRSIIndicator">
+        <description>
+            Stochastic RSI Indicator
+        </description>
+        <instance category="DEFAULT" id="1">
+            <param name="Time Frame" type="Integer">15</param>
+            <param name="Color" type="TaColor">RED</param>
+            <param name="Shape" type="TaShape">NONE</param>
+            <param name="Stroke" type="TaStroke">SMALL_LINE</param>
+            <param name="Chart Type" type="TaChartType">OVERLAY</param>
+        </instance>
+    </indicator>
+    <indicator identifier="StochasticOscillatorK(OscillatorD)">
+        <description>
+            Stochastic Oscillator K with Stochastic Oscillator D
+        </description>
+        <instance category="DEFAULT" id="1">
+            <param name="Time Frame" type="Integer">15</param>
+            <param name="Color D" type="TaColor">RED</param>
+            <param name="Shape D" type="TaShape">NONE</param>
+            <param name="Stroke D" type="TaStroke">SMALL_LINE</param>
+            <param name="Color K" type="TaColor">GREEN</param>
+            <param name="Shape K" type="TaShape">NONE</param>
+            <param name="Stroke K" type="TaStroke">SMALL_LINE</param>
+            <param name="Chart Type" type="TaChartType">OVERLAY</param>
         </instance>
     </indicator>
 

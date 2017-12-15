@@ -20,6 +20,8 @@
 package chart;
 
 import chart.types.IndicatorParameters.*;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableMap;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.ta4j.core.Decimal;
 import org.ta4j.core.Indicator;
@@ -39,33 +41,37 @@ import org.ta4j.core.indicators.volume.*;
 
 import javax.xml.xpath.XPathException;
 import javax.xml.xpath.XPathExpressionException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static chart.types.IndicatorParameters.TaCategory.DEFAULT;
 import static chart.types.IndicatorParameters.TaCategory.HELPERS;
 
 // TODO: overload notifyObserver function to change just entries that are modified
-public class TaChartIndicatorBox extends Observable {
-    private Map<String,TaChartIndicator> chartIndicatorMap;
-    private Map<String, TradingRecord> tradingRecordMap;
-    private TaPropertiesManager parameter;
-
+public class ChartIndicatorBox {
+    private ObservableMap<String, ChartIndicator> chartIndicatorMap;
+    private ObservableMap<String, TradingRecord> tradingRecordMap;
+    private ObservableMap<String, ChartIndicator> tempChartIndicatorBackup;
+    private final TaPropertiesManager parameter;
     private TimeSeries series;
     private ClosePriceIndicator closePriceIndicator;
 
     /**
      * Constructor
      */
-    public TaChartIndicatorBox(TimeSeries series){
-        this.chartIndicatorMap = new HashMap<>();
-        this.tradingRecordMap = new HashMap<>();
+    public ChartIndicatorBox(TimeSeries series){
+        this.chartIndicatorMap = FXCollections.observableMap(new HashMap<>());
+        this.tradingRecordMap = FXCollections.observableMap(new HashMap<>());
+        this.tempChartIndicatorBackup =  FXCollections.observableMap(new HashMap<>());
         this.series = series;
         this.closePriceIndicator = new ClosePriceIndicator(series);
-        this.parameter = new TaPropertiesManager(this);
+        this.parameter = new TaPropertiesManager();
     }
 
     public void addTradingRecord(String name, TradingRecord record){
-        this.tradingRecordMap.put(name,record);
+        this.tradingRecordMap.put(name, record);
     }
 
     public TradingRecord getTradingRecord(String name){
@@ -76,6 +82,11 @@ public class TaChartIndicatorBox extends Observable {
         return this.tradingRecordMap;
     }
 
+    public TimeSeries getTimeSeries(){return series;}
+
+    public void addTimeSeriesAndinitIndicators(TimeSeries series){
+        //TODO
+    }
     // simple moving average
     private void loadSMAIndicator(String key) throws XPathException {
         int smaTimeFrame = Integer.parseInt(parameter.getParameter(key,"Time Frame"));
@@ -85,7 +96,7 @@ public class TaChartIndicatorBox extends Observable {
         TaChartType chartType = parameter.getChartType(key);
         TaCategory category = parameter.getCategory(key);
 
-        TaChartIndicator sma = new TaChartIndicator(new SMAIndicator(closePriceIndicator, smaTimeFrame),
+        ChartIndicator sma = new ChartIndicator(new SMAIndicator(closePriceIndicator, smaTimeFrame),
                 String.format("%s (%s) (%s)",getIdentifier(key),getID(key),smaTimeFrame),
                 createRendere(color,stroke,shape),
                 chartType.toBoolean(),
@@ -193,7 +204,7 @@ public class TaChartIndicatorBox extends Observable {
                 bbRenderer,chartType.toBoolean(),
                 category);
         if(addWidth.toBoolean()) {
-            addChartIndicator("BollingerBandsWidth_" + getID(key),
+            addChartIndicator("Bollinger Bands Width_" + getID(key),
                     new BollingerBandWidthIndicator(bbu, bbm, bbl),
                     String.format("Bollinger Band Width [%s]", id),
                     bbRenderer,
@@ -1036,10 +1047,14 @@ public class TaChartIndicatorBox extends Observable {
 
     }
 
-    public void addChartIndicator(String identifier, List<Indicator> indicators, List<String> names, String generalName,XYLineAndShapeRenderer renderer, boolean isSubchart, TaCategory c){
-        chartIndicatorMap.put(identifier, new TaChartIndicator(indicators,names,generalName,renderer,isSubchart,c));
-        setChanged();
-        notifyObservers();
+    private void addChartIndicator(String identifier, List<Indicator> indicators, List<String> names, String generalName,XYLineAndShapeRenderer renderer, boolean isSubchart, TaCategory c){
+        chartIndicatorMap.put(identifier, new ChartIndicator(indicators,names,generalName,renderer,isSubchart,c));
+    }
+
+    public void addIndicator(String identifier, List<Indicator> indicators, List<String> names, String generalName,XYLineAndShapeRenderer renderer, boolean isSubchart, TaCategory c){
+        chartIndicatorMap.put(identifier,new ChartIndicator(indicators,names,generalName,renderer,isSubchart,c));
+        tempChartIndicatorBackup.put(identifier,new ChartIndicator(indicators,names,generalName,renderer,isSubchart,c));
+
     }
 
     /**
@@ -1047,10 +1062,18 @@ public class TaChartIndicatorBox extends Observable {
      * @param indicator the ta4j indicator
      * @param isSubchart flag if indicator should be plotted on sub chart
      */
-    public void addChartIndicator(Indicator indicator, boolean isSubchart){
-         chartIndicatorMap.put(indicator.toString(),new TaChartIndicator(indicator, indicator.toString(), isSubchart, DEFAULT));
-        setChanged();
-        notifyObservers();
+    private void addChartIndicator(Indicator indicator, boolean isSubchart){
+         chartIndicatorMap.put(indicator.toString(),new ChartIndicator(indicator, indicator.toString(), isSubchart, DEFAULT));
+    }
+
+    /**
+     * Build and add an chart indicator to charts indicator list (random color, default name)
+     * @param indicator the ta4j indicator
+     * @param isSubchart flag if indicator should be plotted on sub chart
+     */
+    public void addIndicator(Indicator indicator, boolean isSubchart){
+        chartIndicatorMap.put(indicator.toString(),new ChartIndicator(indicator, indicator.toString(), isSubchart, DEFAULT));
+        tempChartIndicatorBackup.put(indicator.toString(),new ChartIndicator(indicator, indicator.toString(), isSubchart, DEFAULT));
     }
 
     /**
@@ -1059,10 +1082,19 @@ public class TaChartIndicatorBox extends Observable {
      * @param isSubchart flag if indicator should be plotted on su bchart
      * @param c the category of the chart
      */
-    public void addChartIndicator(String identifier, Indicator indicator, boolean isSubchart, TaCategory c){
-        chartIndicatorMap.put(identifier, new TaChartIndicator(indicator,indicator.toString(), isSubchart, c));
-        setChanged();
-        notifyObservers();
+    private void addChartIndicator(String identifier, Indicator indicator, boolean isSubchart, TaCategory c){
+        chartIndicatorMap.put(identifier, new ChartIndicator(indicator,indicator.toString(), isSubchart, c));
+    }
+
+    /**
+     * Build and add an chart indicator to charts indicator list (random color, default name)
+     * @param indicator the ta4j indicator
+     * @param isSubchart flag if indicator should be plotted on su bchart
+     * @param c the category of the chart
+     */
+    public void addIndicator(String identifier, Indicator indicator, boolean isSubchart, TaCategory c){
+        chartIndicatorMap.put(identifier, new ChartIndicator(indicator,indicator.toString(), isSubchart, c));
+        tempChartIndicatorBackup.put(identifier, new ChartIndicator(indicator,indicator.toString(), isSubchart, c));
     }
 
     /**
@@ -1072,26 +1104,36 @@ public class TaChartIndicatorBox extends Observable {
      * @param name the name of the indicator that should be displayed
      * @param c the category of the chart
      */
-    public void addChartIndicator(String identifier, Indicator indicator, String name, boolean isSubchart, TaCategory c){
-        chartIndicatorMap.put(identifier, new TaChartIndicator(indicator, name, isSubchart, c));
-        setChanged();
-        notifyObservers();
+    private void addChartIndicator(String identifier, Indicator indicator, String name, boolean isSubchart, TaCategory c){
+        addIndicator(identifier, new ChartIndicator(indicator, name, isSubchart, c));
+        tempChartIndicatorBackup.put(identifier, new ChartIndicator(indicator, name, isSubchart, c));
     }
 
-    public void addChartIndicator(String identifier, Indicator indicator, String name,XYLineAndShapeRenderer renderer, boolean isSubchart, TaCategory c){
-        chartIndicatorMap.put(identifier, new TaChartIndicator(indicator, name, renderer, isSubchart, c));
-        setChanged();
-        notifyObservers();
+    public void addIndicator(String identifier, Indicator indicator, String name, XYLineAndShapeRenderer renderer, boolean isSubchart, TaCategory c){
+        addIndicator(identifier, new ChartIndicator(indicator, name, renderer, isSubchart, c));
+        tempChartIndicatorBackup.put(identifier, new ChartIndicator(indicator, name, renderer, isSubchart, c));
+    }
+
+    private void addChartIndicator(String identifier, Indicator indicator, String name, XYLineAndShapeRenderer renderer, boolean isSubchart, TaCategory c){
+        addIndicator(identifier, indicator, name, renderer, isSubchart, c);
+        tempChartIndicatorBackup.put(identifier,new ChartIndicator(indicator,name,renderer,isSubchart,c));
     }
 
     /**
-     * Adds an existing TaChartIndicator to the box
-     * @param taChartIndicator an TaChartIndicator
+     * Adds an existing ChartIndicator to the box
+     * @param chartIndicator an ChartIndicator
      */
-    public void addChartIndicator(String identifier, TaChartIndicator taChartIndicator){
-        chartIndicatorMap.put(identifier, taChartIndicator);
-        setChanged();
-        notifyObservers();
+    private void addChartIndicator(String identifier, ChartIndicator chartIndicator){
+        chartIndicatorMap.put(identifier, chartIndicator);
+    }
+
+    /**
+     * Adds an existing ChartIndicator to the box
+     * @param chartIndicator an ChartIndicator
+     */
+    public void addIndicator(String identifier, ChartIndicator chartIndicator){
+        addChartIndicator(identifier, chartIndicator);
+        tempChartIndicatorBackup.put(identifier,chartIndicator);
     }
 
     public void removeIndicator(String key){
@@ -1102,7 +1144,7 @@ public class TaChartIndicatorBox extends Observable {
      * Get all indicators that are stored in this box
      * @return all ChartIndicators that are stored in this box
      */
-    public Map<String, TaChartIndicator> getChartIndicatorMap() {
+    public ObservableMap<String, ChartIndicator> getChartIndicatorMap() {
         return chartIndicatorMap;
     }
 
@@ -1111,7 +1153,7 @@ public class TaChartIndicatorBox extends Observable {
      * @param identifier the identifier of the indicator (display identifier/general identifier/properties identifier)
      * @return the indicator that is stored for the identifier
      */
-    public TaChartIndicator getChartIndicator(String identifier){
+    public ChartIndicator getChartIndicator(String identifier){
         return this.chartIndicatorMap.get(identifier);
     }
 
@@ -1273,7 +1315,15 @@ public class TaChartIndicatorBox extends Observable {
             }
 
             default:
-                throw new IllegalArgumentException(key+ " could not be loaded!");
+                // indicator not in xml, maybe it was added at runtime dynamically?
+                ChartIndicator dynIndicator = tempChartIndicatorBackup.get(key);
+                if(dynIndicator != null){
+                    chartIndicatorMap.put(key, dynIndicator.clone()); // fake "reload" to notify all observers
+                }else{ // there is no indicator with that key
+                    throw new IllegalArgumentException(key+ " could not be loaded!");
+                }
+
+
         }
     }
 

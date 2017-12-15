@@ -33,9 +33,9 @@ import java.util.List;
 
 /**
  * An Wrapper for the indicators displaying on a jfreeCharts chart panel.
- * An TaChartIndicator can consist of several ta4j-indiactors (e.g. bollinger bands...)
+ * An ChartIndicator can consist of several ta4j-indiactors (e.g. bollinger bands...)
  */
-public class TaChartIndicator {
+public class ChartIndicator {
 
     private List<Indicator> indicators;
     private List<String> indicatorsNames;
@@ -46,19 +46,19 @@ public class TaChartIndicator {
 
     private IndicatorParameters.TaCategory category = IndicatorParameters.TaCategory.DEFAULT;
 
-    public TaChartIndicator(Indicator indicator, String name, boolean isSubchart, IndicatorParameters.TaCategory c){
+    public ChartIndicator(Indicator indicator, String name, boolean isSubchart, IndicatorParameters.TaCategory c){
         this(indicator,name, new XYLineAndShapeRenderer(), isSubchart,c);
     }
 
     /**
-     * Constructor for creating a TaChartIndicator instance for just one ta4j indicator
+     * Constructor for creating a ChartIndicator instance for just one ta4j indicator
      * @param indicator the ta4j indicator
      * @param name the name of the indicator (with parameters)
      * @param renderer the renderer for line, shape etc.
-     * @param isSubchart true if the TaChartIndicator should be plotted as subchart
+     * @param isSubchart true if the ChartIndicator should be plotted as subchart
      * @param c the category of the indicator in the menu of this application
      */
-    public TaChartIndicator(Indicator indicator, String name, XYLineAndShapeRenderer renderer, boolean isSubchart, IndicatorParameters.TaCategory c){
+    public ChartIndicator(Indicator indicator, String name, XYLineAndShapeRenderer renderer, boolean isSubchart, IndicatorParameters.TaCategory c){
         indicators = new ArrayList<>();
         indicatorsNames = new ArrayList<>();
         indicators.add(indicator);
@@ -69,19 +69,19 @@ public class TaChartIndicator {
         category = c;
     }
 
-    public TaChartIndicator(List<Indicator> indicators, List<String> names, String generalName, boolean isSubchart, IndicatorParameters.TaCategory c){
+    public ChartIndicator(List<Indicator> indicators, List<String> names, String generalName, boolean isSubchart, IndicatorParameters.TaCategory c){
         this(indicators,names,generalName,new XYLineAndShapeRenderer(false,false),isSubchart,c);
     }
 
     /**
-     * Constructor for creating a TaChartIndicator instance for several ta4j indicator
+     * Constructor for creating a ChartIndicator instance for several ta4j indicator
      * @param indicators the ta4j indicators
      * @param names the names of the indicator (with parameters)
      * @param renderer the renderer for lines, shapes etc.
      * @param isSubchart true if the TaChartIndicators should be plotted as sub chart
-     * @param c the category of the TaChartIndicator in the menu of this application
+     * @param c the category of the ChartIndicator in the menu of this application
      */
-    public TaChartIndicator(List<Indicator> indicators, List<String> names, String generalName, XYLineAndShapeRenderer renderer, boolean isSubchart, IndicatorParameters.TaCategory c){
+    public ChartIndicator(List<Indicator> indicators, List<String> names, String generalName, XYLineAndShapeRenderer renderer, boolean isSubchart, IndicatorParameters.TaCategory c){
         this.indicators = indicators;
         indicatorsNames = names;
         this.generalName = generalName;
@@ -146,6 +146,11 @@ public class TaChartIndicator {
         for (Indicator indicator : indicators)
             nameList.add(indicator.toString());
         return  nameList;
+    }
+
+    // returns a new ChartIndicator instance of this indicator
+    public ChartIndicator clone(){
+        return new ChartIndicator(indicators,indicatorsNames,generalName,renderer,isSubchart,category);
     }
 
 }

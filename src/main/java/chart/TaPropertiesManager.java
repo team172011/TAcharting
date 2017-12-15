@@ -49,7 +49,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
+/**
+ * Class to read and write parameters and settings to the
+ * XML files
+ */
 public class TaPropertiesManager {
 
     private File propertiesFile;
@@ -59,9 +62,8 @@ public class TaPropertiesManager {
     private Transformer transformer;
 
 
-    public TaPropertiesManager(TaChartIndicatorBox chartIndicatorBox) {
+    public TaPropertiesManager() {
         loadParametersFile();
-
     }
 
     /**
@@ -292,7 +294,14 @@ public class TaPropertiesManager {
         return mapNameValue;
     }
 
-    public void duplicate(String key) throws XPathExpressionException, TransformerException {
+    /**
+     *
+     * @param key
+     * @return the key of the duplicated indicator
+     * @throws XPathExpressionException
+     * @throws TransformerException
+     */
+    public String duplicate(String key) throws XPathExpressionException, TransformerException {
         String raw[] = key.split("_");
         String indicator = raw[0];
         String id = raw[1];
@@ -318,6 +327,7 @@ public class TaPropertiesManager {
         parent.appendChild(duplicate);
         DOMSource source = new DOMSource(doc);
         transformer.transform(source, result);
+        return indicator+"_"+nextID;
     }
 
     private Node getNodeForInstance(String key) throws XPathExpressionException {

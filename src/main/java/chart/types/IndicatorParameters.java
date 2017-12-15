@@ -1,19 +1,38 @@
 package chart.types;
 
-import javax.swing.*;
+import javafx.collections.FXCollections;
+import javafx.scene.control.*;
+import javafx.scene.control.TextField;
+
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
 
 
 public class IndicatorParameters {
 
+    /**
+     * Mapping between xml description and description in menus
+     *
+     */
+    public enum Indicators{
+        BOLLINGER("Bollinger Bands (and Width)");
+
+        private String name;
+
+        Indicators(String name){
+            this.name = name;
+        }
+    }
+
     public enum TaBoolean{
         TRUE,
         FALSE;
 
-        static JComponent getComponent(String value){
+        static Control getComponent(String value){
             TaBoolean choosen = valueOf(value);
-            return new JCheckBox("Yes/No",choosen.toBoolean());
+            CheckBox checkBox = new CheckBox("Yes/No");
+            checkBox.setSelected(choosen.toBoolean());
+            return checkBox;
         }
 
         static String getStringDescription(){
@@ -34,9 +53,9 @@ public class IndicatorParameters {
 
         ;
 
-        static JComponent getComponent(String value){
+        static Control getComponent(String value){
             int choosen = Integer.parseInt(value);
-            return new JSpinner(new SpinnerNumberModel(choosen,0,100,1));
+            return new Spinner(0,1000,choosen);
         }
 
         static String getStringDescription(){
@@ -53,16 +72,16 @@ public class IndicatorParameters {
         MAGENTA(Color.MAGENTA),
         GREEN(Color.GREEN);
 
-        private Paint paint;
+        private java.awt.Paint paint;
 
         TaColor(Paint paint){
             this.paint = paint;
         }
 
-        static JComponent getComponent(String value){
+        static Control getComponent(String value){
             TaColor choosen = TaColor.valueOf(value);
-            JComboBox<TaColor> cBox = new JComboBox<TaColor>(new DefaultComboBoxModel<TaColor>(TaColor.values()));
-            cBox.setSelectedItem(choosen);
+            ComboBox<TaColor> cBox = new ComboBox<TaColor>(FXCollections.observableArrayList(TaColor.values()));
+            cBox.getSelectionModel().select(choosen);
             return cBox;
         }
 
@@ -77,6 +96,8 @@ public class IndicatorParameters {
     }
 
     public enum TaCategory {
+        CUSTOM(8),
+        STRATEGY(9),
         DEFAULT(0),
         BOLLINGER(1),
         CANDLES(2),
@@ -93,35 +114,13 @@ public class IndicatorParameters {
             this.id = id;
         }
 
-        public JMenu getMenueElement(){
-            switch (this){
-                case HELPERS:
-                    return new JMenu("Helpers");
-                case BOLLINGER:
-                    return new JMenu("Bollinger");
-                case ICHIMOKU:
-                    return new JMenu("Ichimoku");
-                case CANDLES:
-                    return new JMenu("Candels");
-                case KELTNER:
-                    return new JMenu("Keltner");
-                case STATISTICS:
-                    return new JMenu("Statistics");
-                case VOLUME:
-                    return new JMenu("Volume");
-                default:
-                    return new JMenu("Default");
-            }
-
-        }
-
         public int getId() {
             return id;
         }
 
-        static JComponent getComponent(String value){
-            JComboBox<TaCategory> cBox = new JComboBox<TaCategory>(new DefaultComboBoxModel<TaCategory>(TaCategory.values()));
-            cBox.setSelectedItem(TaCategory.valueOf(value));
+        static Control getComponent(String value){
+            ComboBox<TaCategory> cBox = new ComboBox<TaCategory>(FXCollections.observableArrayList(TaCategory.values()));
+            cBox.getSelectionModel().select(TaCategory.valueOf(value));
             return cBox;
         }
 
@@ -135,9 +134,9 @@ public class IndicatorParameters {
         OVERLAY,
         SUBCHART;
 
-        static JComponent getComponent(String value){
-            JComboBox<TaChartType> cBox = new JComboBox<TaChartType>(new DefaultComboBoxModel<TaChartType>(TaChartType.values()));
-            cBox.setSelectedItem(TaChartType.valueOf(value));
+        static Control getComponent(String value){
+            ComboBox<TaChartType> cBox = new ComboBox<TaChartType>(FXCollections.observableArrayList(TaChartType.values()));
+            cBox.getSelectionModel().select(TaChartType.valueOf(value));
             return cBox;
         }
 
@@ -170,9 +169,9 @@ public class IndicatorParameters {
             return shape;
         }
 
-        static JComponent getComponent(String value){
-            JComboBox<TaShape> cBox = new JComboBox<TaShape>(new DefaultComboBoxModel<TaShape>(TaShape.values()));
-            cBox.setSelectedItem(TaShape.valueOf(value));
+        static Control getComponent(String value){
+            ComboBox<TaShape> cBox = new ComboBox<TaShape>(FXCollections.observableArrayList(values()));
+            cBox.getSelectionModel().select(TaShape.valueOf(value));
             return cBox;
         }
 
@@ -201,9 +200,9 @@ public class IndicatorParameters {
         }
 
 
-        static JComponent getComponent(String value){
-            JComboBox<TaStroke> cBox = new JComboBox<TaStroke>(new DefaultComboBoxModel<TaStroke>(TaStroke.values()));
-            cBox.setSelectedItem(TaStroke.valueOf(value));
+        static Control getComponent(String value){
+            ComboBox<TaStroke> cBox = new ComboBox<TaStroke>(FXCollections.observableArrayList(values()));
+            cBox.getSelectionModel().select(TaStroke.valueOf(value));
             return cBox;
         }
 
@@ -213,40 +212,40 @@ public class IndicatorParameters {
     }
 
     /**
-     * returns a JComponent to view and/or change the value of parameter via gui
+     * returns a Labeled to view and/or change the value of parameter via gui
      * @param parameterType the type of the parameter from xml
-     * @return JComponent to view and/or change the value of parameter via gui
+     * @return Labeled to view and/or change the value of parameter via gui
      */
-    public static JComponent getComponent(String parameterType, String paramValue){
-        JComponent component = new JTextField(paramValue);
+    public static Control getComponent(String parameterType, String paramValue){
+        Control control = new TextField(paramValue);
 
         if(parameterType.equals(TaColor.getStringDescription())){
-            component = TaColor.getComponent(paramValue);
+            control = TaColor.getComponent(paramValue);
         }
 
         if(parameterType.equals(INTEGER.getStringDescription())){
-            component = INTEGER.getComponent(paramValue);
+            control = INTEGER.getComponent(paramValue);
         }
 
         if(parameterType.equals(TaShape.getStringDescription())){
-            component = TaShape.getComponent(paramValue);
+            control = TaShape.getComponent(paramValue);
         }
 
         if(parameterType.equals(TaStroke.getStringDescription())){
-            component = TaStroke.getComponent(paramValue);
+            control = TaStroke.getComponent(paramValue);
         }
 
         if(parameterType.equals(TaCategory.getStringDescription())){
-            component = TaCategory.getComponent(paramValue);
+            control = TaCategory.getComponent(paramValue);
         }
 
         if(parameterType.equals(TaChartType.getStringDescription())){
-            component = TaChartType.getComponent(paramValue);
+            control = TaChartType.getComponent(paramValue);
         }
         if(parameterType.equals(TaBoolean.getStringDescription())){
-            component = TaBoolean.getComponent(paramValue);
+            control = TaBoolean.getComponent(paramValue);
         }
 
-        return component;
+        return control;
     }
 }
