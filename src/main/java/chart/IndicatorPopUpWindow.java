@@ -23,7 +23,7 @@ public class IndicatorPopUpWindow extends PopupControl {
 
     private static IndicatorPopUpWindow open;
 
-    private final TaPropertiesManager propertiesManager;
+    private final PropertiesManager propertiesManager;
     private final String key;
     private final ChartIndicatorBox indicatorBox;
 

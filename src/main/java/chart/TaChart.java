@@ -34,11 +34,11 @@ import org.jfree.chart.fx.overlay.CrosshairOverlayFX;
 import org.jfree.chart.labels.CrosshairLabelGenerator;
 import org.jfree.chart.plot.*;
 import org.jfree.chart.renderer.xy.CandlestickRenderer;
+import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.chart.title.LegendTitle;
 import org.jfree.chart.ui.RectangleAnchor;
 import org.jfree.chart.ui.RectangleEdge;
 import org.jfree.chart.ui.TextAnchor;
-import org.jfree.data.Range;
 import org.jfree.data.general.DatasetUtils;
 import org.jfree.data.time.Minute;
 import org.jfree.data.xy.DefaultHighLowDataset;
@@ -58,8 +58,6 @@ public class TaChart extends StackPane implements ChartMouseListenerFX, MapChang
     private TimeSeries series;
     private ChartIndicatorBox chartIndicatorBox;
 
-    // gui and plotting
-    private XYDataset candlestickData;
     private Color plotBackground = Color.WHITE; // default colors for white theme
     private Color panelBackground = Color.WHITE;
     private Color frameBackground = Color.WHITE;
@@ -68,9 +66,8 @@ public class TaChart extends StackPane implements ChartMouseListenerFX, MapChang
     private Color subPlotNames = Color.BLACK;
     private Color legendItemPaint = Color.BLACK;
 
-    private JFreeChart chart;
     private CombinedDomainXYPlot combinedXYPlot;
-    private XYPlot mainPlot;
+    private final XYPlot mainPlot;
     private Crosshair xCrosshair;
     private Crosshair yCrosshair;
 
@@ -82,9 +79,9 @@ public class TaChart extends StackPane implements ChartMouseListenerFX, MapChang
 
     private ChartViewer viewer;
 
-    private TaChrosshairOverlay crosshairOverlay;
+
     /**
-     * Constructor
+     * Constructor.
      * @param box a ChartIndicatorBox
      */
     public TaChart(ChartIndicatorBox box){
@@ -93,7 +90,7 @@ public class TaChart extends StackPane implements ChartMouseListenerFX, MapChang
     }
 
     /**
-     * Constructor
+     * Constructor.
      * @param box a ChartIndicatorBox
      * @param darkTheme true if dark theme should be used
      */
@@ -104,7 +101,10 @@ public class TaChart extends StackPane implements ChartMouseListenerFX, MapChang
         }
         this.series = box.getTimeSeries();
         this.chartIndicatorBox = box;
-        chartIndicatorBox.getChartIndicatorMap().addListener(this);
+        this.chartIndicatorBox.getChartIndicatorMap().addListener(this);
+        final XYDataset candlestickData = createOHLCDataset(series);
+        this.currentSubPlots = new ArrayList<>();
+        this.mainPlot = createMainPlot(candlestickData);
         prepare();
     }
 
@@ -122,23 +122,26 @@ public class TaChart extends StackPane implements ChartMouseListenerFX, MapChang
         legendItemPaint = Color.WHITE;
     }
 
+    /**
+     * Prepare the cart. Set Styles, Listeners and Overlays
+     */
     private void prepare(){
-        this.candlestickData = createOHLCDataset(series);
-        this.mainPlot = createMainPlot(this.candlestickData, new ArrayList<>());
-        this.combinedXYPlot = createCombinedDomainXYPlot(mainPlot, new ArrayList<>());
-        this.currentSubPlots = new ArrayList<>();
+        this.combinedXYPlot = createCombinedDomainXYPlot(mainPlot);
+        combinedXYPlot.setBackgroundPaint(plotBackground);
+        this.mainPlot.setBackgroundPaint(plotBackground);
 
-        this.chart = new JFreeChart(series.getName(), combinedXYPlot);
+
+        JFreeChart chart = new JFreeChart(series.getName(), combinedXYPlot);
         //this.chart.setBackgroundPaint(chartBackground);
         this.viewer = new ChartViewer(chart);
 
         this.viewer.addChartMouseListener(this);
         getChildren().add(viewer);
-        crosshairOverlay = createCrosshairOverlay();
+        TaCrosshairOverlay crosshairOverlay = createCrosshairOverlay();
         //this.viewer.setBackground(panelBackground);
         LegendTitle legend = chart.getLegend();
         legend.setPosition(RectangleEdge.RIGHT);
-        legend.setItemFont(new Font("Arial", 1, 8));
+        legend.setItemFont(new Font("Arial", 1, 14));
         legend.setItemPaint(legendItemPaint);
         legend.setBackgroundPaint(legendBackground);
         //viewer.setBackground(frameBackground);
@@ -149,54 +152,26 @@ public class TaChart extends StackPane implements ChartMouseListenerFX, MapChang
 
     }
 
-    // searching for a better way...recreate all charts and subplots because it is not possible to clean
-    // remove a data set from an existing chart
-    public void rep(){
-        viewer.removeChartMouseListener(this);
-        viewer.getCanvas().removeOverlay(crosshairOverlay);
-
-        // create new JFreeChart and ChartViewer with possible new plots
-        JFreeChart newChart = new JFreeChart(this.series.getName(), this.combinedXYPlot);
-        newChart.setBackgroundPaint(chart.getBackgroundPaint());
-
-        LegendTitle legend = newChart.getLegend();
-        legend.setPosition(chart.getLegend().getPosition());
-        legend.setItemFont(chart.getLegend().getItemFont());
-        legend.setBackgroundPaint(chart.getBackgroundPaint());
-        legend.setItemPaint(legendItemPaint);
-
-
-        ChartViewer newViewer = new ChartViewer(newChart);
-        newViewer.getCanvas().getChart().setBackgroundPaint(viewer.getCanvas().getChart().getBackgroundPaint());
-        newViewer.addChartMouseListener(this);
-        this.crosshairOverlay = createCrosshairOverlay();
-
-        getChildren().remove(viewer);
-        chart = newChart;
-        viewer = newViewer;
-        getChildren().add(viewer);
-
-
-        Platform.runLater(() -> {
-            this.viewer.getCanvas().addOverlay(crosshairOverlay);
-        });
-    }
 
     /**
      * plots or removes the trading record
      * @param record the trading record
-     * @param on adds the record if true, else the record will be removed from plot
+     * @param on adds the record if true, else the record will be removed from the chart
      */
     public void plotTradingRecord(TradingRecord record, boolean on){
         if (on){
             addEntryExitSignals(record);
-        } else  {
+        }else {
             removeEntryExitSignals(record);
 
         }
 
     }
 
+    /**
+     * removes entry and exit signals from the chart.
+     * @param record
+     */
     private void removeEntryExitSignals(TradingRecord record) {
         List<Marker> markers = this.mapTradingRecordMarker.get(record);
         if (markers!= null) {
@@ -208,7 +183,7 @@ public class TaChart extends StackPane implements ChartMouseListenerFX, MapChang
     }
 
     /**
-     * Adds entry and exits signals to the main plot.
+     * Adds entry and exits signals to the cahrt.
      * @param record the trading record
      * */
     private void addEntryExitSignals(TradingRecord record){
@@ -256,18 +231,25 @@ public class TaChart extends StackPane implements ChartMouseListenerFX, MapChang
      */
     public void plotOverlays(List<String> indicatorIdentifiers) {
         List<ChartIndicator> overlays = new ArrayList<>();
-        for (String identifier: indicatorIdentifiers){
+        for(int i = 1; i < mainPlot.getRendererCount(); i++){ // 0 = candlestick renderer
+            XYItemRenderer renderer = mainPlot.getRenderer(i);
+            int seriesCounter = 0;
+            while(renderer.getSeriesVisible(seriesCounter) != null){
+                renderer.setSeriesVisible(seriesCounter,false);
+                seriesCounter++;
+            }
+        }
+        int anonymID = 1; // 0 = candlestick data
+        for(String identifier: indicatorIdentifiers) {
             ChartIndicator chartIndicator = chartIndicatorBox.getChartIndicator(identifier);
             overlays.add(chartIndicator);
+            mainPlot.setRenderer(anonymID, chartIndicator.getRenderer()); // set renderer first!
+            mainPlot.setDataset(anonymID, chartIndicator.getDataSet());
+            chartIndicator.setVisible(true);
+            mainPlot.mapDatasetToRangeAxis(anonymID, 0);
+            mainPlot.setDatasetRenderingOrder(DatasetRenderingOrder.FORWARD);
+            anonymID++;
         }
-
-        Range domainRange = this.mainPlot.getDomainAxis().getRange();
-        Range valueRange = this.mainPlot.getRangeAxis().getRange();
-        this.mainPlot = createMainPlot(this.candlestickData, overlays);
-        this.mainPlot.getDomainAxis().setRange(domainRange);
-        this.mainPlot.getRangeAxis().setRange(valueRange);
-        this.combinedXYPlot = recreateCombinedDomainXYPlot();
-        rep();
     }
 
     /**
@@ -276,20 +258,30 @@ public class TaChart extends StackPane implements ChartMouseListenerFX, MapChang
      */
     public void plotSubPlots(List<String> indicatorIdentifiers){
         List<ChartIndicator> subPlots = new ArrayList<>();
+
+        for(int i = 1; i < combinedXYPlot.getSubplots().size(); i++){
+            XYPlot plot = (XYPlot) combinedXYPlot.getSubplots().get(i);
+            combinedXYPlot.remove(plot);
+        }
+
         for (String identifier: indicatorIdentifiers){
             ChartIndicator chartIndicator = chartIndicatorBox.getChartIndicator(identifier);
             subPlots.add(chartIndicator);
+            XYPlot subPlot = createSubplotforIndicators(chartIndicator);
+            combinedXYPlot.add(subPlot);
+            currentSubPlots.add(subPlot);
         }
-
-        this.combinedXYPlot = createCombinedDomainXYPlot(mainPlot, subPlots);
-        rep();
+        // workaround, combinedXYPlot would loos the domain axis and chart would look empty
+        if(indicatorIdentifiers.size() < 1){
+            combinedXYPlot.setDomainAxis(((XYPlot)combinedXYPlot.getSubplots().get(0)).getDomainAxis());
+        }
     }
 
     /**
      * Creating the xyPlot for the base candlestick chart
      * @param dataset a XYDataset for the candlestick
      */
-    private XYPlot createMainPlot(XYDataset dataset, List<ChartIndicator> overlays){
+    private static XYPlot createMainPlot(XYDataset dataset){
 
         TaChart.MyCandlestickRenderer renderer = new TaChart.MyCandlestickRenderer();
         renderer.setCandleWidth(2);
@@ -307,50 +299,26 @@ public class TaChart extends StackPane implements ChartMouseListenerFX, MapChang
         XYPlot plot = new XYPlot(dataset, dateAxis, numberAxis, renderer);
         plot.setOrientation(PlotOrientation.VERTICAL);
         plot.setRangeAxisLocation(AxisLocation.BOTTOM_OR_LEFT);
-        plot.setBackgroundPaint(plotBackground);
+
         float dash[]={1.0f};
         BasicStroke grid = new BasicStroke(0.1f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER,10.0f, dash, 0.0f);
         plot.setDomainGridlineStroke(grid);
         plot.setRangeGridlineStroke(grid);
-        for(ChartIndicator chartIndicator : overlays) {
-            int anonymID = plot.getDatasetCount();
-            plot.setDataset(anonymID, chartIndicator.getDataSet());
-            plot.mapDatasetToRangeAxis(mainPlot.getDatasetCount(), 0);
-            plot.setRenderer(anonymID, chartIndicator.getRenderer());
-            numberAxis.setAutoRangeIncludesZero(false);
-            plot.setDatasetRenderingOrder(DatasetRenderingOrder.FORWARD);
-
-        }
         return plot;
     }
 
-    private CombinedDomainXYPlot createCombinedDomainXYPlot(XYPlot plot, List<ChartIndicator> subplots){
+    /**
+     * Creates a {@link CombinedDomainXYPlot combinedDomainXYPlot} with the <tt>plot</tt> as 'main plot' id = 0
+     * @param plot
+     * @return
+     */
+    private static CombinedDomainXYPlot createCombinedDomainXYPlot(final XYPlot plot){
         // create the combined xy plot for this and the subplots
-        this.currentSubPlots = new ArrayList<>();
+
         CombinedDomainXYPlot combinedXYPlot = new CombinedDomainXYPlot(plot.getDomainAxis());
         combinedXYPlot.setGap(2);
         combinedXYPlot.add(plot,11);
         combinedXYPlot.setOrientation(PlotOrientation.VERTICAL);
-        combinedXYPlot.setBackgroundPaint(plotBackground);
-        for(ChartIndicator chartIndicator : subplots){
-            XYPlot subPlot = createSubplotforIndicators(chartIndicator);
-            combinedXYPlot.add(subPlot);
-            currentSubPlots.add(subPlot);
-        }
-
-        return combinedXYPlot;
-    }
-
-    private CombinedDomainXYPlot recreateCombinedDomainXYPlot(){
-        CombinedDomainXYPlot combinedXYPlot = new CombinedDomainXYPlot(mainPlot.getDomainAxis());
-        combinedXYPlot.setGap(0);
-        combinedXYPlot.add(mainPlot,11);
-        combinedXYPlot.setOrientation(PlotOrientation.VERTICAL);
-        combinedXYPlot.setBackgroundPaint(plotBackground);
-        //TODO: loose mapping between ChartIndicator and his plot
-        for(XYPlot p: currentSubPlots){
-            combinedXYPlot.add(p);
-        }
 
         return combinedXYPlot;
     }
@@ -374,7 +342,7 @@ public class TaChart extends StackPane implements ChartMouseListenerFX, MapChang
         double x = new Minute(Date.from(series.getTick(0).getEndTime().minusDays(50).toInstant())).getFirstMillisecond();
         double y = numberAxis.getLowerBound()+(numberAxis.getUpperBound()+numberAxis.getLowerBound())/1.1;
         XYTextAnnotation annotation = new XYTextAnnotation(chartIndicator.getGeneralName(), x, y);
-        annotation.setFont(new Font("SansSerif", Font.BOLD, 6));
+        annotation.setFont(new Font("SansSerif", Font.BOLD, 12));
         annotation.setPaint(subPlotNames);
         annotation.setOutlineVisible(true);
         annotation.setTextAnchor(TextAnchor.TOP_LEFT);
@@ -389,14 +357,14 @@ public class TaChart extends StackPane implements ChartMouseListenerFX, MapChang
      * Create the crosshair overlay with a custom paint procedure for main plot
      * @return an crosshair overlay for the main plot and sub plots
      */
-    private TaChrosshairOverlay createCrosshairOverlay(){
-        TaChrosshairOverlay crosshairOverlay = new TaChrosshairOverlay();
+    private TaCrosshairOverlay createCrosshairOverlay(){
+        TaCrosshairOverlay crosshairOverlay = new TaCrosshairOverlay();
 
         this.xCrosshair = new Crosshair(Double.NaN, Color.GRAY, new BasicStroke(0f));
         this.xCrosshair.setLabelPaint(Color.GRAY);
         this.xCrosshair.setLabelVisible(true);
         this.xCrosshair.setLabelBackgroundPaint(Color.WHITE);
-        this.xCrosshair.setLabelGenerator(new TaXCrosshairLabelGenerator());
+        //this.xCrosshair.setLabelGenerator(new TaXCrosshairLabelGenerator());
 
         //TODO: shifts if subplots are added. Find way to calculate y+(sizeOfSubplots)*numSublots
         this.yCrosshair = new Crosshair(Double.NaN, Color.GRAY, new BasicStroke(0f));
@@ -448,12 +416,12 @@ public class TaChart extends StackPane implements ChartMouseListenerFX, MapChang
 
             List<XYPlot> subplots = (List<XYPlot>) plot.getSubplots();
 
-            DateAxis xAxis = (DateAxis) subplots.get(0).getDomainAxis();
+            DateAxis xAxis = (DateAxis) plot.getDomainAxis();
             double x = xAxis.java2DToValue(event.getTrigger().getX(), dataArea, RectangleEdge.BOTTOM);
             if (!xAxis.getRange().contains(x)) {
                 x = Double.NaN;
             }
-            double y = DatasetUtils.findYValue(((XYPlot) plot.getSubplots().get(0)).getDataset(), 0, x);
+            double y = DatasetUtils.findYValue((((XYPlot) plot.getSubplots().get(0))).getDataset(0), 0, x);
 
             this.xCrosshair.setValue(x);
             this.yCrosshair.setValue(y);
@@ -467,25 +435,14 @@ public class TaChart extends StackPane implements ChartMouseListenerFX, MapChang
 
     @Override
     public void chartMouseClicked(ChartMouseEventFX chartMouseEvent) {
-        //TODO remove this content ?
-        /*Rectangle2D dataArea = this.chartPanel.getScreenDataArea();
-        JFreeChart chart = chartMouseEvent.getChart();
-        CombinedDomainXYPlot plot = (CombinedDomainXYPlot) chart.getPlot();
-
-        List<XYPlot> subplots = (List<XYPlot>) plot.getSubplots();
-
-        ValueAxis xAxis = subplots.get(0).getDomainAxis();
-
-        double x = xAxis.java2DToValue(chartMouseEvent.getTrigger().getX(), dataArea,
-                RectangleEdge.BOTTOM);
-        double y = DatasetUtils.findYValue(((XYPlot)plot.getSubplots().get(0)).getDataset(), 0, x);
-
-        XYTextAnnotation an = new XYTextAnnotation(x+" "+y, x, y);
-        an.setBackgroundPaint(Color.WHITE);
-        //mainPlot.addAnnotation(an);
-*/
+        //TODO add functionality
     }
 
+    /**
+     * This function is called when the {@link ChartIndicator Chartindicators} of the underlying
+     * {@link ChartIndicatorBox indicatorBox} change (change, new or remove)
+     * @param change
+     */
     @Override
     public void onChanged(Change<? extends String, ? extends ChartIndicator> change) {
 
@@ -528,76 +485,66 @@ public class TaChart extends StackPane implements ChartMouseListenerFX, MapChang
         }
     }
 
-
-    class TaChrosshairOverlay extends CrosshairOverlayFX {
-
+    class TaCrosshairOverlay extends CrosshairOverlayFX {
 
         @Override
         public void paintOverlay(Graphics2D g2, ChartCanvas chartCanvas) {
-            if (chartCanvas.getRenderingInfo() != null) {
-                Shape savedClip = g2.getClip();
-                /**use the complete ScreenDataArea for X-Crosshair paint*/
-                Rectangle2D dataArea = chartCanvas.getRenderingInfo().getPlotInfo().getDataArea();
-
-                g2.clip(dataArea);
-                JFreeChart chart = chartCanvas.getChart();
-                CombinedDomainXYPlot plot = (CombinedDomainXYPlot) chart.getPlot();
-                List<XYPlot> subplots = plot.getSubplots();
-
-                // paint domain crosshair -> "standard way" subplot(0) = main plot
-                ValueAxis xAxis = subplots.get(0).getDomainAxis();
-                RectangleEdge xAxisEdge = subplots.get(0).getDomainAxisEdge();
-                Iterator iterator = getDomainCrosshairs().iterator();
-                while (iterator.hasNext()) {
-                    Crosshair ch = (Crosshair) iterator.next();
-                    if (ch.isVisible()) {
-                        double x = ch.getValue();
-                        double xx = xAxis.valueToJava2D(x, dataArea, xAxisEdge);
-                        if (plot.getOrientation() == PlotOrientation.VERTICAL) {
-                            drawVerticalCrosshair(g2, dataArea, xx, ch);
-                        } else {
-                            drawHorizontalCrosshair(g2, dataArea, xx, ch);
-                        }
-                    }
-                }
-
-
-                RectangleEdge yAxisEdge = subplots.get(0).getRangeAxisEdge();
-                ValueAxis yAxis = subplots.get(0).getRangeAxis();
-                iterator = this.getRangeCrosshairs().iterator();
-
-                /**Use just the subplot(0)=mainPlot ScreenDataArea for Y-Crosshair paint*/
-                Rectangle2D subDataArea = getMainPlotScreenDataArea(chartCanvas);
-                while (iterator.hasNext()) {
-                    Crosshair ch = (Crosshair) iterator.next();
-                    if (ch.isVisible()) {
-                        double y = ch.getValue();
-
-                        double yy = yAxis.valueToJava2D(y, subDataArea, yAxisEdge);
-                        if (plot.getOrientation() == PlotOrientation.VERTICAL) {
-                            drawHorizontalCrosshair(g2, dataArea, yy, ch);
-                        } else {
-                            drawVerticalCrosshair(g2, dataArea, yy, ch);
-                        }
-                    }
-                }
-                g2.setClip(savedClip);
+            if (chartCanvas.getRenderingInfo() == null) {
+                System.out.println("Rinfo is null");
+                return;
             }
-        }
+            Shape savedClip = g2.getClip();
+            //use the complete ScreenDataArea for X-Crosshair paint
+            Rectangle2D dataArea = chartCanvas.getRenderingInfo().getPlotInfo().getDataArea();
 
-        public Rectangle2D getMainPlotScreenDataArea(ChartCanvas chartPanel){
-            Rectangle2D area = chartPanel.getRenderingInfo().getPlotInfo().getSubplotInfo(0).getDataArea();
-            //double x = area.getX()* chartPanel.getScaleX()+chartPanel.getInsets().left;
-            //double y = area.getY()* chartPanel.getScaleY()+chartPanel.getInsets().top;
-            //double w = area.getWidth()*chartPanel.getScaleX();
-            //double h = area.getHeight()*chartPanel.getScaleY();
-            //return new Rectangle2D.Double(x, y, w, h);
-            return area;
+            g2.clip(dataArea);
+            JFreeChart chart = chartCanvas.getChart();
+            CombinedDomainXYPlot plot = (CombinedDomainXYPlot) chart.getPlot();
+            List<XYPlot> subplots = plot.getSubplots();
+
+            // paint domain crosshair -> "standard way" subplot(0) = main plot
+            ValueAxis xAxis = subplots.get(0).getDomainAxis();
+            RectangleEdge xAxisEdge = subplots.get(0).getDomainAxisEdge();
+            Iterator iterator = getDomainCrosshairs().iterator();
+            while (iterator.hasNext()) {
+                Crosshair ch = (Crosshair) iterator.next();
+                if (ch.isVisible()) {
+                    double x = ch.getValue();
+                    double xx = xAxis.valueToJava2D(x, dataArea, xAxisEdge);
+                    if (plot.getOrientation() == PlotOrientation.VERTICAL) {
+                        drawVerticalCrosshair(g2, dataArea, xx, ch);
+                    } else {
+                        drawHorizontalCrosshair(g2, dataArea, xx, ch);
+                    }
+                }
+            }
+
+
+            RectangleEdge yAxisEdge = subplots.get(0).getRangeAxisEdge();
+            ValueAxis yAxis = subplots.get(0).getRangeAxis();
+            iterator = this.getRangeCrosshairs().iterator();
+
+            //Use just the subplot(0)=mainPlot ScreenDataArea for Y-Crosshair paint
+            Rectangle2D subDataArea = chartCanvas.getRenderingInfo().getPlotInfo().getSubplotInfo(0).getDataArea();
+            while (iterator.hasNext()) {
+                Crosshair ch = (Crosshair) iterator.next();
+                if (ch.isVisible()) {
+                    double y = ch.getValue();
+
+                    double yy = yAxis.valueToJava2D(y, subDataArea, yAxisEdge);
+                    if (plot.getOrientation() == PlotOrientation.VERTICAL) {
+                        drawHorizontalCrosshair(g2, dataArea, yy, ch);
+                    } else {
+                        drawVerticalCrosshair(g2, dataArea, yy, ch);
+                    }
+                }
+            }
+            g2.setClip(savedClip);
         }
 
     }
 
-    class MyCandlestickRenderer extends CandlestickRenderer {
+    static class MyCandlestickRenderer extends CandlestickRenderer {
 
         private static final long serialVersionUID = 1L;
 

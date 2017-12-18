@@ -63,7 +63,7 @@ public class RootController implements MapChangeListener<String, ChartIndicator>
 
     @FXML
     public void initialize(){
-
+        //TODO check here..
     }
 
 
@@ -87,7 +87,7 @@ public class RootController implements MapChangeListener<String, ChartIndicator>
      * @param box
      */
     private void buildMenuEntries(ChartIndicatorBox box){
-        final TaPropertiesManager propsManager = box.getPropertiesManager();
+        final PropertiesManager propsManager = box.getPropertiesManager();
 
         Iterator<Map.Entry<String, ChartIndicator>> addedIndicators = chart.getChartIndicatorBox().getChartIndicatorMap().entrySet().iterator();
         while(addedIndicators.hasNext()){
@@ -114,13 +114,7 @@ public class RootController implements MapChangeListener<String, ChartIndicator>
 
     private void addToTradingRecord(String key, TradingRecord value) {
         CheckMenuItem item = new CheckMenuItem(key);
-        item.setOnAction(event -> {
-            if(item.isSelected()){
-                chart.plotTradingRecord(value, true);
-            } else {
-                chart.plotTradingRecord(value, false);
-            }
-        });
+        item.setOnAction(event -> { chart.plotTradingRecord(value, item.isSelected()); });
         tradingRecords.getItems().add(item);
     }
 

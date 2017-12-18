@@ -21,6 +21,7 @@ package chart;
 
 import chart.types.IndicatorParameters.TaCategory;
 import chart.types.IndicatorParameters.TaShape;
+import javafx.stage.Stage;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.ta4j.core.*;
 import org.ta4j.core.indicators.EMAIndicator;
@@ -32,13 +33,14 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Example extends AbstractProgramm {
+public class ExampleProgramm extends AbstractProgramm {
 
     /**
      * This method can be overwritten to get custom {@link ChartIndicatorBox} with custom {@link Indicator indicators},
      * {@link Strategy strategies} and {@link TradingRecord}
-     * @param series The corresponding {@link TimeSeries}
-     * @return a {@link ChartIndicatorBox} for the Chart
+     * @param series The corresponding {@link TimeSeries} for the chart
+     * @return a {@link ChartIndicatorBox} for the Chart that is used in the {@link #start(Stage) start(Stage) function}
+     * of this class
      */
     @Override
     public ChartIndicatorBox createIndicatorBox(TimeSeries series) {

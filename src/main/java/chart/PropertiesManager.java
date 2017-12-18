@@ -53,7 +53,7 @@ import java.util.Map;
  * Class to read and write parameters and settings to the
  * XML files
  */
-public class TaPropertiesManager {
+public class PropertiesManager {
 
     private File propertiesFile;
     private Document doc;
@@ -62,7 +62,7 @@ public class TaPropertiesManager {
     private Transformer transformer;
 
 
-    public TaPropertiesManager() {
+    public PropertiesManager() {
         loadParametersFile();
     }
 
@@ -108,7 +108,8 @@ public class TaPropertiesManager {
      *
      * @param key key for property
      * @param paramName default string array if not found
-     * @return
+     * @return the corresponding parameter as String value
+     * @throws XPathExpressionException if there is no such entry in the xml file
      */
     public String getParameter(String key, String paramName) throws XPathExpressionException {
         String raw[] = key.split("_");
@@ -124,7 +125,7 @@ public class TaPropertiesManager {
      *
      * @param key the key of the indicator
      * @return the category if found, DEFAULT else
-     * @throws XPathExpressionException d
+     * @throws XPathExpressionException i
      */
     public TaCategory getCategory(String key) throws XPathExpressionException {
         Node node = getNodeForInstance(key);
@@ -295,11 +296,10 @@ public class TaPropertiesManager {
     }
 
     /**
-     *
-     * @param key
+     * @param key The key of the Indicator in the xml file (format "name_id")
      * @return the key of the duplicated indicator
-     * @throws XPathExpressionException
-     * @throws TransformerException
+     * @throws XPathExpressionException xpath expression exception
+     * @throws TransformerException transformer exception
      */
     public String duplicate(String key) throws XPathExpressionException, TransformerException {
         String raw[] = key.split("_");

@@ -153,4 +153,9 @@ public class ChartIndicator {
         return new ChartIndicator(indicators,indicatorsNames,generalName,renderer,isSubchart,category);
     }
 
+    public void setVisible(boolean visible) {
+        for(int i = 0; i<indicators.size();i++){
+            renderer.setSeriesVisible(i, visible);
+        }
+    }
 }

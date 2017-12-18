@@ -44,7 +44,6 @@ import javax.xml.xpath.XPathExpressionException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static chart.types.IndicatorParameters.TaCategory.DEFAULT;
 import static chart.types.IndicatorParameters.TaCategory.HELPERS;
@@ -54,7 +53,7 @@ public class ChartIndicatorBox {
     private ObservableMap<String, ChartIndicator> chartIndicatorMap;
     private ObservableMap<String, TradingRecord> tradingRecordMap;
     private ObservableMap<String, ChartIndicator> tempChartIndicatorBackup;
-    private final TaPropertiesManager parameter;
+    private final PropertiesManager parameter;
     private TimeSeries series;
     private ClosePriceIndicator closePriceIndicator;
 
@@ -67,7 +66,7 @@ public class ChartIndicatorBox {
         this.tempChartIndicatorBackup =  FXCollections.observableMap(new HashMap<>());
         this.series = series;
         this.closePriceIndicator = new ClosePriceIndicator(series);
-        this.parameter = new TaPropertiesManager();
+        this.parameter = new PropertiesManager();
     }
 
     public void addTradingRecord(String name, TradingRecord record){
@@ -78,7 +77,7 @@ public class ChartIndicatorBox {
         return this.tradingRecordMap.get(name);
     }
 
-    public Map<String,TradingRecord> getAllTradingRecords(){
+    public ObservableMap<String,TradingRecord> getAllTradingRecords(){
         return this.tradingRecordMap;
     }
 
@@ -1157,7 +1156,7 @@ public class ChartIndicatorBox {
         return this.chartIndicatorMap.get(identifier);
     }
 
-    public TaPropertiesManager getPropertiesManager(){
+    public PropertiesManager getPropertiesManager(){
         return this.parameter;
     }
 
