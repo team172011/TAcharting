@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.VBox?>
+<fx:root type="javafx.scene.layout.VBox" fx:id="borderPane" xmlns:fx="http://javafx.com/fxml">
+    <Label text="Description"/>
+    <TextArea fx:id="description" editable="false"
+            text="  Format of the csv file: &#10;
+                    1. Row: date, open, high, low, volume &#10;
+                    2. Row: description, dateID &#10;
+                    3. Row: data... &#10;"/>
+    <Separator orientation="HORIZONTAL"/>
+
+    <Label text="Separator"/>
+    <ComboBox fx:id="seperatorBox"/>
+    <Separator orientation="HORIZONTAL"/>
+    <Label text="Line End"/>
+    <ComboBox fx:id="lineEndBox"/>
+</fx:root>

@@ -8,17 +8,18 @@
          <children>
             <MenuBar>
               <menus>
-                <Menu mnemonicParsing="false" text="Api">
+                <Menu mnemonicParsing="false" text="Api Settings">
                     <items>
-                        <MenuItem mnemonicParsing="false" text="Yahoo" />
-                    </items>
-                  <items>
-                    <MenuItem mnemonicParsing="false" text="Google" />
+                        <MenuItem mnemonicParsing="false" onAction="#settingCSV" text="CSV" />
+                        <MenuItem mnemonicParsing="false" onAction="#settingsExcel" text="Excel" />
+                        <MenuItem mnemonicParsing="false" onAction="#settingsYahoo" text="Yahoo" />
+                        <MenuItem disable="true" mnemonicParsing="false" text="Google" />
+                        <MenuItem disable="true" mnemonicParsing="false" text="IB" />
                   </items>
                 </Menu>
                 <Menu fx:id="indicatorsMenu" mnemonicParsing="false" text="Add Indicator">
                    <items>
-                       <Menu  fx:id="strategy" mnemonicParsing="false" text="Strategy" />
+                       <Menu fx:id="strategy" mnemonicParsing="false" text="Strategy" />
                        <Menu fx:id="custom" mnemonicParsing="false" text="Custom" />
                        <Menu fx:id="def" mnemonicParsing="false" text="Default" />
                        <Menu fx:id="bollinger" mnemonicParsing="false" text="Bollinger" />
@@ -30,13 +31,39 @@
                        <Menu fx:id="keltner" mnemonicParsing="false" text="Keltner" />
                    </items>
                 </Menu>
-                <Menu mnemonicParsing="false" fx:id="tradingRecords" text="Trading Records">
+                <Menu fx:id="tradingRecords" mnemonicParsing="false" text="Trading Records">
                 </Menu>
                   <Menu mnemonicParsing="false" text="About" />
               </menus>
             </MenuBar>
-            <BorderPane fx:id="borderPane" VBox.vgrow="ALWAYS" />
-             <ToolBar fx:id="toolBar" opacity="0.58" prefHeight="39.0" prefWidth="600.0">
+             <BorderPane fx:id="borderPane" VBox.vgrow="ALWAYS">
+                 <top>
+                     <ToolBar fx:id="toolBarSearch">
+                         <items>
+                             <TextField fx:id="fieldSearch" />
+                        <Button mnemonicParsing="false" text="Add" onAction="#loadDataFromSelectedApi" />
+                        <ComboBox fx:id="choiceBoxAPI" />
+                             <Separator orientation="VERTICAL" />
+                             <Button fx:id="loadCSV" onAction="#addEcxelOrCSV" text="Import excel/csv" />
+                         </items>
+                     </ToolBar>
+                 </top>
+                 <left>
+                     <VBox>
+                        <children>
+                            <TableView fx:id="table" maxWidth="120" opacity="0.69" prefWidth="120.0" tableMenuButtonVisible="true">
+                               <columnResizePolicy>
+                                    <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                               </columnResizePolicy>
+                               <columns>
+                                    <TableColumn fx:id="symbolColumn" text="Watchlist" />
+                               </columns>
+                        </TableView>
+                        </children>
+                     </VBox>
+                 </left>
+             </BorderPane>
+             <ToolBar fx:id="toolBarIndicators" prefHeight="39.0" prefWidth="600.0">
                  <items>
                      <Button fx:id="clearAll" mnemonicParsing="false" onAction="#clearToogelBar" text="Clear All" />
                      <Separator orientation="VERTICAL" />

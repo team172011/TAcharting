@@ -1,0 +1,7 @@
+/*Style for the labels of the parameters*/
+Label{
+    -fx-font: 10px "Arial";
+    -fx-color: green;
+    -fx-text-fill: black;
+    -fx-opacity: 0.6;
+}

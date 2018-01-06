@@ -1,5 +1,5 @@
 /*
- The MIT License (MIT)
+ GNU Lesser General Public License
 
  Copyright (c) 2017 Wimmer, Simon-Justus
 
@@ -19,7 +19,7 @@
 
 package chart;
 
-import chart.types.IndicatorParameters;
+import chart.parameters.IndicatorParameters;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.time.Second;
 import org.jfree.data.time.TimeSeriesCollection;
@@ -32,7 +32,7 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * An Wrapper for the indicators displaying on a jfreeCharts chart panel.
+ * A Wrapper for the indicators displaying on a jfreeCharts chart panel.
  * An ChartIndicator can consist of several ta4j-indiactors (e.g. bollinger bands...)
  */
 public class ChartIndicator {

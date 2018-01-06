@@ -1,5 +1,5 @@
 /*
- The MIT License (MIT)
+ GNU Lesser General Public License
 
  Copyright (c) 2017 Wimmer, Simon-Justus
 
@@ -19,8 +19,9 @@
 
 package chart;
 
-import chart.types.IndicatorParameters.TaCategory;
-import chart.types.IndicatorParameters.TaShape;
+import chart.parameters.IndicatorParameters.TaCategory;
+import chart.parameters.IndicatorParameters.TaShape;
+import example.Loader;
 import javafx.stage.Stage;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.ta4j.core.*;
@@ -30,20 +31,26 @@ import org.ta4j.core.trading.rules.CrossedDownIndicatorRule;
 import org.ta4j.core.trading.rules.CrossedUpIndicatorRule;
 
 import java.awt.*;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ExampleProgramm extends AbstractProgramm {
+
+public class ExampleProgram extends AbstractProgram {
 
     /**
      * This method can be overwritten to get custom {@link ChartIndicatorBox} with custom {@link Indicator indicators},
      * {@link Strategy strategies} and {@link TradingRecord}
-     * @param series The corresponding {@link TimeSeries} for the chart
      * @return a {@link ChartIndicatorBox} for the Chart that is used in the {@link #start(Stage) start(Stage) function}
      * of this class
      */
     @Override
-    public ChartIndicatorBox createIndicatorBox(TimeSeries series) {
+    public ChartIndicatorBox createIndicatorBox() {
+
+        // load a TimeSeries
+        ClassLoader cl = getClass().getClassLoader();
+        URL file = cl.getResource("fb_daily.csv");
+        TimeSeries series = Loader.getDailyTimeSeries(file, "fb");
 
         // define indicators
         ClosePriceIndicator cp = new ClosePriceIndicator(series);
@@ -58,7 +65,6 @@ public class ExampleProgramm extends AbstractProgramm {
 
         // initialize and add your individual indicators to chart
         ChartIndicatorBox chartIndicatorBox = new ChartIndicatorBox(series);
-        //chartIndicatorBox.initAllIndicators(); // add all ta4j indicators from properties file to the box/menu
 
         XYLineAndShapeRenderer emaShortRenderer = new XYLineAndShapeRenderer(); // specify how the lines should be rendered
         emaShortRenderer.setSeriesShape(0, TaShape.NONE.getShape());
@@ -92,7 +98,6 @@ public class ExampleProgramm extends AbstractProgramm {
         TradingRecord record2 = manager.run(strategyShort, Order.OrderType.SELL);
         chartIndicatorBox.addTradingRecord("My Record Long", record);
         chartIndicatorBox.addTradingRecord("My Record Short", record2);
-
         return chartIndicatorBox;
     }
 }

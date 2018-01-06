@@ -1,5 +1,6 @@
 /*
- The MIT License (MIT)
+ GNU Lesser General Public License
+
  Copyright (c) 2017 Wimmer, Simon-Justus
 
  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
@@ -18,11 +19,11 @@
 
 package chart;
 
-import chart.types.IndicatorParameters.TaCategory;
-import chart.types.IndicatorParameters.TaChartType;
-import chart.types.IndicatorParameters.TaShape;
-import chart.types.IndicatorParameters.TaStroke;
-import chart.types.Paths;
+import chart.parameters.IndicatorParameters.TaCategory;
+import chart.parameters.IndicatorParameters.TaChartType;
+import chart.parameters.IndicatorParameters.TaShape;
+import chart.parameters.IndicatorParameters.TaStroke;
+import chart.parameters.Parameter;
 import com.sun.org.apache.xml.internal.dtm.ref.DTMNodeList;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -72,10 +73,10 @@ public class PropertiesManager {
     private void loadParametersFile() {
         try {
             ClassLoader cl = getClass().getClassLoader();
-            URL fileURL = cl.getResource(Paths.PROPERTIES_FILE);
+            URL fileURL = cl.getResource(Parameter.INDICATOR_PROPERTIES_FILE);
 
             if (fileURL == null) { // no file found create one
-                propertiesFile = new File(Paths.PROPERTIES_FILE);
+                propertiesFile = new File(Parameter.INDICATOR_PROPERTIES_FILE);
                 propertiesFile.createNewFile();
             } else {
                 propertiesFile = new File(fileURL.getFile());

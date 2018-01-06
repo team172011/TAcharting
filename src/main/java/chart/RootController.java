@@ -1,5 +1,5 @@
 /*
- The MIT License (MIT)
+ GNU Lesser General Public License
 
  Copyright (c) 2017 Wimmer, Simon-Justus
 
@@ -19,29 +19,61 @@
 
 package chart;
 
-import chart.types.IndicatorParameters;
+import chart.api.YahooConnector;
+import chart.parameters.IndicatorParameters;
+import chart.parameters.Parameter;
+import chart.settings.CsvSettingsManager;
+import chart.settings.IndicatorPopUpWindow;
+import chart.settings.YahooSettingsManager;
+import chart.utils.FormatUtils;
+import com.opencsv.CSVParser;
+import com.opencsv.CSVReader;
+import com.opencsv.CSVReaderBuilder;
 import javafx.application.Platform;
+import javafx.collections.FXCollections;
 import javafx.collections.MapChangeListener;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.geometry.Orientation;
 import javafx.scene.control.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.Menu;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.TextField;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
+import javafx.stage.FileChooser;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.ta4j.core.BaseTimeSeries;
+import org.ta4j.core.Tick;
+import org.ta4j.core.TimeSeries;
 import org.ta4j.core.TradingRecord;
 
 import javax.xml.xpath.XPathException;
 import javax.xml.xpath.XPathExpressionException;
 import java.awt.*;
-import java.util.HashMap;
-import java.util.Iterator;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
+
+import static chart.parameters.Parameter.EXTENSION_FILTER_CSV;
+import static chart.parameters.Parameter.EXTENSION_FILTER_EXCEL;
 
 public class RootController implements MapChangeListener<String, ChartIndicator>{
 
+    private final Logger logger = LoggerFactory.getLogger(RootController.class);
     private TaChart chart;
     private final Map<String, CheckMenuItem> itemMap = new HashMap<>();
+    private final ObservableList<TimeSeriesTableCell> tableData = FXCollections.observableArrayList();
 
     @FXML BorderPane borderPane;
 
@@ -59,11 +91,42 @@ public class RootController implements MapChangeListener<String, ChartIndicator>
     @FXML Menu strategy;
     @FXML Menu tradingRecords;
 
-    @FXML ToolBar toolBar;
+    @FXML ToolBar toolBarIndicators;
+    @FXML ComboBox<Parameter.ApiProvider> choiceBoxAPI;
+
+    @FXML TableColumn symbolColumn;
+    @FXML TextField fieldSearch;
 
     @FXML
     public void initialize(){
-        //TODO check here..
+        fieldSearch.textProperty().addListener((ov, oldValue, newValue) -> {
+            fieldSearch.setText(newValue.toUpperCase());
+        });
+        symbolColumn.setCellValueFactory(new PropertyValueFactory<>("Name"));
+        //symbolColumn.setCellFactory(column -> new SymbolTableCell());
+        symbolColumn.getTableView().setItems(tableData);
+        symbolColumn.getTableView().setOnMouseClicked(e -> {
+            if (e.getClickCount() == 2) {
+                TimeSeries series = ((TimeSeriesTableCell) symbolColumn.getTableView().getSelectionModel().getSelectedItem()).getTimeSeries();
+                this.chart.getChartIndicatorBox().setTimeSeries(series);
+                this.chart.reloadTimeSeries();
+            }
+        });
+
+        symbolColumn.getTableView().setContextMenu(buildContextMenu());
+        choiceBoxAPI.setItems(FXCollections.observableArrayList(Parameter.ApiProvider.values()));
+        choiceBoxAPI.setValue(Parameter.ApiProvider.Yahoo);
+    }
+
+    private ContextMenu buildContextMenu(){
+        MenuItem itemRemove = new MenuItem("remove");
+        itemRemove.setOnAction(e -> {
+            TimeSeriesTableCell selectedCell = (TimeSeriesTableCell) symbolColumn.getTableView().getSelectionModel().getSelectedItem();
+            symbolColumn.getTableView().getItems().remove(selectedCell);
+        });
+        ContextMenu menu = new ContextMenu();
+        menu.getItems().add(itemRemove);
+        return menu;
     }
 
 
@@ -78,6 +141,9 @@ public class RootController implements MapChangeListener<String, ChartIndicator>
             borderPane.setCenter(chart);
             box.getChartIndicatorMap().addListener(this);
             buildMenuEntries(box);
+            Platform.runLater(()->tableData.add(new TimeSeriesTableCell(box.getTimeSeries())));
+
+
         }
     }
 
@@ -87,6 +153,7 @@ public class RootController implements MapChangeListener<String, ChartIndicator>
      * @param box
      */
     private void buildMenuEntries(ChartIndicatorBox box){
+
         final PropertiesManager propsManager = box.getPropertiesManager();
 
         Iterator<Map.Entry<String, ChartIndicator>> addedIndicators = chart.getChartIndicatorBox().getChartIndicatorMap().entrySet().iterator();
@@ -183,8 +250,8 @@ public class RootController implements MapChangeListener<String, ChartIndicator>
     }
 
     //TODO write class to store this information
-    Map<String, Button> keyButton = new HashMap<>();
-    Map<String, Separator> keySeperator = new HashMap<>();
+    private Map<String, Button> keyButton = new HashMap<>();
+    private Map<String, Separator> keySeperator = new HashMap<>();
 
     /**
      * Update the ToolBar
@@ -198,8 +265,8 @@ public class RootController implements MapChangeListener<String, ChartIndicator>
         String key = change.getKey();
 
         if(change.wasRemoved()){
-            toolBar.getItems().remove(keyButton.get(key));
-            toolBar.getItems().remove(keySeperator.get(key));
+            toolBarIndicators.getItems().remove(keyButton.get(key));
+            toolBarIndicators.getItems().remove(keySeperator.get(key));
             if(!change.wasAdded()) {
                 CheckMenuItem item = itemMap.get(key);
                 if(item!=null){
@@ -219,8 +286,8 @@ public class RootController implements MapChangeListener<String, ChartIndicator>
             keyButton.put(key,btnSetup);
             Separator sep1 = new Separator(Orientation.VERTICAL);
             keySeperator.put(key, sep1);
-            toolBar.getItems().add(btnSetup);
-            toolBar.getItems().add(sep1);
+            toolBarIndicators.getItems().add(btnSetup);
+            toolBarIndicators.getItems().add(sep1);
         }
     }
 
@@ -229,9 +296,203 @@ public class RootController implements MapChangeListener<String, ChartIndicator>
      */
     public void clearToogelBar(){
 
-        Iterator<Map.Entry<String, Button>> it = keyButton.entrySet().iterator();
-        while (it.hasNext()){
-            chart.getChartIndicatorBox().removeIndicator(it.next().getKey());
+        for (Map.Entry<String, Button> stringButtonEntry : keyButton.entrySet()) {
+            chart.getChartIndicatorBox().removeIndicator(stringButtonEntry.getKey());
+        }
+    }
+
+    /**
+     * Opens a FileChooser dialog and adds excel or csv ohlc data as TimeSeries to the current watchlist
+     */
+    public void addEcxelOrCSV(){
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Select Csv/Excel File(s)");
+        fileChooser.setInitialDirectory(new File(System.getProperty("user.home")));
+        fileChooser.getExtensionFilters().addAll(EXTENSION_FILTER_CSV, EXTENSION_FILTER_EXCEL);
+
+        List<File> files = fileChooser.showOpenMultipleDialog((borderPane).getScene().getWindow());
+        if(files == null) {
+            return;
+        }
+
+        for(File file: files){
+            if(file==null) {
+                continue;
+            }
+            int extPoint = file.getName().lastIndexOf(".");
+            String extension = file.getName().substring(extPoint+1);
+            if(EXTENSION_FILTER_CSV.getExtensions().contains("*."+extension)){
+                addCSV(file);
+                continue;
+            }
+            if(EXTENSION_FILTER_EXCEL.getExtensions().contains("*."+extension)){
+                addExcel(file);
+            }
+        }
+    }
+
+    //TODO: use CSVParserBuilder and Settings parameter to build parser (special case: file is from yahoo request)
+    private void addCSV(File file){
+        try{
+
+            CSVReader reader = new CSVReaderBuilder(new FileReader(file)).withCSVParser(new CSVParser()).build();
+            String line[];
+            line = reader.readNext();
+            Map<Parameter.Columns, Integer> headers = FormatUtils.getHeaderMap(Arrays.asList(line));
+            line = reader.readNext();
+            String name = line[0];
+            Parameter.TimeFormat timeFormat = Parameter.TimeFormat.from(line[1]);
+
+            List<Tick> ticks = new ArrayList<>();
+            while((line = reader.readNext()) != null) {
+                ticks.add(FormatUtils.extractOHLCData(headers,timeFormat,line));
+            }
+            if(ticks.get(ticks.size()-1).getEndTime().isBefore(ticks.get(0).getEndTime())){
+                Collections.reverse(ticks);
+            }
+            Platform.runLater(()-> tableData.add(new TimeSeriesTableCell(new BaseTimeSeries(name==null?"unnamed":name,ticks))));
+        } catch (IOException ioe){
+            ioe.printStackTrace();
+            //TODO: handle..
+        }
+    }
+
+    public void settingCSV(){
+        new CsvSettingsManager();
+    }
+
+    public void settingsYahoo(){
+        new YahooSettingsManager();
+    }
+
+    public void settingsExcel(){
+
+    }
+
+    public void addExcel(File file){
+        try {
+            FileInputStream inputStream = new FileInputStream(file);
+            Workbook wb = new XSSFWorkbook(inputStream);
+            Sheet sheet = wb.getSheetAt(0);
+            Iterator<Row> rowIterator = sheet.rowIterator();
+
+            // first row with header description
+            Row infoRow = rowIterator.next();
+            Iterator<Cell> cellIterator = infoRow.cellIterator();
+
+
+            ArrayList<String> headerLine = new ArrayList<>();
+            while (cellIterator.hasNext()){
+                Cell cell = cellIterator.next();
+                headerLine.add(cell.getStringCellValue());
+            }
+
+            Map<Parameter.Columns, Integer> headerMap = FormatUtils.getHeaderMap(headerLine);
+
+            // second row with name and time format
+            infoRow = rowIterator.next();
+            String name = infoRow.getCell(0).getStringCellValue();
+            String timeFormat = infoRow.getCell(1).getStringCellValue();
+
+            Parameter.TimeFormat timeFormat1 = Parameter.TimeFormat.from(timeFormat);
+
+            List<Tick> ticks = new ArrayList<>();
+
+
+            while (rowIterator.hasNext()){
+                Row row = rowIterator.next();
+                cellIterator = row.cellIterator();
+                ArrayList<String> list = new ArrayList<>();
+                while(cellIterator.hasNext()){
+                    list.add(cellIterator.next().getStringCellValue());
+                }
+                Tick tick = FormatUtils.extractOHLCData(headerMap,timeFormat1,list.toArray(new String[list.size()]));
+                ticks.add(tick);
+            }
+            if(ticks.get(ticks.size()-1).getEndTime().isBefore(ticks.get(0).getEndTime())){
+                Collections.reverse(ticks);
+            }
+            Platform.runLater(()-> tableData.add(new TimeSeriesTableCell(new BaseTimeSeries(name==null?"unnamed":name,ticks))));
+
+        } catch (Exception e){
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Cannot read excel");
+            alert.setHeaderText(file.getName()+" could not be read");
+            alert.setContentText(e.getMessage());
+            alert.showAndWait();
+        }
+    }
+
+    public void loadDataFromSelectedApi(){
+        switch (choiceBoxAPI.valueProperty().get()){
+            case Yahoo:{
+                addYahoo();
+                break;}
+            case AlphaVantage: {
+
+                break;
+            }
+            default: addYahoo();
+        }
+    }
+
+    //TODO: store as csv to get possibility to reload the file
+    public void addYahoo(){
+        logger.debug("Start Yahoo request...");
+        String symbol = fieldSearch.getText();
+
+        if(! symbol.equals("") || symbol == null) {
+            YahooConnector yahooConnector = new YahooConnector();
+            try {
+                File file = yahooConnector.request(symbol);
+                addCSV(file);
+                file.delete();
+            } catch (IOException io) {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Symbol not found");
+                alert.setHeaderText(null);
+                alert.setContentText("Could not found Symbol: " + symbol);
+
+                alert.showAndWait();
+            }
+        } else{
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Symbol not found");
+            alert.setHeaderText(null);
+            alert.setContentText("Empty input");
+
+            alert.showAndWait();
+        }
+    }
+
+    public void addAlphaVantage(){
+        logger.debug("Start AlphaVantage request...");
+       //TODO: https://www.alphavantage.co/
+    }
+
+    /****************************************************************************************/
+    // Table Cells and logic
+    /****************************************************************************************/
+
+    /**
+     * Symbol table cell (not needed at the moment)
+     * @param <T>
+     */
+    class  SymbolTableCell <T extends String> extends  TableCell<TimeSeriesTableCell, T>{
+
+        @Override
+        protected void updateItem(T item, boolean empty){
+            super.updateItem(item, empty);
+
+            if(item == null){
+                setStyle("");
+                setText(null);
+                return;
+            }
+            if(item.toString().equals("")){
+                setText("unnamed");
+            }
+            setText(item.toString());
         }
     }
 }

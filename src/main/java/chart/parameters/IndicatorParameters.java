@@ -1,4 +1,4 @@
-package chart.types;
+package chart.parameters;
 
 import javafx.collections.FXCollections;
 import javafx.scene.control.*;
@@ -11,11 +11,14 @@ import java.awt.geom.Ellipse2D;
 public class IndicatorParameters {
 
     /**
-     * Mapping between xml description and description in menus
+     * (In progress..)
+     * Enum of all available indicators with names
      *
      */
     public enum Indicators{
-        BOLLINGER("Bollinger Bands (and Width)");
+        BOLLINGER("Bollinger Bands (and Width)"),
+        SMA("Simple Moving Average"),
+        EMA("Exponential Moving Average");
 
         private String name;
 
@@ -82,7 +85,8 @@ public class IndicatorParameters {
             TaColor choosen = TaColor.valueOf(value);
             ComboBox<TaColor> cBox = new ComboBox<TaColor>(FXCollections.observableArrayList(TaColor.values()));
             cBox.getSelectionModel().select(choosen);
-            return cBox;
+            ColorPicker colorPicker = new ColorPicker();
+            return colorPicker;
         }
 
         static String getStringDescription(){
@@ -95,6 +99,9 @@ public class IndicatorParameters {
 
     }
 
+    /**
+     * The available categories in the menu
+     */
     public enum TaCategory {
         CUSTOM(8),
         STRATEGY(9),

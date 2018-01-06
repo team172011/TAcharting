@@ -1,5 +1,5 @@
 /*
- The MIT License (MIT)
+ GNU Lesser General Public License
 
  Copyright (c) 2017 Wimmer, Simon-Justus
 
@@ -20,6 +20,7 @@
 package example;
 
 import com.opencsv.CSVReader;
+import com.opencsv.CSVReaderBuilder;
 import org.ta4j.core.BaseTick;
 import org.ta4j.core.BaseTimeSeries;
 import org.ta4j.core.Tick;
@@ -45,14 +46,18 @@ public class Loader {
     private static final DateTimeFormatter DATE_FORMAT_Daily = DateTimeFormatter.ofPattern("yyyy/MM/dd");
 
 
-    public static TimeSeries getHourlyTimeSeries(String pathToCsv, String name){
+    public static TimeSeries getHourlyTimeSeries(URL file, String name){
 
         List<Tick> ticks = new ArrayList<>();
         CSVReader reader;
+        String nameInCSV="";
         try {
-            reader = new CSVReader(new FileReader(pathToCsv));
+            reader = new CSVReaderBuilder(new FileReader(file.getFile())).withSkipLines(1).build();
             String[] line;
-            reader.readNext();
+            nameInCSV = reader.readNext()[0];
+            if(nameInCSV==null || nameInCSV.equals("")){
+                nameInCSV = name;
+            }
             while ((line = reader.readNext()) != null) {
                 ZonedDateTime date = ZonedDateTime.parse(line[0]+" "+line[1]+" PST", DATE_FORMAT_HOURLY_MINUTE);
                 double open = Double.parseDouble(line[2]);
@@ -70,22 +75,25 @@ public class Loader {
         if (ticks.get(0).getEndTime().isAfter(ticks.get(ticks.size()-1).getEndTime()))
             Collections.reverse(ticks);
 
-        return new BaseTimeSeries(name, ticks);
+        return new BaseTimeSeries(nameInCSV, ticks);
     }
 
-    public static TimeSeries getMinuteTimeSeries(String pathToCsv, String name){
-        return getHourlyTimeSeries(pathToCsv, name);
+    public static TimeSeries getMinuteTimeSeries(URL file, String name){
+        return getHourlyTimeSeries(file, name);
     }
 
     public static TimeSeries getDailyTimeSeries(URL file, String name){
 
         List<Tick> ticks = new ArrayList<>();
         CSVReader reader;
+        String nameInCSV="";
         try {
-            reader = new CSVReader(new FileReader(file.getFile()));
+            reader = new CSVReaderBuilder(new FileReader(file.getFile())).withSkipLines(1).build();
             String[] line;
-            reader.readNext();
-            reader.readNext();
+            name = reader.readNext()[0];
+            if(nameInCSV==null||nameInCSV.equals("")){
+                nameInCSV=name;
+            }
             while ((line = reader.readNext()) != null) {
                 ZonedDateTime date = LocalDate.parse(line[0], DATE_FORMAT_Daily).atStartOfDay(ZoneId.systemDefault());
                 double close = Double.parseDouble(line[1]);
@@ -102,7 +110,7 @@ public class Loader {
 
         if (ticks.get(0).getEndTime().isAfter(ticks.get(ticks.size()-1).getEndTime()))
             Collections.reverse(ticks);
-        return new BaseTimeSeries(name, ticks);
+        return new BaseTimeSeries(nameInCSV, ticks);
     }
 
 	
