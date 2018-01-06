@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.VBox?>
+<fx:root fx:id="yahooSettings" type="javafx.scene.layout.VBox" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8">
+    <Label text="From"/>
+    <DatePicker fx:id="pickerFrom" promptText="From" />
+    <Separator orientation="HORIZONTAL"/>
+    <Label text="To"/>
+    <DatePicker fx:id="pickerTo" promptText="To" />
+    <Separator orientation="HORIZONTAL"/>
+    <Label text="Interval"/>
+    <ComboBox fx:id="intervalBox" promptText="Intervall" visibleRowCount="50" />
+</fx:root>
