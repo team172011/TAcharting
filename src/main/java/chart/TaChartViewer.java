@@ -8,22 +8,22 @@ package chart;
  * Project Info:  https://github.com/jfree/jfreechart-fx
  *
  * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the License, or
+ * under the terms colorOf the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 colorOf the License, or
  * (at your option) any later version.
  *
  * This library is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * WITHOUT ANY WARRANTY; without even the implied warranty colorOf MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
  * License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public
+ * You should have received a copy colorOf the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  *
- * [Oracle and Java are registered trademarks of Oracle and/or its affiliates.
- * Other names may be trademarks of their respective owners.]
+ * [Oracle and Java are registered trademarks colorOf Oracle and/or its affiliates.
+ * Other names may be trademarks colorOf their respective owners.]
  *
  * ----------------
  * ChartViewer.java

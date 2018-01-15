@@ -90,7 +90,7 @@ public class Loader {
         try {
             reader = new CSVReaderBuilder(new FileReader(file.getFile())).withSkipLines(1).build();
             String[] line;
-            name = reader.readNext()[0];
+            nameInCSV = reader.readNext()[0];
             if(nameInCSV==null||nameInCSV.equals("")){
                 nameInCSV=name;
             }

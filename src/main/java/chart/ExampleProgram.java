@@ -42,7 +42,6 @@ public class ExampleProgram extends AbstractProgram {
      * This method can be overwritten to get custom {@link ChartIndicatorBox} with custom {@link Indicator indicators},
      * {@link Strategy strategies} and {@link TradingRecord}
      * @return a {@link ChartIndicatorBox} for the Chart that is used in the {@link #start(Stage) start(Stage) function}
-     * of this class
      */
     @Override
     public ChartIndicatorBox createIndicatorBox() {

@@ -36,8 +36,8 @@ public class TaTooltipHandler extends TaAbstractMouseHandlerFX {
      * Returns the tooltip text.
      *
      * @param canvas  the canvas that is displaying the chart.
-     * @param x  the x-coordinate of the mouse pointer.
-     * @param y  the y-coordinate of the mouse pointer.
+     * @param x  the x-coordinate colorOf the mouse pointer.
+     * @param y  the y-coordinate colorOf the mouse pointer.
      *
      * @return String The tooltip text (possibly {@code null}).
      */

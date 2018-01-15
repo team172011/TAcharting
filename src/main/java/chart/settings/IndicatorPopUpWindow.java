@@ -33,6 +33,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 
 import javax.xml.xpath.XPathExpressionException;
 import java.io.IOException;
@@ -64,10 +65,10 @@ public class IndicatorPopUpWindow extends PopupControl {
         this.indicatorBox = indicatorBox;
         borderPane = new BorderPane();
         setAutoHide(true);
-        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getClassLoader().getResource(("fxml/IndicatorPopUpWindow.fxml")));
+        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getClassLoader().getResource(("fxml/charting-IndicatorPopUpWindow.fxml")));
         fxmlLoader.setController(this);
         fxmlLoader.setRoot(borderPane);
-        borderPane.getStylesheets().add("fxml/IndicatorPopUpWindow.css");
+        borderPane.getStylesheets().add("fxml/charting-IndicatorPopUpWindow.css");
 
         try {
             fxmlLoader.load();
@@ -75,13 +76,14 @@ public class IndicatorPopUpWindow extends PopupControl {
             title.setText(el[0]);
             title.getStyleClass().add("title");
             if(el.length > 1){
-                Map parameters = propertiesManager.getParametersFor(key);
+                Map<String, String> parameters = propertiesManager.getParametersFor(key);
 
                 VBox first = new VBox(3);
-                Iterator<Map.Entry> it = parameters.entrySet().iterator();
+                Iterator<Map.Entry<String, String>> it = parameters.entrySet().iterator();
                 if(!it.hasNext()){
                     hide();
                 }
+                // iterate over all parameters and add label and a value setter
                 while(it.hasNext()){
                     first.setId("vbox");
                     Map.Entry entry = it.next();
@@ -97,6 +99,9 @@ public class IndicatorPopUpWindow extends PopupControl {
                         nameValue.put(parameterName,value);
                     } else if (valueSetter instanceof ComboBox){
                         value.bind(((ComboBox)valueSetter).valueProperty());
+                        nameValue.put(parameterName,value);
+                    } else if( valueSetter instanceof ColorPicker){
+                        value.bind(((ColorPicker)valueSetter).valueProperty());
                         nameValue.put(parameterName,value);
                     }
                     Label name = new Label(parameterName);
@@ -121,12 +126,8 @@ public class IndicatorPopUpWindow extends PopupControl {
                 addButtonAction(false, false, true);
             }
 
-        } catch (XPathExpressionException xpe){
+        } catch (XPathExpressionException | IOException xpe){
             xpe.printStackTrace();
-            borderPane.setCenter(new Label("No settings available"));
-            addButtonAction(false, false, true);
-        } catch (IOException io){
-            io.printStackTrace();
             borderPane.setCenter(new Label("No settings available"));
             addButtonAction(false, false, true);
         }
@@ -141,7 +142,13 @@ public class IndicatorPopUpWindow extends PopupControl {
                     try{
                         Map.Entry<String, Property> entry = it.next();
                         try{
-                            propertiesManager.setParameter(key,entry.getKey(),entry.getValue().getValue().toString());
+                            if(propertiesManager.getParameterType(key,entry.getKey()).equals("Color")){
+                                Color color = ((Color)entry.getValue().getValue());
+                                propertiesManager.setParameter(key, entry.getKey(),
+                                        String.format("%s,%s,%s,%s",color.getRed(),color.getGreen(),color.getBlue(),color.getBrightness()*255));
+                            } else {
+                                propertiesManager.setParameter(key, entry.getKey(), entry.getValue().getValue().toString());
+                            }
                             indicatorBox.reloadIndicator(key);
                             hide();
                         } catch (XPathExpressionException xpe){

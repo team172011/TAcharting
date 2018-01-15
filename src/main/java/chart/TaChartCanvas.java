@@ -9,22 +9,22 @@ package chart;
  * Project Info:  https://github.com/jfree/jfreechart-fx
  *
  * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the License, or
+ * under the terms colorOf the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 colorOf the License, or
  * (at your option) any later version.
  *
  * This library is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * WITHOUT ANY WARRANTY; without even the implied warranty colorOf MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
  * License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public
+ * You should have received a copy colorOf the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  *
- * [Oracle and Java are registered trademarks of Oracle and/or its affiliates.
- * Other names may be trademarks of their respective owners.]
+ * [Oracle and Java are registered trademarks colorOf Oracle and/or its affiliates.
+ * Other names may be trademarks colorOf their respective owners.]
  *
  * ----------------
  * ChartCanvas.java
@@ -103,7 +103,7 @@ public class TaChartCanvas extends Canvas implements ChartChangeListener,
     private JFreeChart chart;
 
     /**
-     * The graphics drawing context (will be an instance of FXGraphics2D).
+     * The graphics drawing context (will be an instance colorOf FXGraphics2D).
      */
     private Graphics2D g2;
 
@@ -115,7 +115,7 @@ public class TaChartCanvas extends Canvas implements ChartChangeListener,
      */
     private Point2D anchor;
 
-    /** The chart rendering info from the most recent drawing of the chart. */
+    /** The chart rendering info from the most recent drawing colorOf the chart. */
     private ChartRenderingInfo info;
 
     /** The tooltip object for the canvas (can be null). */
@@ -134,7 +134,7 @@ public class TaChartCanvas extends Canvas implements ChartChangeListener,
     private TaMouseHandlerFX liveHandler;
 
     /**
-     * The list of available live mouse handlers (can be empty but not null).
+     * The list colorOf available live mouse handlers (can be empty but not null).
      */
     private java.util.List<TaMouseHandlerFX> availableMouseHandlers;
 
@@ -285,7 +285,7 @@ public class TaChartCanvas extends Canvas implements ChartChangeListener,
     }
 
     /**
-     * Returns the rendering info from the most recent drawing of the chart.
+     * Returns the rendering info from the most recent drawing colorOf the chart.
      *
      * @return The rendering info (possibly {@code null}).
      */
@@ -317,7 +317,7 @@ public class TaChartCanvas extends Canvas implements ChartChangeListener,
     /**
      * Returns the anchor point.  This is the last point on the canvas
      * that the user clicked with the mouse, and is used during chart
-     * rendering to determine the position of crosshairs (if visible).
+     * rendering to determine the position colorOf crosshairs (if visible).
      *
      * @return The anchor point (possibly {@code null}).
      *
@@ -328,8 +328,8 @@ public class TaChartCanvas extends Canvas implements ChartChangeListener,
     }
 
     /**
-     * Set the anchor point and forces a redraw of the chart (the anchor point
-     * is used to determine the position of the crosshairs on the chart, if
+     * Set the anchor point and forces a redraw colorOf the chart (the anchor point
+     * is used to determine the position colorOf the crosshairs on the chart, if
      * they are visible).
      *
      * @param anchor  the anchor ({@code null} permitted).
@@ -376,7 +376,7 @@ public class TaChartCanvas extends Canvas implements ChartChangeListener,
      * Returns a (newly created) list containing the listeners currently
      * registered with the canvas.
      *
-     * @return A list of listeners (possibly empty but never {@code null}).
+     * @return A list colorOf listeners (possibly empty but never {@code null}).
      *
      * @since 1.0.20
      */
@@ -395,7 +395,7 @@ public class TaChartCanvas extends Canvas implements ChartChangeListener,
     }
 
     /**
-     * Removes a listener from the list of objects listening for chart mouse
+     * Removes a listener from the list colorOf objects listening for chart mouse
      * events.
      *
      * @param listener  the listener.
@@ -428,8 +428,8 @@ public class TaChartCanvas extends Canvas implements ChartChangeListener,
     }
 
     /**
-     * Adds a mouse handler to the list of available handlers (handlers that
-     * are candidates to take the position of live handler).  The handler must
+     * Adds a mouse handler to the list colorOf available handlers (handlers that
+     * are candidates to take the position colorOf live handler).  The handler must
      * have an ID that uniquely identifies it amongst the handlers registered
      * with this canvas.
      *
@@ -445,7 +445,7 @@ public class TaChartCanvas extends Canvas implements ChartChangeListener,
     }
 
     /**
-     * Removes a handler from the list of available handlers.
+     * Removes a handler from the list colorOf available handlers.
      *
      * @param handler  the handler ({@code null} not permitted).
      */
@@ -454,7 +454,7 @@ public class TaChartCanvas extends Canvas implements ChartChangeListener,
     }
 
     /**
-     * Adds a handler to the list of auxiliary handlers.  The handler must
+     * Adds a handler to the list colorOf auxiliary handlers.  The handler must
      * have an ID that uniquely identifies it amongst the handlers registered
      * with this canvas.
      *
@@ -472,7 +472,7 @@ public class TaChartCanvas extends Canvas implements ChartChangeListener,
     }
 
     /**
-     * Removes a handler from the list of auxiliary handlers.
+     * Removes a handler from the list colorOf auxiliary handlers.
      *
      * @param handler  the handler ({@code null} not permitted).
      *
@@ -513,7 +513,7 @@ public class TaChartCanvas extends Canvas implements ChartChangeListener,
     }
 
     /**
-     * Draws the content of the canvas and updates the
+     * Draws the content colorOf the canvas and updates the
      * {@code renderingInfo} attribute with the latest rendering
      * information.
      */
@@ -576,8 +576,8 @@ public class TaChartCanvas extends Canvas implements ChartChangeListener,
      * class, you won't normally call it directly.
      *
      * @param text  the text ({@code null} permitted).
-     * @param x  the x-coordinate of the mouse pointer.
-     * @param y  the y-coordinate of the mouse pointer.
+     * @param x  the x-coordinate colorOf the mouse pointer.
+     * @param y  the y-coordinate colorOf the mouse pointer.
      */
     public void setTooltip(String text, double x, double y) {
         if (text != null) {

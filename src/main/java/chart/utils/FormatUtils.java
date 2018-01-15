@@ -4,6 +4,7 @@ import chart.parameters.Parameter;
 import org.ta4j.core.BaseTick;
 import org.ta4j.core.Tick;
 
+import java.awt.*;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -49,7 +50,7 @@ public class FormatUtils {
 
     /**
      * Extracts the OHLC data from a string array into a tick object
-     * @param headerMap the header maps that maps indices of the <tt>line</tt> to the {@link Parameter.Columns columns}
+     * @param headerMap the header maps that maps indices colorOf the <tt>line</tt> to the {@link Parameter.Columns columns}
      * @param timeFormat the {@link chart.parameters.Parameter.TimeFormat time format}
      * @param line the string array with corresponding entries for the tick
      * @return a {@link Tick tick} object with the ohlc data
@@ -58,7 +59,7 @@ public class FormatUtils {
         ZonedDateTime date;
         if(timeFormat == Parameter.TimeFormat.y_M_d_hmsZ){
             date = timeFormat.format(line[headerMap.get(Parameter.Columns.DATE)]
-                    +" "+line[headerMap.get(Parameter.Columns.DATE2)]+" PST"); // TODO better handling of special case with two columns based date
+                    +" "+line[headerMap.get(Parameter.Columns.DATE2)]+" PST"); // TODO better handling colorOf special case with two columns based date
         } else {
             date = timeFormat.format(line[headerMap.get(Parameter.Columns.DATE)]);
         }
@@ -71,5 +72,31 @@ public class FormatUtils {
             volume = Double.parseDouble(line[headerMap.get(Parameter.Columns.VOLUME)]);
         }
         return new BaseTick(date, open, high, low, close, volume);
+    }
+    /**
+     * Returns a javaFX Color object that represents the same color as the awt color object
+     * @param c a java.awt.Color object
+     */
+    public static javafx.scene.paint.Color awtColorToJavaFX(Color c) {
+        return javafx.scene.paint.Color.rgb(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha() / 255.0);
+    }
+
+    public static Color javaFXColorToAwt(javafx.scene.paint.Color c){
+        return new Color((float) c.getRed(),(float)c.getGreen(), (float)c.getBlue(), (float) c.getOpacity());
+    }
+
+    /**
+     *
+     * @param color color as String or RGB value as String
+     * @return corresponding awt color
+     */
+    public static Color colorOf(String color) {
+        String[] rgb = color.split(",");
+        if (rgb.length == 3) {
+            return new Color(Float.parseFloat(rgb[0]), Float.parseFloat(rgb[1]),Float.parseFloat(rgb[2]));
+        } else if (rgb.length == 4) {
+            return new Color(Float.parseFloat(rgb[0]),Float.parseFloat(rgb[1]), Float.parseFloat(rgb[2]), Float.parseFloat(rgb[3])/255);
+        }
+        return Color.BLUE; // default
     }
 }

@@ -32,11 +32,11 @@ public class YahooSettingsManager{
         settingDialog.setTitle("Yahoo Api Settings");
         settingDialog.setHeaderText("Yahoo connections and data settings");
 
-        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getClassLoader().getResource(("fxml/YahooSettings.fxml")));
+        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getClassLoader().getResource(("fxml/charting-YahooSettings.fxml")));
         fxmlLoader.setController(this);
         fxmlLoader.setRoot(rootPane);
         settingDialog.getDialogPane().setContent(rootPane);
-        rootPane.getStylesheets().add("fxml/Settings.css");
+        rootPane.getStylesheets().add("fxml/charting-Settings.css");
         try{
             fxmlLoader.load();
             YahooProperties yahooProperties = new YahooProperties();

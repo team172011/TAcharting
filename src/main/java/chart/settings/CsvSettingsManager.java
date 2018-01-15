@@ -31,10 +31,10 @@ public class CsvSettingsManager {
 
     public CsvSettingsManager(){
         Dialog<Boolean> settingsDialog = new Dialog<>();
-        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getClassLoader().getResource(("fxml/CsvSettings.fxml")));
+        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getClassLoader().getResource(("fxml/charting-CsvSettings.fxml")));
         fxmlLoader.setController(this);
         fxmlLoader.setRoot(rootPane);
-        rootPane.getStylesheets().add("fxml/Settings.css");
+        rootPane.getStylesheets().add("fxml/charting-Settings.css");
         settingsDialog.getDialogPane().setContent(rootPane);
         try{
             fxmlLoader.load();
@@ -80,7 +80,7 @@ public class CsvSettingsManager {
         }
     }
 
-    // TODO add position of info line and maybe possibility to set info line in properties
+    // TODO add position colorOf info line and maybe possibility to set info line in properties
     class CsvProperties{
         private final StringProperty separator;
         private final StringProperty lineBreak;

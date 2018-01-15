@@ -71,7 +71,7 @@ public class TaAbstractMouseHandlerFX implements TaMouseHandlerFX {
     }
 
         /**
-         * Sets the flag that controls the enabled/disabled state of the handler.
+         * Sets the flag that controls the enabled/disabled state colorOf the handler.
          *
          * @param enabled  the new flag value.
          */

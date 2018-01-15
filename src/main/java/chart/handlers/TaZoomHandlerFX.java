@@ -53,7 +53,7 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
 /**
- * Handles drag zooming of charts on a {@link ChartCanvas}.  This
+ * Handles drag zooming colorOf charts on a {@link ChartCanvas}.  This
  * handler should be configured with the required modifier keys and installed
  * as a live handler (not an auxiliary handler).  This handler only works for
  * a <b>ChartCanvas</b> that is embedded in a {@link ChartViewer}, since it
@@ -85,7 +85,7 @@ public class TaZoomHandlerFX extends TaAbstractMouseHandlerFX {
 
     /**
      * Creates a new instance that will be activated using the specified
-     * combination of modifier keys.
+     * combination colorOf modifier keys.
      *
      * @param id  the handler ID ({@code null} not permitted).
      * @param parent  the chart viewer.

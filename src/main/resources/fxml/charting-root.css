@@ -1,0 +1,27 @@
+
+#ChartStackPane{
+    -fx-background-color: #ffffff;
+
+}
+
+.ToggleBar{
+
+}
+
+.ChartViewer{
+
+}
+
+.buttonSearchCloseIcon {
+    -glyph-size: 15;
+    -glyph-name: CLOSE;
+}
+
+ToolBar {
+    -fx-background-color: linear-gradient(from 25% 25% to 100% 100%, -fx-background, #f2f2f2);
+
+}
+
+Button {
+
+}

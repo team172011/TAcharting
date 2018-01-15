@@ -1,5 +1,6 @@
 package chart.parameters;
 
+import chart.utils.FormatUtils;
 import javafx.collections.FXCollections;
 import javafx.scene.control.*;
 import javafx.scene.control.TextField;
@@ -12,7 +13,7 @@ public class IndicatorParameters {
 
     /**
      * (In progress..)
-     * Enum of all available indicators with names
+     * Enum colorOf all available indicators with names
      *
      */
     public enum Indicators{
@@ -27,34 +28,21 @@ public class IndicatorParameters {
         }
     }
 
-    public enum TaBoolean{
-        TRUE,
-        FALSE;
+    public static class TaBoolean{
 
         static Control getComponent(String value){
-            TaBoolean choosen = valueOf(value);
+            Boolean choosen = Boolean.valueOf(value);
             CheckBox checkBox = new CheckBox("Yes/No");
-            checkBox.setSelected(choosen.toBoolean());
+            checkBox.setSelected(choosen);
             return checkBox;
         }
 
         static String getStringDescription(){
             return "TaBoolean";
         }
-
-        public boolean toBoolean(){
-            switch (this){
-                case TRUE:
-                    return true;
-                default:
-                    return false;
-            }
-        }
     }
 
-    public enum INTEGER {
-
-        ;
+    public static class INTEGER {
 
         static Control getComponent(String value){
             int choosen = Integer.parseInt(value);
@@ -67,36 +55,18 @@ public class IndicatorParameters {
     }
 
 
-    public enum TaColor{ //TODO: add rgb parameter
+    public static class TaColor { //TODO: add rgb parameter
 
-        BLUE(Color.BLUE),
-        YELLOW(Color.YELLOW),
-        RED(Color.RED),
-        MAGENTA(Color.MAGENTA),
-        GREEN(Color.GREEN);
-
-        private java.awt.Paint paint;
-
-        TaColor(Paint paint){
-            this.paint = paint;
-        }
-
-        static Control getComponent(String value){
-            TaColor choosen = TaColor.valueOf(value);
-            ComboBox<TaColor> cBox = new ComboBox<TaColor>(FXCollections.observableArrayList(TaColor.values()));
-            cBox.getSelectionModel().select(choosen);
+        static Control getComponent(String value) {
+            Color choosen = FormatUtils.colorOf(value);
             ColorPicker colorPicker = new ColorPicker();
+            colorPicker.setValue(FormatUtils.awtColorToJavaFX(choosen));
             return colorPicker;
         }
 
-        static String getStringDescription(){
-            return "TaColor";
+        static String getStringDescription() {
+            return "Color";
         }
-
-        public Paint getPaint(){
-            return paint;
-        }
-
     }
 
     /**
@@ -219,9 +189,9 @@ public class IndicatorParameters {
     }
 
     /**
-     * returns a Labeled to view and/or change the value of parameter via gui
-     * @param parameterType the type of the parameter from xml
-     * @return Labeled to view and/or change the value of parameter via gui
+     * returns a Labeled to view and/or change the value colorOf parameter via gui
+     * @param parameterType the type colorOf the parameter from xml
+     * @return Labeled to view and/or change the value colorOf parameter via gui
      */
     public static Control getComponent(String parameterType, String paramValue){
         Control control = new TextField(paramValue);

@@ -19,8 +19,8 @@ public class TaAnchorHandler extends TaAbstractMouseHandlerFX {
     }
 
     /**
-     * Handles a mouse pressed event by recording the location of the mouse
-     * pointer (so that later we can check that the click isn't part of a
+     * Handles a mouse pressed event by recording the location colorOf the mouse
+     * pointer (so that later we can check that the click isn't part colorOf a
      * drag).
      *
      * @param canvas  the chart canvas.

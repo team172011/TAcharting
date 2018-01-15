@@ -26,7 +26,6 @@ import javafx.collections.ObservableList;
 import javafx.scene.CacheHint;
 import javafx.scene.layout.StackPane;
 import org.jfree.chart.JFreeChart;
-import org.jfree.chart.annotations.XYTextAnnotation;
 import org.jfree.chart.axis.AxisLocation;
 import org.jfree.chart.axis.DateAxis;
 import org.jfree.chart.axis.NumberAxis;
@@ -38,7 +37,6 @@ import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.chart.title.LegendTitle;
 import org.jfree.chart.ui.RectangleAnchor;
 import org.jfree.chart.ui.RectangleEdge;
-import org.jfree.chart.ui.TextAnchor;
 import org.jfree.data.time.Minute;
 import org.jfree.data.xy.DefaultHighLowDataset;
 import org.jfree.data.xy.OHLCDataset;
@@ -60,18 +58,11 @@ public class TaChart extends StackPane implements MapChangeListener<String, Char
 
     private ChartIndicatorBox chartIndicatorBox;
 
-    private Color plotBackground = Color.WHITE; // default colors for white theme
-    private Color panelBackground = Color.WHITE;
-    private Color frameBackground = Color.WHITE;
-    private Color chartBackground = Color.WHITE;
-    private Color legendBackground = Color.WHITE;
-    private Color subPlotNames = Color.BLACK;
-    private Color legendItemPaint = Color.BLACK;
+    private Color plotBackground = new Color(0,0,0,0);
+    private Color legendBackground = new Color(0,0,0,0);
 
     private final CombinedDomainXYPlot combinedXYPlot;
     private final XYPlot mainPlot;
-    private Crosshair xCrosshair;
-    private Crosshair yCrosshair;
 
     private Map<TradingRecord, List<Marker>> mapTradingRecordMarker;
     private List<XYPlot> currentSubPlots;
@@ -81,26 +72,12 @@ public class TaChart extends StackPane implements MapChangeListener<String, Char
 
     private TaChartViewer viewer;
 
-
     /**
      * Constructor.
      * @param box a ChartIndicatorBox
      */
     public TaChart(ChartIndicatorBox box){
-        this(box,false);
-
-    }
-
-    /**
-     * Constructor.
-     * @param box a ChartIndicatorBox
-     * @param darkTheme true if dark theme should be used
-     */
-    public TaChart(ChartIndicatorBox box, boolean darkTheme){
         mapTradingRecordMarker = new HashMap<>();
-        if (darkTheme){
-            setDarkTheme();
-        }
         this.chartIndicatorBox = box;
         this.chartIndicatorBox.getChartIndicatorMap().addListener(this);
         XYDataset candlestickData = createOHLCDataset(box.getTimeSeries());
@@ -114,41 +91,25 @@ public class TaChart extends StackPane implements MapChangeListener<String, Char
         return chartIndicatorBox;
     }
 
-    private void setDarkTheme() {
-        plotBackground = Color.BLACK;
-        panelBackground = Color.BLACK;
-        frameBackground = Color.BLACK;
-        chartBackground = Color.BLACK;
-        legendBackground = Color.BLACK;
-        subPlotNames = Color.WHITE;
-        legendItemPaint = Color.WHITE;
-    }
-
     /**
      * Prepare the cart. Set Styles, Listeners and Overlays
      */
     private void prepare(){
         this.setCache(true);
         this.setCacheHint(CacheHint.SPEED);
-        this.combinedXYPlot.setBackgroundPaint(plotBackground);
-        this.mainPlot.setBackgroundPaint(plotBackground);
-
+        //this.combinedXYPlot.setBackgroundPaint(plotBackground);
+        //this.mainPlot.setBackgroundPaint(plotBackground);
 
         final JFreeChart chart = new JFreeChart(chartIndicatorBox.getTimeSeries().getName(), combinedXYPlot);
-        //this.chart.setBackgroundPaint(chartBackground);
         this.viewer = new TaChartViewer(chart);
-        //this.viewer.addChartMouseListener(this);
         this.viewer.setCache(true);
         this.viewer.setCacheHint(CacheHint.SPEED);
+        setStyle("-fx-background-color: #ffffff");
         getChildren().add(viewer);
-        //this.viewer.setBackground(panelBackground);
         LegendTitle legend = chart.getLegend();
-        legend.setPosition(RectangleEdge.RIGHT);
-        legend.setItemFont(new Font("Arial", 1, 14));
-        legend.setItemPaint(legendItemPaint);
+        legend.setPosition(RectangleEdge.TOP);
+        legend.setItemFont(new Font("Arial", 1, 12));
         legend.setBackgroundPaint(legendBackground);
-        //viewer.setBackground(frameBackground);
-
     }
 
 
@@ -226,8 +187,8 @@ public class TaChart extends StackPane implements MapChangeListener<String, Char
 
 
     /**
-     * Plots the corresponding indicators of the list of identifiers as overlays
-     * @param indicatorIdentifiers a list of identifiers e.g. "EMAIndicator_1"
+     * Plots the corresponding indicators colorOf the list colorOf identifiers as overlays
+     * @param indicatorIdentifiers a list colorOf identifiers e.g. "EMAIndicator_1"
      */
     public void plotOverlays(List<String> indicatorIdentifiers) {
         List<ChartIndicator> overlays = new ArrayList<>();
@@ -253,8 +214,8 @@ public class TaChart extends StackPane implements MapChangeListener<String, Char
     }
 
     /**
-     * Plots the corresponding indicators of the list of identifiers as subplots
-     * @param indicatorIdentifiers a list of identifiers e.g. "MACDIndicator_1"
+     * Plots the corresponding indicators colorOf the list colorOf identifiers as subplots
+     * @param indicatorIdentifiers a list colorOf identifiers e.g. "MACDIndicator_1"
      */
     public void plotSubPlots(List<String> indicatorIdentifiers){
         List<ChartIndicator> subPlots = new ArrayList<>();
@@ -317,7 +278,7 @@ public class TaChart extends StackPane implements MapChangeListener<String, Char
 
     /**
      * Creates a {@link CombinedDomainXYPlot combinedDomainXYPlot} with the <tt>plot</tt> as 'main plot' id = 0
-     * @param plot the first plot (main plot) that will get 70 percent of the plot area
+     * @param plot the first plot (main plot) that will get 70 percent colorOf the plot area
      * @return a CombinedXYPlot with the <tt>plot</tt> added
      */
     private static CombinedDomainXYPlot createCombinedDomainXYPlot(final XYPlot plot){
@@ -352,13 +313,7 @@ public class TaChart extends StackPane implements MapChangeListener<String, Char
         TimeSeries series = chartIndicatorBox.getTimeSeries();
         double x = new Minute(Date.from(series.getTick(0).getEndTime().minusDays(50).toInstant())).getFirstMillisecond();
         double y = numberAxis.getLowerBound()+(numberAxis.getUpperBound()+numberAxis.getLowerBound())/1.1;
-        XYTextAnnotation annotation = new XYTextAnnotation(chartIndicator.getGeneralName(), x, y);
-        annotation.setFont(new Font("SansSerif", Font.BOLD, 12));
-        annotation.setPaint(subPlotNames);
-        annotation.setOutlineVisible(true);
-        annotation.setTextAnchor(TextAnchor.TOP_LEFT);
-        indicatorPlot.addAnnotation(annotation);
-        indicatorPlot.setBackgroundPaint(plotBackground);
+        //indicatorPlot.setBackgroundPaint(plotBackground);
         indicatorPlot.setRangeAxisLocation(AxisLocation.TOP_OR_LEFT);
 
         return indicatorPlot;
@@ -393,7 +348,7 @@ public class TaChart extends StackPane implements MapChangeListener<String, Char
     }
 
     /**
-     * This function is called when the {@link ChartIndicator Chartindicators} of the underlying
+     * This function is called when the {@link ChartIndicator Chartindicators} colorOf the underlying
      * {@link ChartIndicatorBox indicatorBox} change (change, new or remove)
      * @param change Change object
      */

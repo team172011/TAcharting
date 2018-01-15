@@ -24,6 +24,7 @@ import chart.parameters.IndicatorParameters.TaChartType;
 import chart.parameters.IndicatorParameters.TaShape;
 import chart.parameters.IndicatorParameters.TaStroke;
 import chart.parameters.Parameter;
+import chart.utils.FormatUtils;
 import com.sun.org.apache.xml.internal.dtm.ref.DTMNodeList;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -124,7 +125,7 @@ public class PropertiesManager {
 
     /**
      *
-     * @param key the key of the indicator
+     * @param key the key colorOf the indicator
      * @return the category if found, DEFAULT else
      * @throws XPathExpressionException i
      */
@@ -165,27 +166,12 @@ public class PropertiesManager {
         XPathExpression expr = xPath.compile(command);
         Node paramNode = (Node) expr.evaluate(node,XPathConstants.NODE);
         String color = paramNode.getTextContent();
-        return swithString(color);
-    }
-
-    private Paint swithString(String color){
-        switch (color){
-            case "YELLOW":
-                return Color.YELLOW;
-            case "BLUE":
-                return Color.BLUE;
-            case "GREEN":
-                return Color.GREEN;
-            case "RED":
-                return Color.RED;
-            default:
-                return Color.MAGENTA;
-        }
+        return FormatUtils.colorOf(color);
     }
 
     /**
-     * returns the main {@link Stroke} of the indicator identified by key
-     * @param key the identifier of the indicator
+     * returns the main {@link Stroke} colorOf the indicator identified by key
+     * @param key the identifier colorOf the indicator
      * @return Stroke object or null
      * @throws XPathExpressionException
      */
@@ -270,8 +256,8 @@ public class PropertiesManager {
 
     /**
      * Get all parameters for a
-     * @param key identifier of the indicator
-     * @return a Map of name and value of the parameter
+     * @param key identifier colorOf the indicator
+     * @return a Map colorOf name and value colorOf the parameter
      */
     public Map<String,String> getParametersFor(String key) throws XPathExpressionException {
         String raw[] = key.split("_");
@@ -297,17 +283,16 @@ public class PropertiesManager {
     }
 
     /**
-     * @param key The key of the Indicator in the xml file (format "name_id")
-     * @return the key of the duplicated indicator
+     * @param key The key colorOf the Indicator in the xml file (format "name_id")
+     * @return the key colorOf the duplicated indicator
      * @throws XPathExpressionException xpath expression exception
      * @throws TransformerException transformer exception
      */
     public String duplicate(String key) throws XPathExpressionException, TransformerException {
         String raw[] = key.split("_");
         String indicator = raw[0];
-        String id = raw[1];
         //get valid id (the biggest+1 ...)
-        String command = String.format("//indicator[@identifier='%s']/instance",indicator,id);
+        String command = String.format("//indicator[@identifier='%s']/instance",indicator);
         XPathExpression expr = xPath.compile(command);
         NodeList nodes = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
         int nextID = 1;
@@ -320,7 +305,7 @@ public class PropertiesManager {
         }
         nextID++;
 
-        // get instance, clone it and append to parent of instance
+        // get instance, clone it and append to parent colorOf instance
         Node toDuplicate = getNodeForInstance(key);
         Element duplicate = (Element) toDuplicate.cloneNode(true);
         duplicate.setAttribute("id", String.valueOf(nextID));
@@ -346,15 +331,13 @@ public class PropertiesManager {
         String indicator = raw[0];
         String command = String.format("//indicator[@identifier='%s']/description/text()",indicator);
         XPathExpression expr = xPath.compile(command);
-        String result = (String) expr.evaluate(doc,XPathConstants.STRING);
-        return result;
+        return (String) expr.evaluate(doc,XPathConstants.STRING);
     }
 
     public String getParameterType(String key, String param) throws XPathExpressionException {
         Node instanceNode = getNodeForInstance(key);
         String command = String.format("./param[@name='%s']/@type",param);
         XPathExpression expr = xPath.compile(command);
-        String result = (String) expr.evaluate(instanceNode,XPathConstants.STRING);
-        return result;
+        return  (String) expr.evaluate(instanceNode,XPathConstants.STRING);
     }
 }

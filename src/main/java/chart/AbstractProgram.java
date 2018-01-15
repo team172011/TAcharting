@@ -39,14 +39,14 @@ public abstract class AbstractProgram extends Application {
     public void start(Stage primaryStage) throws Exception {
 
 
-        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getClassLoader().getResource("fxml/root.fxml"));
+        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getClassLoader().getResource("fxml/charting-root.fxml"));
 
         Parent root = fxmlLoader.load();
         RootController rootController = fxmlLoader.<RootController>getController();
         final ChartIndicatorBox indicatorBox = createIndicatorBox();
         rootController.setIndicatorBox(indicatorBox);
         Scene rootScene = new Scene(root);
-        rootScene.getStylesheets().add(getClass().getClassLoader().getResource(("fxml/root.css")).toString());
+        rootScene.getStylesheets().add(getClass().getClassLoader().getResource(("fxml/charting-root.css")).toString());
         primaryStage.setScene(rootScene);
 
         primaryStage.setTitle(indicatorBox.getTimeSeries().getName());
@@ -57,7 +57,7 @@ public abstract class AbstractProgram extends Application {
      * This method can be overwritten to get custom {@link ChartIndicatorBox} with custom {@link Indicator indicators},
      * {@link Strategy strategies} and {@link TradingRecord}
      * @return a {@link ChartIndicatorBox} for the Chart that is used in the {@link #start(Stage) start(Stage) function}
-     * of this class
+     * colorOf this class
      */
     abstract public ChartIndicatorBox createIndicatorBox();
 

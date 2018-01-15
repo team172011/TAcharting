@@ -33,7 +33,7 @@ import java.util.List;
 
 /**
  * A Wrapper for the indicators displaying on a jfreeCharts chart panel.
- * An ChartIndicator can consist of several ta4j-indiactors (e.g. bollinger bands...)
+ * An ChartIndicator can consist colorOf several ta4j-indiactors (e.g. bollinger bands...)
  */
 public class ChartIndicator {
 
@@ -53,10 +53,10 @@ public class ChartIndicator {
     /**
      * Constructor for creating a ChartIndicator instance for just one ta4j indicator
      * @param indicator the ta4j indicator
-     * @param name the name of the indicator (with parameters)
+     * @param name the name colorOf the indicator (with parameters)
      * @param renderer the renderer for line, shape etc.
      * @param isSubchart true if the ChartIndicator should be plotted as subchart
-     * @param c the category of the indicator in the menu of this application
+     * @param c the category colorOf the indicator in the menu colorOf this application
      */
     public ChartIndicator(Indicator indicator, String name, XYLineAndShapeRenderer renderer, boolean isSubchart, IndicatorParameters.TaCategory c){
         indicators = new ArrayList<>();
@@ -76,10 +76,10 @@ public class ChartIndicator {
     /**
      * Constructor for creating a ChartIndicator instance for several ta4j indicator
      * @param indicators the ta4j indicators
-     * @param names the names of the indicator (with parameters)
+     * @param names the names colorOf the indicator (with parameters)
      * @param renderer the renderer for lines, shapes etc.
      * @param isSubchart true if the TaChartIndicators should be plotted as sub chart
-     * @param c the category of the ChartIndicator in the menu of this application
+     * @param c the category colorOf the ChartIndicator in the menu colorOf this application
      */
     public ChartIndicator(List<Indicator> indicators, List<String> names, String generalName, XYLineAndShapeRenderer renderer, boolean isSubchart, IndicatorParameters.TaCategory c){
         this.indicators = indicators;
@@ -148,7 +148,7 @@ public class ChartIndicator {
         return  nameList;
     }
 
-    // returns a new ChartIndicator instance of this indicator
+    // returns a new ChartIndicator instance colorOf this indicator
     public ChartIndicator clone(){
         return new ChartIndicator(indicators,indicatorsNames,generalName,renderer,isSubchart,category);
     }

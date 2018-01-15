@@ -94,7 +94,7 @@ public class RootController implements MapChangeListener<String, ChartIndicator>
     @FXML ToolBar toolBarIndicators;
     @FXML ComboBox<Parameter.ApiProvider> choiceBoxAPI;
 
-    @FXML TableColumn symbolColumn;
+    @FXML TableColumn<TimeSeriesTableCell, String> symbolColumn;
     @FXML TextField fieldSearch;
 
     @FXML
@@ -107,7 +107,7 @@ public class RootController implements MapChangeListener<String, ChartIndicator>
         symbolColumn.getTableView().setItems(tableData);
         symbolColumn.getTableView().setOnMouseClicked(e -> {
             if (e.getClickCount() == 2) {
-                TimeSeries series = ((TimeSeriesTableCell) symbolColumn.getTableView().getSelectionModel().getSelectedItem()).getTimeSeries();
+                TimeSeries series = symbolColumn.getTableView().getSelectionModel().getSelectedItem().getTimeSeries();
                 this.chart.getChartIndicatorBox().setTimeSeries(series);
                 this.chart.reloadTimeSeries();
             }
@@ -138,18 +138,19 @@ public class RootController implements MapChangeListener<String, ChartIndicator>
     public void setIndicatorBox(ChartIndicatorBox box){
         if (box != null) {
             chart = new TaChart(box);
+            borderPane.setStyle("-fx-background-color: #ffffff");
+            chart.setStyle("-fx-background-color: #ffffff");
+
             borderPane.setCenter(chart);
             box.getChartIndicatorMap().addListener(this);
             buildMenuEntries(box);
             Platform.runLater(()->tableData.add(new TimeSeriesTableCell(box.getTimeSeries())));
-
-
         }
     }
 
 
     /**
-     * Build the menu with entries of all indicators from xml AND added indicators from the indicatorBox
+     * Build the menu with entries colorOf all indicators from xml AND added indicators from the indicatorBox
      * @param box
      */
     private void buildMenuEntries(ChartIndicatorBox box){
@@ -256,7 +257,7 @@ public class RootController implements MapChangeListener<String, ChartIndicator>
     /**
      * Update the ToolBar
      * Called every time an ChartIndicator has been added or removed to the
-     * {@link ChartIndicatorBox chartIndicatorBox} of the underlying {@link TaChart chart}
+     * {@link ChartIndicatorBox chartIndicatorBox} colorOf the underlying {@link TaChart chart}
      *
      * @param change Change<? extends String, ? extends ChartIndicator>
      */
@@ -441,7 +442,7 @@ public class RootController implements MapChangeListener<String, ChartIndicator>
         logger.debug("Start Yahoo request...");
         String symbol = fieldSearch.getText();
 
-        if(! symbol.equals("") || symbol == null) {
+        if(!symbol.equals("")) {
             YahooConnector yahooConnector = new YahooConnector();
             try {
                 File file = yahooConnector.request(symbol);
