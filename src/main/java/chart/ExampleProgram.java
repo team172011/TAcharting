@@ -19,8 +19,8 @@
 
 package chart;
 
-import chart.parameters.IndicatorParameters.IndicatorCategory;
-import chart.parameters.IndicatorParameters.TaShape;
+import chart.parameters.Parameter.IndicatorCategory;
+import chart.parameters.ShapeType;
 import example.Loader;
 import javafx.stage.Stage;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
@@ -66,11 +66,11 @@ public class ExampleProgram extends AbstractProgram {
         ChartIndicatorBox chartIndicatorBox = new ChartIndicatorBox(series);
 
         XYLineAndShapeRenderer emaShortRenderer = new XYLineAndShapeRenderer(); // specify how the lines should be rendered
-        emaShortRenderer.setSeriesShape(0, TaShape.NONE.getShape());
+        emaShortRenderer.setSeriesShape(0, ShapeType.NONE.getShape());
         emaShortRenderer.setSeriesPaint(0,Color.RED);
 
         XYLineAndShapeRenderer emaLongRenderer = new XYLineAndShapeRenderer();
-        emaLongRenderer.setSeriesShape(0,TaShape.NONE.getShape());
+        emaLongRenderer.setSeriesShape(0,ShapeType.NONE.getShape());
         emaLongRenderer.setSeriesPaint(0,Color.GREEN);
 
         chartIndicatorBox.addIndicator("ema1",ema20, "myEMA Short (20)",emaShortRenderer, false, IndicatorCategory.CUSTOM);
@@ -84,9 +84,9 @@ public class ExampleProgram extends AbstractProgram {
         names.add("myEma (20)");
         names.add("myEma (60)");
         XYLineAndShapeRenderer strategieRenderer = new XYLineAndShapeRenderer();
-        strategieRenderer.setSeriesShape(0,TaShape.NONE.getShape()); // specify how the both lines should be rendered
+        strategieRenderer.setSeriesShape(0,ShapeType.NONE.getShape()); // specify how the both lines should be rendered
         strategieRenderer.setSeriesPaint(0,Color.RED);
-        strategieRenderer.setSeriesShape(1,TaShape.NONE.getShape());
+        strategieRenderer.setSeriesShape(1,ShapeType.NONE.getShape());
         strategieRenderer.setSeriesPaint(1,Color.GREEN);
         chartIndicatorBox.addIndicator("Strategy1",strategyIndicators, names,"my Strategy Ema Short/Long",
                 strategieRenderer,false, IndicatorCategory.STRATEGY);

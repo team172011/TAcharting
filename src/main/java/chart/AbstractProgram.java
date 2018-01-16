@@ -53,7 +53,7 @@ public abstract class AbstractProgram extends Application {
             rootScene.getStylesheets().add(stylesheetPath.toExternalForm());
         }
         primaryStage.setScene(rootScene);
-        primaryStage.setTitle(indicatorBox.getTimeSeries().getName());
+        primaryStage.setTitle("Ta4j-Charting");
         primaryStage.show();
     }
 

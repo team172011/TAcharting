@@ -1,5 +1,5 @@
 /*
- The MIT License (MIT)
+ GNU Lesser General Public License
 
  Copyright (c) 2017 Wimmer, Simon-Justus
 
@@ -12,11 +12,10 @@
  Software.
 
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
- WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
  COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-
 package chart.parameters;
 
 import javafx.stage.FileChooser;
@@ -66,6 +65,38 @@ public  class Parameter {
 
     public static final String PROPERTY_CSV_SEPERATOR = "csv_seperator";
     public static final String PROPERTY_CSV_ENDLINE = "csv_endline";
+
+
+    /** Menu entries *********************************************************************************************/
+    public enum IndicatorCategory {
+        CUSTOM(8),
+        STRATEGY(9),
+        DEFAULT(0),
+        BOLLINGER(1),
+        CANDLES(2),
+        HELPERS(3),
+        ICHIMOKU(4),
+        KELTNER(5),
+        STATISTICS(6),
+        VOLUME(7);
+
+        private int id;
+
+        IndicatorCategory(int id) {
+
+            this.id = id;
+        }
+
+        public int getId() {
+            return id;
+        }
+
+        static String getStringDescription(){
+            return "Category";
+        }
+
+    }
+
 
     /***********************************************************************************************/
     // Available api provider

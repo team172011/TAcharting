@@ -1,6 +1,25 @@
+/*
+ GNU Lesser General Public License
+
+ Copyright (c) 2017 Wimmer, Simon-Justus
+
+ Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+ documentation files (the "Software"), to deal in the Software without restriction, including without limitation
+ the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and
+ to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+ The above copyright notice and this permission notice shall be included in all copies or substantial portions of the
+ Software.
+
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+ WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
 package chart.utils;
 
-import chart.parameters.Parameter;
+import chart.parameters.*;
+import javafx.util.StringConverter;
 import org.ta4j.core.BaseTick;
 import org.ta4j.core.Tick;
 
@@ -8,6 +27,8 @@ import java.awt.*;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
+
+import static chart.parameters.IndicatorParameterType.*;
 
 public class FormatUtils {
 
@@ -73,6 +94,7 @@ public class FormatUtils {
         }
         return new BaseTick(date, open, high, low, close, volume);
     }
+
     /**
      * Returns a javaFX Color object that represents the same color as the awt color object
      * @param c a java.awt.Color object
@@ -85,19 +107,132 @@ public class FormatUtils {
         return new Color((float) c.getRed(),(float)c.getGreen(), (float)c.getBlue(), (float) c.getOpacity());
     }
 
-    /**
-     *
-     * @param color color as String or RGB value as String
-     * @return corresponding awt color
-     */
-    public static Color colorOf(String color) {
-        String[] rgb = color.split(",");
-        if (rgb.length == 3) {
-            return new Color(Float.parseFloat(rgb[0]), Float.parseFloat(rgb[1]),Float.parseFloat(rgb[2]));
-        } else if (rgb.length == 4) {
-            return new Color(Float.parseFloat(rgb[0]),Float.parseFloat(rgb[1]), Float.parseFloat(rgb[2]), Float.parseFloat(rgb[3])/255);
+
+
+    public static IndicatorParameterType indicatorParameterTypeOf(String val) {
+        final String typeToSwitch = val.toUpperCase().replaceAll("\\s+", "");
+        switch (typeToSwitch) {
+            case "COLOR": {
+                return COLOR;
+            }
+            case "STROKE": {
+                return STROKE;
+            }
+            case "SHAPE": {
+                return SHAPE;
+            }
+            case "CHARTTYPE": {
+                return CHARTTYPE;
+            }
+            case "INTEGER": {
+                return INTEGER;
+            }
+            case "DOUBLE": {
+                return DOUBLE;
+            }
+            case "BOOLEAN": {
+                return BOOLEAN;
+            }
+            default: {
+                return STRING;
+            }
         }
-        return Color.BLUE; // default
     }
+
+    public static StringConverter<javafx.scene.paint.Color> ColorFxConverter = new StringConverter<javafx.scene.paint.Color>() {
+        @Override
+        public String toString(javafx.scene.paint.Color color) {
+            return String.format("%s,%s,%s,%s",color.getRed(),color.getGreen(),color.getBlue(),color.getBrightness());
+        }
+
+        @Override
+        public javafx.scene.paint.Color fromString(String color) {
+            String[] rgb = color.split(",");
+            if (rgb.length == 3) {
+                return javafx.scene.paint.Color.rgb((int)Float.parseFloat(rgb[0])*255, (int)Float.parseFloat(rgb[1])*255,(int)Float.parseFloat(rgb[2])*255);
+            } else if (rgb.length == 4) {
+                return javafx.scene.paint.Color.rgb((int)Float.parseFloat(rgb[0])*255,(int)Float.parseFloat(rgb[1])*255, (int)Float.parseFloat(rgb[2])*255, Float.parseFloat(rgb[3]));
+            }
+            return javafx.scene.paint.Color.rgb(0,0,255,1); // default
+        }
+    };
+
+    public static StringConverter<Color> ColorAWTConverter = new StringConverter<Color>() {
+
+        @Override
+        public String toString(Color color) {
+            return String.format("%s,%s,%s,%s",(float)color.getRed()/255,(float)color.getGreen()/255,(float)color.getBlue()/255,(float)color.getAlpha()/255);
+        }
+
+        @Override
+        public Color fromString(String color) {
+            try {
+                String[] rgb = color.split(",");
+                if (rgb.length == 3) {
+                    return new Color(Float.parseFloat(rgb[0]), Float.parseFloat(rgb[1]), Float.parseFloat(rgb[2]));
+                } else if (rgb.length == 4) {
+                    return new Color(Float.parseFloat(rgb[0]), Float.parseFloat(rgb[1]), Float.parseFloat(rgb[2]), Float.parseFloat(rgb[3]));
+                }
+            } catch (IllegalArgumentException ille){
+                return new Color(0.0f, 0.0f,0.1f, 0.1f); // default
+            }
+            return new Color(0.0f, 0.0f,0.1f, 0.1f); // default
+        }
+    };
+
+    /** Converter *****************************************************************************************************/
+
+    public static StringConverter<ShapeType> ShapeTypeConverter = new StringConverter<ShapeType>() {
+        @Override
+        public String toString(ShapeType object) {
+            return object.toString();
+        }
+
+        @Override
+        public ShapeType fromString(String string) {
+            string = string.toUpperCase().replace("\\s","");
+            return ShapeType.valueOf(string);
+        }
+    };
+
+    public static StringConverter<StrokeType> StrokeTypeConverter = new StringConverter<StrokeType>() {
+        @Override
+        public String toString(StrokeType object) {
+            if(object==null){
+                return null; // Don't know why object is null at start /TODO
+            }
+            return object.toString();
+        }
+
+        @Override
+        public StrokeType fromString(String string) {
+            string = string.toUpperCase().replace("\\s","");
+            return StrokeType.valueOf(string);
+        }
+    };
+
+    public static StringConverter<Boolean> BooleanypeConverter = new StringConverter<Boolean>() {
+        @Override
+        public String toString(Boolean object) {
+            return object.toString();
+        }
+
+        @Override
+        public Boolean fromString(String string) {
+            return Boolean.valueOf(string);
+        }
+    };
+
+    public static StringConverter<ChartType> ChartTypeConverter = new StringConverter<ChartType>() {
+        @Override
+        public String toString(ChartType object) {
+            return object.toString();
+        }
+
+        @Override
+        public ChartType fromString(String string) {
+            return ChartType.valueOf(string);
+        }
+    };
 
 }

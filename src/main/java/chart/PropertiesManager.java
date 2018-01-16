@@ -16,14 +16,10 @@
  COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-
 package chart;
 
-import chart.parameters.IndicatorParameters.IndicatorCategory;
-import chart.parameters.IndicatorParameters.TaChartType;
-import chart.parameters.IndicatorParameters.TaShape;
-import chart.parameters.IndicatorParameters.TaStroke;
-import chart.parameters.Parameter;
+import chart.parameters.*;
+import chart.parameters.Parameter.IndicatorCategory;
 import chart.utils.FormatUtils;
 import com.sun.org.apache.xml.internal.dtm.ref.DTMNodeList;
 import org.slf4j.Logger;
@@ -49,9 +45,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Class to read and write parameters and settings of {@link ChartIndicator ChartIndicators} to and from XML files
@@ -159,7 +153,7 @@ public class PropertiesManager {
         String shape = paramNode.getTextContent();
         if (shape.equals(""))
             return null;
-        return TaShape.valueOf(shape).getShape();
+        return ShapeType.valueOf(shape.toUpperCase()).getShape();
     }
 
     public Paint getColorOf(String key) throws XPathExpressionException {
@@ -172,7 +166,7 @@ public class PropertiesManager {
         XPathExpression expr = xPath.compile(command);
         Node paramNode = (Node) expr.evaluate(node,XPathConstants.NODE);
         String color = paramNode.getTextContent();
-        return FormatUtils.colorOf(color);
+        return FormatUtils.ColorAWTConverter.fromString(color);
     }
 
     /**
@@ -194,10 +188,10 @@ public class PropertiesManager {
         if(stroke.equals("")){
             return null;
         }
-        return TaStroke.valueOf(stroke).getStroke();
+        return StrokeType.valueOf(stroke.toUpperCase()).getStroke();
     }
 
-    public TaChartType getChartType(String key) throws XPathExpressionException {
+    public ChartType getChartType(String key) throws XPathExpressionException {
         Node node = getNodeForInstance(key);
         String command = "./param[@name='Chart Type']";
         XPathExpression expr = xPath.compile(command);
@@ -206,7 +200,7 @@ public class PropertiesManager {
         if(chartType.equals("")){
             return null;
         }
-        return TaChartType.valueOf(chartType);
+        return ChartType.valueOf(chartType);
     }
 
     public void setParameter(String key, String paramName, String value) throws IOException, XPathExpressionException, TransformerException {
@@ -265,27 +259,27 @@ public class PropertiesManager {
      * @param key identifier colorOf the indicator
      * @return a Map colorOf name and value colorOf the parameter
      */
-    public Map<String,String> getParametersFor(String key) throws XPathExpressionException {
+    public List<IndicatorParameter> getParametersFor(String key) throws XPathExpressionException {
         String raw[] = key.split("_");
         String indicator = raw[0];
         String id = raw[1];
         String command = String.format("//indicator[@identifier='%s']/instance[@id='%s']/*",indicator,id);
         XPathExpression expr = xPath.compile(command);
         NodeList nodes = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
-        Map<String,String> mapNameValue = new HashMap<>();
+        List<IndicatorParameter> parameters = new ArrayList<>();
         for (int i = 0; i<nodes.getLength(); i++){
             Node node = nodes.item(i);
             if(node.getNodeType()==Node.ELEMENT_NODE){
                 Element paraElement = (Element) node;
                 if(paraElement.getNodeName().equals("param")){
                     String name = paraElement.getAttribute("name");
+                    String type = paraElement.getAttribute("type");
                     String value = paraElement.getTextContent();
-                    mapNameValue.put(name,value);
+                    parameters.add(new IndicatorParameter(name, FormatUtils.indicatorParameterTypeOf(type),value));
                 }
-
             }
         }
-        return mapNameValue;
+        return parameters;
     }
 
     /**

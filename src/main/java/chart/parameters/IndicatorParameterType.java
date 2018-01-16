@@ -16,12 +16,25 @@
  COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-package chart.utils;
+package chart.parameters;
 
-public class CalculationUtils {
+/**
+ * Parameter types that could be set for an indicator
+ */
 
+public enum IndicatorParameterType{
+    BOOLEAN("Boolean"),
+    INTEGER("Integer"),
+    DOUBLE("Double"),
+    STRING("String"),
+    SHAPE("Shape"),
+    STROKE("Stroke"),
+    COLOR("Color"),
+    CHARTTYPE("ChartType");
 
-    public static String roundToString(Double value, int d){
-        return String.format("%."+d+"f",value);
+    private final String name;
+
+    IndicatorParameterType(String name){
+        this.name = name;
     }
 }

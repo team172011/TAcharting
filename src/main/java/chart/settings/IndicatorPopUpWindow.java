@@ -16,14 +16,17 @@
  COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-
 package chart.settings;
 
 import chart.ChartIndicatorBox;
 import chart.PropertiesManager;
-import chart.parameters.IndicatorParameters;
-import javafx.beans.property.Property;
-import javafx.beans.property.SimpleObjectProperty;
+import chart.parameters.ChartType;
+import chart.parameters.IndicatorParameter;
+import chart.parameters.ShapeType;
+import chart.parameters.StrokeType;
+import chart.utils.FormatUtils;
+import javafx.beans.binding.Bindings;
+import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Orientation;
@@ -33,13 +36,13 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
 
+import javax.xml.transform.TransformerException;
+import javax.xml.xpath.XPathException;
 import javax.xml.xpath.XPathExpressionException;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 public class IndicatorPopUpWindow extends PopupControl {
 
@@ -57,7 +60,7 @@ public class IndicatorPopUpWindow extends PopupControl {
     @FXML private Button btnDuplicate;
     @FXML private Button btnRemove;
 
-    private Map<String, Property> nameValue = new HashMap<>();
+    private final List<IndicatorParameter> parameters = new ArrayList<>(); //TODO: simplify with observable list
 
     private IndicatorPopUpWindow(String key, ChartIndicatorBox indicatorBox){
         this.propertiesManager = indicatorBox.getPropertiesManager();
@@ -75,36 +78,16 @@ public class IndicatorPopUpWindow extends PopupControl {
             String[] el = key.split("_");
             title.setText(el[0]);
             title.getStyleClass().add("title");
-            if(el.length > 1){
-                Map<String, String> parameters = propertiesManager.getParametersFor(key);
-
+            if(el.length > 1){ // only start building gui if the indicator is from xml, e.g if it has an id
+                parameters.addAll(propertiesManager.getParametersFor(key));
                 VBox first = new VBox(3);
-                Iterator<Map.Entry<String, String>> it = parameters.entrySet().iterator();
-                if(!it.hasNext()){
-                    hide();
-                }
                 // iterate over all parameters and add label and a value setter
-                while(it.hasNext()){
+                for(int i = 0; i<parameters.size(); i++){
                     first.setId("vbox");
-                    Map.Entry entry = it.next();
-                    String parameterName = (String) entry.getKey();
-                    String parameterValue = (String) entry.getValue();
-                    String parameterType = propertiesManager.getParameterType(key, parameterName);
-
-                    Control valueSetter = IndicatorParameters.getComponent(parameterType, parameterValue);
-                    valueSetter.setId(parameterName);
-                    Property value = new SimpleObjectProperty();
-                    if (valueSetter instanceof javafx.scene.control.TextField){
-                        value.bind(((javafx.scene.control.TextField)valueSetter).textProperty());
-                        nameValue.put(parameterName,value);
-                    } else if (valueSetter instanceof ComboBox){
-                        value.bind(((ComboBox)valueSetter).valueProperty());
-                        nameValue.put(parameterName,value);
-                    } else if( valueSetter instanceof ColorPicker){
-                        value.bind(((ColorPicker)valueSetter).valueProperty());
-                        nameValue.put(parameterName,value);
-                    }
-                    Label name = new Label(parameterName);
+                    IndicatorParameter parameter = parameters.get(i);
+                    Control valueSetter = getAndBind(parameter);
+                    valueSetter.setId(parameter.getDescription());
+                    Label name = new Label(parameter.getDescription());
                     name.getStyleClass().add("plable");
                     first.getChildren().add(name);
                     first.getChildren().add(valueSetter);
@@ -118,50 +101,50 @@ public class IndicatorPopUpWindow extends PopupControl {
                     hBox.getChildren().add(first);
                 }
 
-                addButtonAction(true, true, true);
-                setOnAutoHide(event -> {hide();});
+                addButtonAction(true, true);
+                setOnAutoHide(event -> hide());
                 getScene().setRoot(borderPane);
             } else {
                 borderPane.setCenter(new Label("No settings available"));
-                addButtonAction(false, false, true);
+                addButtonAction(false, false);
             }
 
         } catch (XPathExpressionException | IOException xpe){
             xpe.printStackTrace();
             borderPane.setCenter(new Label("No settings available"));
-            addButtonAction(false, false, true);
+            addButtonAction(false, false);
         }
     }
 
-    private void addButtonAction (boolean save, boolean duplicate, boolean remove){
+    private void addButtonAction (boolean save, boolean duplicate){
         if(save){
             btnSave.setOnAction(event -> {
 
-                Iterator<Map.Entry<String, Property>> it = this.nameValue.entrySet().iterator();
-                while (it.hasNext()){
-                    try{
-                        Map.Entry<String, Property> entry = it.next();
-                        try{
-                            if(propertiesManager.getParameterType(key,entry.getKey()).equals("Color")){
-                                Color color = ((Color)entry.getValue().getValue());
-                                propertiesManager.setParameter(key, entry.getKey(),
-                                        String.format("%s,%s,%s,%s",color.getRed(),color.getGreen(),color.getBlue(),color.getBrightness()*255));
-                            } else {
-                                propertiesManager.setParameter(key, entry.getKey(), entry.getValue().getValue().toString());
+                try {
+                    for (IndicatorParameter parameter : parameters) {
+                        final String valueToStore ;
+                        switch (parameter.getType()){
+                            case COLOR:{
+                                valueToStore = FormatUtils.ColorAWTConverter.toString((java.awt.Color)parameter.getValue());
+                                break;
+                            } default:{
+                                valueToStore = parameter.getValue().toString();
+                                break;
                             }
-                            indicatorBox.reloadIndicator(key);
-                            hide();
-                        } catch (XPathExpressionException xpe){
-                            //TODO handle..
-                            xpe.printStackTrace();
                         }
-                    } catch (Exception io){
-                        //TODO handle..
-                        io.printStackTrace();
+                        propertiesManager.setParameter(key, parameter.getDescription(), valueToStore);
+                        indicatorBox.reloadIndicator(key);
+                        hide();
                     }
+                } catch (XPathExpressionException | IOException | TransformerException xpe) {
+                    //TODO handle..
+                    xpe.printStackTrace();
+                } catch (XPathException e) {
+                    e.printStackTrace();
                 }
             });
-        } else {
+
+            } else {
             btnSave.setDisable(true);
         }
 
@@ -180,15 +163,9 @@ public class IndicatorPopUpWindow extends PopupControl {
             btnDuplicate.setDisable(true);
         }
 
-        if (remove){
-            btnRemove.setOnAction(event -> {
-                indicatorBox.removeIndicator(key);
-                hide();
-            });
-        } else {
-            btnRemove.setDisable(true);
+        btnRemove.setOnAction(event -> { indicatorBox.removeIndicator(key);hide(); });
+
         }
-    }
 
     public static IndicatorPopUpWindow getPopUpWindow(String key, ChartIndicatorBox chartIndicatorBox){
         if (open != null) {
@@ -237,5 +214,44 @@ public class IndicatorPopUpWindow extends PopupControl {
         public void dispose() {
 
         }
+    }
+
+
+    private Control getAndBind(IndicatorParameter parameter) {
+        Object value = parameter.getValue();
+        switch (parameter.getType()){
+            case COLOR:{
+                ColorPicker colorPicker = new ColorPicker(FormatUtils.awtColorToJavaFX((java.awt.Color)value));
+                Bindings.bindBidirectional(parameter.valueProperty(),colorPicker.valueProperty(), FormatUtils.ColorFxConverter);
+                return colorPicker;
+            }
+            case SHAPE:{
+                ComboBox<ShapeType> cbox = new ComboBox<ShapeType>(FXCollections.observableArrayList(ShapeType.values()));
+                cbox.setValue((ShapeType)value);
+                Bindings.bindBidirectional(parameter.valueProperty(),cbox.valueProperty(),FormatUtils.ShapeTypeConverter);
+                return cbox;
+            }
+            case STROKE:{
+                ComboBox<StrokeType> cbox = new ComboBox<StrokeType>(FXCollections.observableArrayList(StrokeType.values()));
+                Bindings.bindBidirectional(parameter.valueProperty(),cbox.valueProperty(),FormatUtils.StrokeTypeConverter);
+                cbox.setValue((StrokeType)value);
+                return cbox;
+            }
+            case BOOLEAN:{
+                CheckBox checkBox = new CheckBox("yes/no:");
+                checkBox.setSelected((boolean)value);
+                Bindings.bindBidirectional(parameter.valueProperty(),checkBox.selectedProperty(),FormatUtils.BooleanypeConverter);
+                return checkBox;
+            }
+            case CHARTTYPE:{
+                ComboBox<ChartType> cbox = new ComboBox<ChartType>(FXCollections.observableArrayList(ChartType.values()));
+                cbox.setValue((ChartType)value);
+                Bindings.bindBidirectional(parameter.valueProperty(),cbox.valueProperty(),FormatUtils.ChartTypeConverter);
+                return cbox;
+            }
+        }
+        TextField textField = new TextField(value.toString());
+        textField.textProperty().bindBidirectional(parameter.valueProperty());
+        return textField;
     }
 }

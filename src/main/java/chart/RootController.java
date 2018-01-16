@@ -20,7 +20,6 @@
 package chart;
 
 import chart.api.YahooConnector;
-import chart.parameters.IndicatorParameters;
 import chart.parameters.Parameter;
 import chart.settings.CsvSettingsManager;
 import chart.settings.IndicatorPopUpWindow;
@@ -159,7 +158,7 @@ public class RootController implements MapChangeListener<String, ChartIndicator>
         final List<String> keys = propsManager.getAllKeys();
         for(String key: keys){
             try{
-                IndicatorParameters.IndicatorCategory category = propsManager.getCategory(key);
+                Parameter.IndicatorCategory category = propsManager.getCategory(key);
                 addToCategory(key, category);
             } catch (XPathExpressionException xpe){
                 Platform.runLater(() -> new Alert(Alert.AlertType.INFORMATION,xpe.getMessage()).show());
@@ -178,7 +177,7 @@ public class RootController implements MapChangeListener<String, ChartIndicator>
     }
 
 
-    private void addToCategory(String key, IndicatorParameters.IndicatorCategory category){
+    private void addToCategory(String key, Parameter.IndicatorCategory category){
         final String[] el = key.split("_");
         String name = el[0];
         String id = "";
