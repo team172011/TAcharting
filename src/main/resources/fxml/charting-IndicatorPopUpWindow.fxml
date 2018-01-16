@@ -18,7 +18,7 @@
                 <tooltip><Tooltip text="Add another instance with current settings to the menu"/></tooltip>
             </Button>
             <Button fx:id="btnRemove" text="Remove">
-                <tooltip><Tooltip text="Remove this indicator from chart"/></tooltip>
+                <tooltip><Tooltip text="Remove this indicator from org.sjwimmer.tacharting.chart"/></tooltip>
             </Button>
         </HBox>
     </bottom>

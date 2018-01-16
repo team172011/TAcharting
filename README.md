@@ -19,7 +19,7 @@
 ### Fast and free zoom
 ![Show Chart](https://github.com/team172011/ta4j-charting/blob/master/src/main/java/data/screenshots/zoom.PNG)
 
-### Plot a candle sticks chart (OHLC) of a time series
+### Plot a candle sticks org.sjwimmer.tacharting.chart (OHLC) of a time series
 ![Show Chart](https://github.com/team172011/ta4j-charting/blob/master/src/main/java/data/screenshots/show_graph.png )
 
 ### Plot a strategy, basic and custom indicators

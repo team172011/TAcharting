@@ -12,29 +12,16 @@
  Software.
 
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
- WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
  COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+package org.sjwimmer.tacharting.chart.utils;
 
-package example;
+public class CalculationUtils {
 
-import javafx.application.Application;
-import org.sjwimmer.tacharting.chart.AbstractProgram;
-import org.sjwimmer.tacharting.chart.ExampleProgram;
 
-/**
- * Example class with main entry point that launch the charting application
- * with an Example class that extends the AbstractProgram
- */
-public class Example {
-
-    /**
-     * launch the Application {@link ExampleProgram} that extends the
-     * {@link AbstractProgram AbstractProgram}
-     * @param args command line arguments
-     */
-    public static void main(String[] args){
-        Application.launch(ExampleProgram.class);
+    public static String roundToString(Double value, int d){
+        return String.format("%."+d+"f",value);
     }
 }

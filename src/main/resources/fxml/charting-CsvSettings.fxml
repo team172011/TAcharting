@@ -1,19 +1,49 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
+<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
-<fx:root type="javafx.scene.layout.VBox" fx:id="borderPane" xmlns:fx="http://javafx.com/fxml">
-    <Label text="Description"/>
-    <TextArea fx:id="description" editable="false"
-            text="  Format of the csv file: &#10;
-                    1. Row: date, open, high, low, volume &#10;
-                    2. Row: description, dateID &#10;
-                    3. Row: data... &#10;"/>
-    <Separator orientation="HORIZONTAL"/>
+<?import javafx.scene.text.Font?>
+<fx:root fx:id="borderPane" prefHeight="444.0" prefWidth="448.0" type="javafx.scene.layout.VBox" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+    <children>
+      <Label text="The csv/excel files must fullfil some criterias: " wrapText="true">
+         <font>
+            <Font name="System Bold" size="16.0" />
+         </font>
+      </Label>
+      <TextArea editable="false" text="The first row: must contain the name of the symbol and the TimeFormatID&#10;&#10;The second: row must cotain the column names of the following data. (no matter in what order) &#10;&#10;Third row until end of  file: the open, high, low, close, volume data (other columns will be ignored) " wrapText="true" />
+        <Separator orientation="HORIZONTAL" />
+      <HBox spacing="5.0">
+         <children>
+              <Label text="Separator">
+               <padding>
+                  <Insets top="5.0" />
+               </padding>
+            </Label>
+              <ComboBox fx:id="seperatorBox" />
+            <Separator orientation="VERTICAL" />
+              <Label text="Line End">
+               <padding>
+                  <Insets top="5.0" />
+               </padding>
+            </Label>
+              <ComboBox fx:id="lineEndBox" />
+            <Separator orientation="VERTICAL" />
+            <Button fx:id="btnShowTimeIds" mnemonicParsing="false" text="Avaliable TimeFormat id" />
+         </children>
+      </HBox>
+      <Separator prefWidth="200.0" />
+        <Label text="Example of csv input file:">
+            <font>
+                <Font name="System Bold" size="16"/>
 
-    <Label text="Separator"/>
-    <ComboBox fx:id="seperatorBox"/>
-    <Separator orientation="HORIZONTAL"/>
-    <Label text="Line End"/>
-    <ComboBox fx:id="lineEndBox"/>
+            </font>
+        </Label>
+      <TextArea editable="false" text="AAPL, 1&#10;date,close,volume,open,high,low&#10;2017/08/18,157.5000,27391950.0000,157.8600,159.5000,156.7200&#10;2017/08/17,157.8600,27377960.0000,160.5200,160.7100,157.8400&#10;2017/08/16,160.9500,27607370.0000,161.9400,162.5100,160.1500&#10;2017/08/15,161.6000,29377630.0000,160.6600,162.1950,160.1400&#10;2017/08/14,159.8500,22074760.0000,159.3200,160.2100,158.7500&#10;2017/08/11,157.4800,26208970.0000,156.6000,158.5728,156.0700&#10;2017/08/10,155.3200,39636190.0000,159.9000,160.0000,154.6300">
+         <font>
+            <Font size="12.0" />
+         </font>
+      </TextArea>
+    </children>
 </fx:root>

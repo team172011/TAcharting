@@ -4,9 +4,54 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.ta4j</groupId>
-    <artifactId>ta4j-charting</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <groupId>org.sjwimmer</groupId>
+    <artifactId>tacharting</artifactId>
+    <version>0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <name>TAcharting</name>
+    <description>TAcharting is a charting application for downloading, store and plot financial data and indicators</description>
+    <url>https://github.com/team172011/ta4j-charting</url>
+    <inceptionYear>2017</inceptionYear>
+
+    <developers>
+        <developer>
+            <name>Simon-Justus Wimmer</name>
+        </developer>
+    </developers>
+
+    <licenses>
+        <license>
+            <name>GNU Lesser General Public License v2.1</name>
+            <comments>All source code is under the GNU LGPL license.</comments>
+        </license>
+    </licenses>
+
+    <issueManagement>
+        <system>GitHub</system>
+        <url>https://github.com/team172011/ta4j-charting/issues</url>
+    </issueManagement>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>sonatype-nexus-snapshots</id>
+            <name>Sonatype Nexus snapshot repository</name>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>sonatype-nexus-staging</id>
+            <name>Sonatype Nexus release repository</name>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
+
+    <scm>
+        <connection>scm:git:git://github.com/ta4j/ta4j.git</connection>
+        <developerConnection>scm:git:git@github.com:team172011/ta4j.git</developerConnection>
+        <url>http://github.com/ta4j/ta4j</url>
+        <tag>0.1-SNAPSHOT</tag>
+    </scm>
+
     <build>
         <plugins>
             <plugin>
