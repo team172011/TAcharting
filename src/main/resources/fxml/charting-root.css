@@ -1,15 +1,10 @@
 
-#ChartStackPane{
-    -fx-background-color: #ffffff;
-
+BorderPane{
+    -fx-background-color: white;
 }
 
-.ToggleBar{
-
-}
-
-.ChartViewer{
-
+ChartViewer{
+    -fx-background-color: white;
 }
 
 .buttonSearchCloseIcon {

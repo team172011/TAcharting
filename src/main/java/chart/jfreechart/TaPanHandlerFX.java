@@ -1,6 +1,5 @@
-package chart.handlers;
+package chart.jfreechart;
 
-import chart.TaChartCanvas;
 import javafx.scene.input.MouseEvent;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.Pannable;

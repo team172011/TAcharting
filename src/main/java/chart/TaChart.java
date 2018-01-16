@@ -30,7 +30,6 @@ import org.jfree.chart.axis.AxisLocation;
 import org.jfree.chart.axis.DateAxis;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.axis.NumberTickUnit;
-import org.jfree.chart.labels.CrosshairLabelGenerator;
 import org.jfree.chart.plot.*;
 import org.jfree.chart.renderer.xy.CandlestickRenderer;
 import org.jfree.chart.renderer.xy.XYItemRenderer;
@@ -44,33 +43,34 @@ import org.jfree.data.xy.XYDataset;
 import org.ta4j.core.*;
 
 import java.awt.*;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 
 /**
  * Main class for creating and managing the charts.
  * Creates a Chart, a ChartViewer and shows it.
- * Adds and removes ChartIndicators, TradingRecords and can change the main plot (TimeSeries)
+ * Adds and removes ChartIndicators, TradingRecords
  */
 public class TaChart extends StackPane implements MapChangeListener<String, ChartIndicator> {
 
 
-    private ChartIndicatorBox chartIndicatorBox;
-
-    private Color plotBackground = new Color(0,0,0,0);
-    private Color legendBackground = new Color(0,0,0,0);
-
+    private final ChartIndicatorBox chartIndicatorBox;
     private final CombinedDomainXYPlot combinedXYPlot;
     private final XYPlot mainPlot;
+    private final TaChartViewer viewer;
 
-    private Map<TradingRecord, List<Marker>> mapTradingRecordMarker;
-    private List<XYPlot> currentSubPlots;
 
-    private ObservableList<String> currentOverlays = FXCollections.observableArrayList();
-    private ObservableList<String> currentSubplots = FXCollections.observableArrayList();
+    // awt colors override the stylesheets of the StackPane i think..
+    private final Color chartBackground = Color.WHITE;
+    private final Color legendBackground = new Color(0,0,0,0);
 
-    private TaChartViewer viewer;
+    private final Map<TradingRecord, List<Marker>> mapTradingRecordMarker;
+    private final List<XYPlot> currentSubPlots;
+
+    private final ObservableList<String> currentOverlays = FXCollections.observableArrayList();
+    private final ObservableList<String> currentSubplots = FXCollections.observableArrayList();
+
+
 
     /**
      * Constructor.
@@ -84,32 +84,23 @@ public class TaChart extends StackPane implements MapChangeListener<String, Char
         this.currentSubPlots = new ArrayList<>();
         this.mainPlot = createMainPlot(candlestickData);
         this.combinedXYPlot = createCombinedDomainXYPlot(mainPlot);
-        prepare();
-    }
-
-    public ChartIndicatorBox getChartIndicatorBox() {
-        return chartIndicatorBox;
-    }
-
-    /**
-     * Prepare the cart. Set Styles, Listeners and Overlays
-     */
-    private void prepare(){
         this.setCache(true);
         this.setCacheHint(CacheHint.SPEED);
-        //this.combinedXYPlot.setBackgroundPaint(plotBackground);
-        //this.mainPlot.setBackgroundPaint(plotBackground);
-
         final JFreeChart chart = new JFreeChart(chartIndicatorBox.getTimeSeries().getName(), combinedXYPlot);
         this.viewer = new TaChartViewer(chart);
         this.viewer.setCache(true);
         this.viewer.setCacheHint(CacheHint.SPEED);
-        setStyle("-fx-background-color: #ffffff");
+        chart.setBackgroundPaint(chartBackground);
         getChildren().add(viewer);
         LegendTitle legend = chart.getLegend();
         legend.setPosition(RectangleEdge.TOP);
         legend.setItemFont(new Font("Arial", 1, 12));
         legend.setBackgroundPaint(legendBackground);
+        chartIndicatorBox.getObservableTimeSeries().addListener((ob, o, n)-> reloadTimeSeries(n));
+    }
+
+    public ChartIndicatorBox getChartIndicatorBox() {
+        return chartIndicatorBox;
     }
 
 
@@ -268,9 +259,9 @@ public class TaChart extends StackPane implements MapChangeListener<String, Char
         return plot;
     }
 
-    public void reloadTimeSeries(){
+    private void reloadTimeSeries(TimeSeries series){
         Platform.runLater(()->viewer.getCanvas().getChart().setTitle(chartIndicatorBox.getTimeSeries().getName()));
-        mainPlot.setDataset(0, createOHLCDataset(chartIndicatorBox.getTimeSeries()));
+        mainPlot.setDataset(0, createOHLCDataset(series));
         mainPlot.setRenderer(0, new TaCandlestickRenderer());
         mainPlot.getDomainAxis().setAutoRange(true);
         mainPlot.getRangeAxis().setAutoRange(true);
@@ -348,9 +339,8 @@ public class TaChart extends StackPane implements MapChangeListener<String, Char
     }
 
     /**
-     * This function is called when the {@link ChartIndicator Chartindicators} colorOf the underlying
+     * This function is called when the {@link ChartIndicator Chartindicators} of the underlying
      * {@link ChartIndicatorBox indicatorBox} change (change, new or remove)
-     * @param change Change object
      */
     @Override
     public void onChanged(Change<? extends String, ? extends ChartIndicator> change) {
@@ -379,21 +369,6 @@ public class TaChart extends StackPane implements MapChangeListener<String, Char
             }
         }
     }
-
-    /**
-     * Custom CrosshairLabelGenerator to display the date in the crosshair label
-     */
-    class TaXCrosshairLabelGenerator implements CrosshairLabelGenerator{
-
-        @Override
-        public String generateLabel(Crosshair crosshair) {
-            double value = crosshair.getValue();
-            long itemLong = (long) (value);
-            Date itemDate = new Date(itemLong);
-            return new SimpleDateFormat().format(itemDate);
-        }
-    }
-
 
     /**
      * Custom CandleStickRenderer to display filled red/green candles

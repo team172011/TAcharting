@@ -51,17 +51,17 @@ public class FormatUtils {
     /**
      * Extracts the OHLC data from a string array into a tick object
      * @param headerMap the header maps that maps indices colorOf the <tt>line</tt> to the {@link Parameter.Columns columns}
-     * @param timeFormat the {@link chart.parameters.Parameter.TimeFormat time format}
+     * @param timeFormat the {@link chart.parameters.Parameter.TimeFormat time ofFormat}
      * @param line the string array with corresponding entries for the tick
      * @return a {@link Tick tick} object with the ohlc data
      */
     public static Tick extractOHLCData(Map<Parameter.Columns, Integer> headerMap, Parameter.TimeFormat timeFormat, String[] line){
         ZonedDateTime date;
         if(timeFormat == Parameter.TimeFormat.y_M_d_hmsZ){
-            date = timeFormat.format(line[headerMap.get(Parameter.Columns.DATE)]
+            date = timeFormat.ofFormat(line[headerMap.get(Parameter.Columns.DATE)]
                     +" "+line[headerMap.get(Parameter.Columns.DATE2)]+" PST"); // TODO better handling colorOf special case with two columns based date
         } else {
-            date = timeFormat.format(line[headerMap.get(Parameter.Columns.DATE)]);
+            date = timeFormat.ofFormat(line[headerMap.get(Parameter.Columns.DATE)]);
         }
         double open = Double.parseDouble(line[headerMap.get(Parameter.Columns.OPEN)]);
         double high = Double.parseDouble(line[headerMap.get(Parameter.Columns.HIGH)]);
@@ -99,4 +99,5 @@ public class FormatUtils {
         }
         return Color.BLUE; // default
     }
+
 }

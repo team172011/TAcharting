@@ -44,9 +44,9 @@ public class ChartIndicator {
     private String generalName;
     private boolean isSubchart;
 
-    private IndicatorParameters.TaCategory category = IndicatorParameters.TaCategory.DEFAULT;
+    private IndicatorParameters.IndicatorCategory category = IndicatorParameters.IndicatorCategory.DEFAULT;
 
-    public ChartIndicator(Indicator indicator, String name, boolean isSubchart, IndicatorParameters.TaCategory c){
+    public ChartIndicator(Indicator indicator, String name, boolean isSubchart, IndicatorParameters.IndicatorCategory c){
         this(indicator,name, new XYLineAndShapeRenderer(), isSubchart,c);
     }
 
@@ -58,7 +58,7 @@ public class ChartIndicator {
      * @param isSubchart true if the ChartIndicator should be plotted as subchart
      * @param c the category colorOf the indicator in the menu colorOf this application
      */
-    public ChartIndicator(Indicator indicator, String name, XYLineAndShapeRenderer renderer, boolean isSubchart, IndicatorParameters.TaCategory c){
+    public ChartIndicator(Indicator indicator, String name, XYLineAndShapeRenderer renderer, boolean isSubchart, IndicatorParameters.IndicatorCategory c){
         indicators = new ArrayList<>();
         indicatorsNames = new ArrayList<>();
         indicators.add(indicator);
@@ -69,7 +69,7 @@ public class ChartIndicator {
         category = c;
     }
 
-    public ChartIndicator(List<Indicator> indicators, List<String> names, String generalName, boolean isSubchart, IndicatorParameters.TaCategory c){
+    public ChartIndicator(List<Indicator> indicators, List<String> names, String generalName, boolean isSubchart, IndicatorParameters.IndicatorCategory c){
         this(indicators,names,generalName,new XYLineAndShapeRenderer(false,false),isSubchart,c);
     }
 
@@ -81,7 +81,7 @@ public class ChartIndicator {
      * @param isSubchart true if the TaChartIndicators should be plotted as sub chart
      * @param c the category colorOf the ChartIndicator in the menu colorOf this application
      */
-    public ChartIndicator(List<Indicator> indicators, List<String> names, String generalName, XYLineAndShapeRenderer renderer, boolean isSubchart, IndicatorParameters.TaCategory c){
+    public ChartIndicator(List<Indicator> indicators, List<String> names, String generalName, XYLineAndShapeRenderer renderer, boolean isSubchart, IndicatorParameters.IndicatorCategory c){
         this.indicators = indicators;
         indicatorsNames = names;
         this.generalName = generalName;
@@ -119,7 +119,7 @@ public class ChartIndicator {
     }
 
 
-    public IndicatorParameters.TaCategory getCategory(){
+    public IndicatorParameters.IndicatorCategory getCategory(){
         return this.category;
     }
 

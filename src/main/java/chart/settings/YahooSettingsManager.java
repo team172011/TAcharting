@@ -94,8 +94,8 @@ public class YahooSettingsManager{
         YahooProperties(){
             interval = new SimpleObjectProperty<>(Parameter.YahooInterval.valueOf(getProperties().getProperty(Parameter.PROPERTY_YAHOO_INTERVAL, "daily")));
             LocalDate now = LocalDate.now();
-            to = new SimpleObjectProperty<>(Parameter.TimeFormat.yahoo.format(getProperties().getProperty(Parameter.PROPERTY_YAHOO_TO, now.format(Parameter.FORMATTER_yyy_MM_dd))).toLocalDate());
-            from = new SimpleObjectProperty<>(Parameter.TimeFormat.yahoo.format(getProperties().getProperty(Parameter.PROPERTY_YAHOO_FROM, now.minusYears(1).format(Parameter.FORMATTER_yyy_MM_dd))).toLocalDate());
+            to = new SimpleObjectProperty<>(Parameter.TimeFormat.yahoo.ofFormat(getProperties().getProperty(Parameter.PROPERTY_YAHOO_TO, now.format(Parameter.FORMATTER_yyy_MM_dd))).toLocalDate());
+            from = new SimpleObjectProperty<>(Parameter.TimeFormat.yahoo.ofFormat(getProperties().getProperty(Parameter.PROPERTY_YAHOO_FROM, now.minusYears(1).format(Parameter.FORMATTER_yyy_MM_dd))).toLocalDate());
         }
 
         public LocalDate getFrom() {

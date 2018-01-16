@@ -72,7 +72,7 @@ public class IndicatorParameters {
     /**
      * The available categories in the menu
      */
-    public enum TaCategory {
+    public enum IndicatorCategory {
         CUSTOM(8),
         STRATEGY(9),
         DEFAULT(0),
@@ -86,7 +86,7 @@ public class IndicatorParameters {
 
         private int id;
 
-        TaCategory(int id) {
+        IndicatorCategory(int id) {
 
             this.id = id;
         }
@@ -96,13 +96,13 @@ public class IndicatorParameters {
         }
 
         static Control getComponent(String value){
-            ComboBox<TaCategory> cBox = new ComboBox<TaCategory>(FXCollections.observableArrayList(TaCategory.values()));
-            cBox.getSelectionModel().select(TaCategory.valueOf(value));
+            ComboBox<IndicatorCategory> cBox = new ComboBox<IndicatorCategory>(FXCollections.observableArrayList(IndicatorCategory.values()));
+            cBox.getSelectionModel().select(IndicatorCategory.valueOf(value));
             return cBox;
         }
 
         static String getStringDescription(){
-            return "TaCategory";
+            return "Category";
         }
 
     }
@@ -212,8 +212,8 @@ public class IndicatorParameters {
             control = TaStroke.getComponent(paramValue);
         }
 
-        if(parameterType.equals(TaCategory.getStringDescription())){
-            control = TaCategory.getComponent(paramValue);
+        if(parameterType.equals(IndicatorCategory.getStringDescription())){
+            control = IndicatorCategory.getComponent(paramValue);
         }
 
         if(parameterType.equals(TaChartType.getStringDescription())){

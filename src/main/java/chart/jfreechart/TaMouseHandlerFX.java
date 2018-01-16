@@ -38,9 +38,8 @@
  *
  */
 
-package chart.handlers;
+package chart.jfreechart;
 
-import chart.TaChartCanvas;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import org.jfree.chart.fx.ChartCanvas;
@@ -56,8 +55,8 @@ import org.jfree.chart.fx.ChartCanvas;
  * modifier keys that are specified for the handler.  The live handler is
  * responsible for unregistering itself once it has finished handling mouse
  * events (it can be reselected again on subsequent mouse pressed events).
- * The auxiliary handlers are always called to respond to mouse events, but
- * after the live handler has dealt with the event first.  Auxiliary handlers
+ * The auxiliary jfreechart are always called to respond to mouse events, but
+ * after the live handler has dealt with the event first.  Auxiliary jfreechart
  * should not perform tasks that could interfere with the live handler.
  * 
  * <p>THE API FOR THIS CLASS IS SUBJECT TO CHANGE IN FUTURE RELEASES.  This is

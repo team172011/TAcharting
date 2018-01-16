@@ -28,6 +28,8 @@ import org.ta4j.core.Indicator;
 import org.ta4j.core.Strategy;
 import org.ta4j.core.TradingRecord;
 
+import java.net.URL;
+
 public abstract class AbstractProgram extends Application {
 
     /**
@@ -46,9 +48,11 @@ public abstract class AbstractProgram extends Application {
         final ChartIndicatorBox indicatorBox = createIndicatorBox();
         rootController.setIndicatorBox(indicatorBox);
         Scene rootScene = new Scene(root);
-        rootScene.getStylesheets().add(getClass().getClassLoader().getResource(("fxml/charting-root.css")).toString());
+        URL stylesheetPath = getClass().getClassLoader().getResource(("fxml/charting-root.css"));
+        if(stylesheetPath != null){
+            rootScene.getStylesheets().add(stylesheetPath.toExternalForm());
+        }
         primaryStage.setScene(rootScene);
-
         primaryStage.setTitle(indicatorBox.getTimeSeries().getName());
         primaryStage.show();
     }

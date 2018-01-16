@@ -1,47 +1,27 @@
-package chart;
-/* ================================================
- * JFreeChart-FX : JavaFX extensions for JFreeChart
- * ================================================
- *
- * (C) Copyright 2017, by Object Refinery Limited and Contributors.
- *
- * Project Info:  https://github.com/jfree/jfreechart-fx
- *
- * This library is free software; you can redistribute it and/or modify it
- * under the terms colorOf the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 colorOf the License, or
- * (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty colorOf MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
- * License for more details.
- *
- * You should have received a copy colorOf the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
- * USA.
- *
- * [Oracle and Java are registered trademarks colorOf Oracle and/or its affiliates.
- * Other names may be trademarks colorOf their respective owners.]
- *
- * ----------------
- * ChartViewer.java
- * ----------------
- * (C) Copyright 2014-2017, by Object Refinery Limited and Contributors.
- *
- * Original Author:  David Gilbert (for Object Refinery Limited);
- * Contributor(s):   -;
- *
- * Changes:
- * --------
- * 27-Jun-2014 : Version 1 (DG);
- * 18-Feb-2017 : Change base class from Control to Region. ChartViewerSkin.java
- *               is deleted, code from that class is now included here (DG);
- *
- */
+/*
+ GNU Lesser General Public License
 
-import chart.handlers.TaZoomHandlerFX;
+ Copyright (c) 2017 Wimmer, Simon-Justus
+
+ Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+ documentation files (the "Software"), to deal in the Software without restriction, including without limitation
+ the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and
+ to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+ The above copyright notice and this permission notice shall be included in all copies or substantial portions of the
+ Software.
+
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+ WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+ */
+package chart;
+
+
+import chart.jfreechart.TaChartCanvas;
+import chart.jfreechart.TaZoomHandlerFX;
 import chart.utils.CalculationUtils;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
@@ -50,14 +30,11 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
-import javafx.scene.paint.Paint;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.FileChooser;
-import org.jfree.chart.ChartMouseEvent;
 import org.jfree.chart.ChartRenderingInfo;
 import org.jfree.chart.JFreeChart;
-import org.jfree.chart.fx.interaction.ChartMouseListenerFX;
 import org.jfree.chart.fx.interaction.ZoomHandlerFX;
 import org.jfree.chart.plot.CombinedDomainXYPlot;
 import org.jfree.chart.plot.XYPlot;
@@ -72,16 +49,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
- * A control for displaying a {@link JFreeChart} in JavaFX (embeds a
- * {@link TaChartCanvas}, adds drag zooming and provides a popup menu for export
- * to PNG/JPG/SVG and PDF formats).  Many behaviours (tooltips, zooming etc) are
- * provided directly by the canvas.
- *
- * <p>THE API FOR THIS CLASS IS SUBJECT TO CHANGE IN FUTURE RELEASES.  This is
- * so that we can incorporate feedback on the (new) JavaFX support in
- * JFreeChart.</p>
- *
- * @since 1.0.18
+ * Customized ChartViewer with javafx CrosshairOverlay for this Region
  */
 public class TaChartViewer extends Region {
 
@@ -125,7 +93,7 @@ public class TaChartViewer extends Region {
         setFocusTraversable(true);
         getChildren().add(this.canvas);
 
-        this.zoomRectangle = new Rectangle(0, 0, new Color(0, 0, 1, 0.25));
+        this.zoomRectangle = new Rectangle(0, 0, new Color(0, 0, 1, 0.5));
         this.zoomRectangle.setManaged(false);
         this.zoomRectangle.setVisible(false);
         getChildren().add(this.zoomRectangle);
@@ -155,6 +123,7 @@ public class TaChartViewer extends Region {
         this.getChildren().add(yLabel);
 
 
+        /**Custom Mouse Listener for the CrosshairOverlay */
         this.setOnMouseMoved( e ->{
             final double x = e.getX();
             final double y = e.getY();
@@ -162,8 +131,7 @@ public class TaChartViewer extends Region {
 
             Rectangle2D dataArea = getCanvas().getRenderingInfo().getPlotInfo().getDataArea();
 
-            if(x > dataArea.getMinX() && y > dataArea.getMinY()
-                    && x < dataArea.getMaxX() && y < dataArea.getMaxY()) {
+            if(x > dataArea.getMinX() && y > dataArea.getMinY() && x < dataArea.getMaxX() && y < dataArea.getMaxY()) {
                 setCrosshairVisible(true);
                 CombinedDomainXYPlot combinedDomainXYPlot = (CombinedDomainXYPlot) getCanvas().getChart().getPlot();
                 XYPlot plot = (XYPlot) combinedDomainXYPlot.getSubplots().get(0);
@@ -258,27 +226,6 @@ public class TaChartViewer extends Region {
         return getCanvas().getRenderingInfo();
     }
 
-    /**
-     * Returns the current fill paint for the zoom rectangle.
-     *
-     * @return The fill paint.
-     *
-     * @since 1.0.20
-     */
-    public Paint getZoomFillPaint() {
-        return this.zoomRectangle.getFill();
-    }
-
-    /**
-     * Sets the fill paint for the zoom rectangle.
-     *
-     * @param paint  the new paint.
-     *
-     * @since 1.0.20
-     */
-    public void setZoomFillPaint(Paint paint) {
-        this.zoomRectangle.setFill(paint);
-    }
 
     @Override
     protected void layoutChildren() {
@@ -287,28 +234,6 @@ public class TaChartViewer extends Region {
         this.canvas.setLayoutY(getLayoutY());
         this.canvas.setWidth(getWidth());
         this.canvas.setHeight(getHeight());
-    }
-
-    /**
-     * Registers a listener to receive {@link ChartMouseEvent} notifications
-     * from the canvas embedded in this viewer.
-     *
-     * @param listener  the listener ({@code null} not permitted).
-     */
-    public void addChartMouseListener(ChartMouseListenerFX listener) {
-        Args.nullNotPermitted(listener, "listener");
-        this.canvas.addChartMouseListener(listener);
-    }
-
-    /**
-     * Removes a listener from the list of objects listening for chart mouse
-     * events.
-     *
-     * @param listener  the listener.
-     */
-    public void removeChartMouseListener(ChartMouseListenerFX listener) {
-        Args.nullNotPermitted(listener, "listener");
-        this.canvas.removeChartMouseListener(listener);
     }
 
     /**

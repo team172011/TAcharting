@@ -19,13 +19,15 @@
 
 package chart;
 
-import chart.parameters.IndicatorParameters.TaCategory;
+import chart.parameters.IndicatorParameters.IndicatorCategory;
 import chart.parameters.IndicatorParameters.TaChartType;
 import chart.parameters.IndicatorParameters.TaShape;
 import chart.parameters.IndicatorParameters.TaStroke;
 import chart.parameters.Parameter;
 import chart.utils.FormatUtils;
 import com.sun.org.apache.xml.internal.dtm.ref.DTMNodeList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -52,12 +54,14 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Class to read and write parameters and settings to the
- * XML files
+ * Class to read and write parameters and settings of {@link ChartIndicator ChartIndicators} to and from XML files
+ * Mostly used from the {@link ChartIndicatorBox} to init the indicators and from the {@link RootController} to show
+ * controls for the settings and to store the settings.
  */
+//TODO extract interface
 public class PropertiesManager {
 
-    private File propertiesFile;
+    private final Logger log = LoggerFactory.getLogger(PropertiesManager.class);
     private Document doc;
     private XPath xPath;
     private StreamResult result;
@@ -73,12 +77,15 @@ public class PropertiesManager {
      */
     private void loadParametersFile() {
         try {
-            ClassLoader cl = getClass().getClassLoader();
-            URL fileURL = cl.getResource(Parameter.INDICATOR_PROPERTIES_FILE);
+            URL fileURL = getClass().getClassLoader().getResource(Parameter.INDICATOR_PROPERTIES_FILE);
 
-            if (fileURL == null) { // no file found create one
+            File propertiesFile;
+            if (fileURL == null) {
+                log.info("No parameters file found");
                 propertiesFile = new File(Parameter.INDICATOR_PROPERTIES_FILE);
-                propertiesFile.createNewFile();
+                if(propertiesFile.createNewFile()){
+                    log.info("New parameters file created {}", propertiesFile.getPath());
+                }
             } else {
                 propertiesFile = new File(fileURL.getFile());
             }
@@ -107,7 +114,7 @@ public class PropertiesManager {
 
     /**
      * Reads a parameter from the parameter file
-     *
+     * <p/>
      * @param key key for property
      * @param paramName default string array if not found
      * @return the corresponding parameter as String value
@@ -129,14 +136,14 @@ public class PropertiesManager {
      * @return the category if found, DEFAULT else
      * @throws XPathExpressionException i
      */
-    public TaCategory getCategory(String key) throws XPathExpressionException {
+    public IndicatorCategory getCategory(String key) throws XPathExpressionException {
         Node node = getNodeForInstance(key);
         String command = "@category";
         XPathExpression expr = xPath.compile(command);
         String categorie = (String) expr.evaluate(node, XPathConstants.STRING);
         if(categorie.equals(""))
-            return TaCategory.DEFAULT;
-        return TaCategory.valueOf(categorie);
+            return IndicatorCategory.DEFAULT;
+        return IndicatorCategory.valueOf(categorie);
     }
 
     //TODO overload those with extra int id for further color, shape and stroke params
@@ -155,7 +162,6 @@ public class PropertiesManager {
         return TaShape.valueOf(shape).getShape();
     }
 
-    //TODO: add more colors
     public Paint getColorOf(String key) throws XPathExpressionException {
         return getColorOf(key,"Color");
     }
@@ -236,7 +242,7 @@ public class PropertiesManager {
         return keyList;
     }
 
-    public List<String> getKeysForCategory(TaCategory category) throws XPathExpressionException {
+    public List<String> getKeysForCategory(IndicatorCategory category) throws XPathExpressionException {
         String command = String.format("//instance[@category='%s']",category.toString());
         XPathExpression expr = xPath.compile(command);
         DTMNodeList nodes = (DTMNodeList) expr.evaluate(doc, XPathConstants.NODESET);
@@ -283,7 +289,7 @@ public class PropertiesManager {
     }
 
     /**
-     * @param key The key colorOf the Indicator in the xml file (format "name_id")
+     * @param key The key colorOf the Indicator in the xml file (ofFormat "name_id")
      * @return the key colorOf the duplicated indicator
      * @throws XPathExpressionException xpath expression exception
      * @throws TransformerException transformer exception

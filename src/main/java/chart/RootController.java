@@ -12,7 +12,7 @@
  Software.
 
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
- WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
  COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
@@ -78,7 +78,6 @@ public class RootController implements MapChangeListener<String, ChartIndicator>
     @FXML BorderPane borderPane;
 
     @FXML Menu indicatorsMenu;
-
     @FXML Menu candles;
     @FXML Menu def;
     @FXML Menu custom;
@@ -94,26 +93,24 @@ public class RootController implements MapChangeListener<String, ChartIndicator>
     @FXML ToolBar toolBarIndicators;
     @FXML ComboBox<Parameter.ApiProvider> choiceBoxAPI;
 
-    @FXML TableColumn<TimeSeriesTableCell, String> symbolColumn;
+    @FXML private TableView<TimeSeriesTableCell> tblSymbol;
+    @FXML TableColumn<TimeSeriesTableCell, String> colSymbol;
     @FXML TextField fieldSearch;
 
     @FXML
     public void initialize(){
-        fieldSearch.textProperty().addListener((ov, oldValue, newValue) -> {
-            fieldSearch.setText(newValue.toUpperCase());
-        });
-        symbolColumn.setCellValueFactory(new PropertyValueFactory<>("Name"));
-        //symbolColumn.setCellFactory(column -> new SymbolTableCell());
-        symbolColumn.getTableView().setItems(tableData);
-        symbolColumn.getTableView().setOnMouseClicked(e -> {
+        fieldSearch.textProperty().addListener((ov, oldValue, newValue) -> fieldSearch.setText(newValue.toUpperCase()));
+        colSymbol.setCellValueFactory(new PropertyValueFactory<>("Name"));
+        //colSymbol.setCellFactory(column -> new SymbolTableCell());
+        colSymbol.getTableView().setItems(tableData);
+        colSymbol.getTableView().setOnMouseClicked(e -> {
             if (e.getClickCount() == 2) {
-                TimeSeries series = symbolColumn.getTableView().getSelectionModel().getSelectedItem().getTimeSeries();
+                TimeSeries series = colSymbol.getTableView().getSelectionModel().getSelectedItem().getTimeSeries();
                 this.chart.getChartIndicatorBox().setTimeSeries(series);
-                this.chart.reloadTimeSeries();
             }
         });
 
-        symbolColumn.getTableView().setContextMenu(buildContextMenu());
+        colSymbol.getTableView().setContextMenu(buildContextMenu());
         choiceBoxAPI.setItems(FXCollections.observableArrayList(Parameter.ApiProvider.values()));
         choiceBoxAPI.setValue(Parameter.ApiProvider.Yahoo);
     }
@@ -121,8 +118,8 @@ public class RootController implements MapChangeListener<String, ChartIndicator>
     private ContextMenu buildContextMenu(){
         MenuItem itemRemove = new MenuItem("remove");
         itemRemove.setOnAction(e -> {
-            TimeSeriesTableCell selectedCell = (TimeSeriesTableCell) symbolColumn.getTableView().getSelectionModel().getSelectedItem();
-            symbolColumn.getTableView().getItems().remove(selectedCell);
+            TimeSeriesTableCell selectedCell = colSymbol.getTableView().getSelectionModel().getSelectedItem();
+            colSymbol.getTableView().getItems().remove(selectedCell);
         });
         ContextMenu menu = new ContextMenu();
         menu.getItems().add(itemRemove);
@@ -138,10 +135,8 @@ public class RootController implements MapChangeListener<String, ChartIndicator>
     public void setIndicatorBox(ChartIndicatorBox box){
         if (box != null) {
             chart = new TaChart(box);
-            borderPane.setStyle("-fx-background-color: #ffffff");
-            chart.setStyle("-fx-background-color: #ffffff");
-
             borderPane.setCenter(chart);
+            chart.getStylesheets().add(getClass().getClassLoader().getResource("charting-chartStackPane.css").toExternalForm());
             box.getChartIndicatorMap().addListener(this);
             buildMenuEntries(box);
             Platform.runLater(()->tableData.add(new TimeSeriesTableCell(box.getTimeSeries())));
@@ -157,26 +152,22 @@ public class RootController implements MapChangeListener<String, ChartIndicator>
 
         final PropertiesManager propsManager = box.getPropertiesManager();
 
-        Iterator<Map.Entry<String, ChartIndicator>> addedIndicators = chart.getChartIndicatorBox().getChartIndicatorMap().entrySet().iterator();
-        while(addedIndicators.hasNext()){
-            Map.Entry<String, ChartIndicator> entry = addedIndicators.next();
-            addToCategory(entry.getKey(),entry.getValue().getCategory());
+        for (Map.Entry<String, ChartIndicator> entry : chart.getChartIndicatorBox().getChartIndicatorMap().entrySet()) {
+            addToCategory(entry.getKey(), entry.getValue().getCategory());
         }
 
         final List<String> keys = propsManager.getAllKeys();
         for(String key: keys){
             try{
-                IndicatorParameters.TaCategory category = propsManager.getCategory(key);
+                IndicatorParameters.IndicatorCategory category = propsManager.getCategory(key);
                 addToCategory(key, category);
             } catch (XPathExpressionException xpe){
                 Platform.runLater(() -> new Alert(Alert.AlertType.INFORMATION,xpe.getMessage()).show());
             }
         }
 
-        Iterator<Map.Entry<String, TradingRecord>> it = chart.getChartIndicatorBox().getAllTradingRecords().entrySet().iterator();
-        while (it.hasNext()){
-            Map.Entry<String, TradingRecord> entry = it.next();
-            addToTradingRecord(entry.getKey(),entry.getValue());
+        for (Map.Entry<String, TradingRecord> entry : chart.getChartIndicatorBox().getAllTradingRecords().entrySet()) {
+            addToTradingRecord(entry.getKey(), entry.getValue());
         }
     }
 
@@ -187,8 +178,8 @@ public class RootController implements MapChangeListener<String, ChartIndicator>
     }
 
 
-    private void addToCategory(String key, IndicatorParameters.TaCategory category){
-        String[] el = key.split("_");
+    private void addToCategory(String key, IndicatorParameters.IndicatorCategory category){
+        final String[] el = key.split("_");
         String name = el[0];
         String id = "";
         if(el.length > 1){ // custom indicators or indicators that added during runtime may not have an id separator
@@ -203,6 +194,7 @@ public class RootController implements MapChangeListener<String, ChartIndicator>
                     chart.getChartIndicatorBox().reloadIndicator(key);
                 }
             } catch (XPathException xpe){
+                //TODO: handle exception..
                 xpe.printStackTrace();
             } });
 
@@ -390,7 +382,7 @@ public class RootController implements MapChangeListener<String, ChartIndicator>
 
             Map<Parameter.Columns, Integer> headerMap = FormatUtils.getHeaderMap(headerLine);
 
-            // second row with name and time format
+            // second row with name and time ofFormat
             infoRow = rowIterator.next();
             String name = infoRow.getCell(0).getStringCellValue();
             String timeFormat = infoRow.getCell(1).getStringCellValue();

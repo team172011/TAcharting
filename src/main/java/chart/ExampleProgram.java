@@ -19,7 +19,7 @@
 
 package chart;
 
-import chart.parameters.IndicatorParameters.TaCategory;
+import chart.parameters.IndicatorParameters.IndicatorCategory;
 import chart.parameters.IndicatorParameters.TaShape;
 import example.Loader;
 import javafx.stage.Stage;
@@ -73,8 +73,8 @@ public class ExampleProgram extends AbstractProgram {
         emaLongRenderer.setSeriesShape(0,TaShape.NONE.getShape());
         emaLongRenderer.setSeriesPaint(0,Color.GREEN);
 
-        chartIndicatorBox.addIndicator("ema1",ema20, "myEMA Short (20)",emaShortRenderer, false, TaCategory.CUSTOM);
-        chartIndicatorBox.addIndicator("ema2",ema60, "myEMA Long (60)",emaLongRenderer, false, TaCategory.CUSTOM);
+        chartIndicatorBox.addIndicator("ema1",ema20, "myEMA Short (20)",emaShortRenderer, false, IndicatorCategory.CUSTOM);
+        chartIndicatorBox.addIndicator("ema2",ema60, "myEMA Long (60)",emaLongRenderer, false, IndicatorCategory.CUSTOM);
 
         // or add your whole strategy as
         List<Indicator> strategyIndicators = new ArrayList<>();
@@ -89,7 +89,7 @@ public class ExampleProgram extends AbstractProgram {
         strategieRenderer.setSeriesShape(1,TaShape.NONE.getShape());
         strategieRenderer.setSeriesPaint(1,Color.GREEN);
         chartIndicatorBox.addIndicator("Strategy1",strategyIndicators, names,"my Strategy Ema Short/Long",
-                strategieRenderer,false, TaCategory.STRATEGY);
+                strategieRenderer,false, IndicatorCategory.STRATEGY);
 
         // run the strategies and add strategies
         TimeSeriesManager manager = new TimeSeriesManager(series);

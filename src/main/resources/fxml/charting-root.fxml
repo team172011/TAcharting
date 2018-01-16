@@ -56,7 +56,7 @@
                                     <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
                                </columnResizePolicy>
                                <columns>
-                                    <TableColumn fx:id="symbolColumn" text="Watchlist" />
+                                    <TableColumn fx:id="colSymbol" text="Watchlist" />
                                </columns>
                         </TableView>
                         </children>

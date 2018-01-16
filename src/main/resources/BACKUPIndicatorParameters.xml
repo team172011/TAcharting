@@ -6,9 +6,9 @@
         </description>
         <instance category="DEFAULT" id="1">
             <param name="Time Frame" type="Integer">20</param>
-            <param name="Color" type="Color">0.20000000298023224,0.10196078568696976,0.501960813999176,128.0000075697899</param>
-            <param name="Shape" type="TaShape">SMALL_REC</param>
-            <param name="Stroke" type="TaStroke">SMALL_LINE</param>
+            <param name="Color" type="Color">0.3019607961177826,0.20000000298023224,0.6000000238418579,153.00000607967377</param>
+            <param name="Shape" type="TaShape">NONE</param>
+            <param name="Stroke" type="TaStroke">DOT_DOT_LINE</param>
             <param name="Chart Type" type="TaChartType">OVERLAY</param>
         </instance>
     </indicator>
@@ -53,17 +53,16 @@
         <instance category="BOLLINGER" id="1">
             <param name="Time Frame" type="Integer">20</param>
             <param name="Standard Deviation">14</param>
-            <param name="Color Middle Band" type="Color">0x0000ffff</param>
+            <param name="Color Middle Band" type="Color">1.0,1.0,0.501960813999176,255.0</param>
             <param name="Shape Middle Band" type="TaShape">NONE</param>
             <param name="Stroke Middle Band" type="TaStroke">SMALL_LINE</param>
-            <param name="Color Upper Band" type="Color">0xffff4dff</param>
+            <param name="Color Upper Band" type="Color">0.10196078568696976,0.20000000298023224,0.6000000238418579,153.00000607967377</param>
             <param name="Shape Upper Band" type="TaShape">NONE</param>
             <param name="Stroke Upper Band" type="TaStroke">SMALL_LINE</param>
-            <param name="Color Lower Band" type="Color">0x0000ffff</param>
+            <param name="Color Lower Band" type="Color">0.10196078568696976,0.20000000298023224,0.6000000238418579,153.00000607967377</param>
             <param name="Shape Lower Band" type="TaShape">NONE</param>
             <param name="Stroke Lower Band" type="TaStroke">SMALL_LINE</param>
             <param name="Chart Type" type="TaChartType">OVERLAY</param>
-            <param name="Add Bollinger Bands Width" type="TaBoolean">FALSE</param>
         </instance>
     </indicator>
     <indicator identifier="PercentBIIndicator">
@@ -152,13 +151,13 @@
         <instance category="DEFAULT" id="1">
             <param name="Time Frame Short" type="Integer">12</param>
             <param name="Time Frame Long" type="Integer">26</param>
-            <param name="Color" type="Color">GREEN</param>
+            <param name="Color" type="Color">0.0,0.0,1.0,255.0</param>
             <param name="Shape" type="TaShape">NONE</param>
             <param name="Stroke" type="TaStroke">SMALL_LINE</param>
             <param name="Chart Type" type="TaChartType">SUBCHART</param>
             <param name="Add Signal Line" type="TaBoolean">TRUE</param>
             <param name="Time Frame Signal Line" type="Integer">9</param>
-            <param name="Color Signal Line" type="Color">RED</param>
+            <param name="Color Signal Line" type="Color">1.0,0.4000000059604645,0.4000000059604645,255.0</param>
             <param name="Shape Signal Line" type="TaShape">NONE</param>
             <param name="Stroke Signal Line" type="TaStroke">SMALL_LINE</param>
         </instance>

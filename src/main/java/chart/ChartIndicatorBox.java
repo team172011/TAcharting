@@ -19,11 +19,12 @@
 
 package chart;
 
-import chart.parameters.IndicatorParameters.TaCategory;
+import chart.parameters.IndicatorParameters.IndicatorCategory;
 import chart.parameters.IndicatorParameters.TaChartType;
 import chart.parameters.IndicatorParameters.TaShape;
 import chart.parameters.IndicatorParameters.TaStroke;
 import chart.utils.FormatUtils;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableObjectValue;
 import javafx.collections.FXCollections;
@@ -54,16 +55,17 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-import static chart.parameters.IndicatorParameters.TaCategory.DEFAULT;
+import static chart.parameters.IndicatorParameters.IndicatorCategory.DEFAULT;
 
 // TODO: overload notifyObserver function to change just entries that are modified
 public class ChartIndicatorBox {
-    private ObservableMap<String, ChartIndicator> chartIndicatorMap; // currently loaded indicators
-    private ObservableMap<String, TradingRecord> tradingRecordMap; // stored trading records
-    private ObservableMap<String, ChartIndicator> tempChartIndicatorBackup; // indicators that are dynamically added
+
+    private final ObservableMap<String, ChartIndicator> chartIndicatorMap; // currently loaded indicators
+    private final ObservableMap<String, TradingRecord> tradingRecordMap; // stored trading records
+    private final ObservableMap<String, ChartIndicator> tempChartIndicatorBackup; // indicators that are dynamically added
     private final PropertiesManager parameter;
-    private ObservableObjectValue<TimeSeries> series;
-    private ObservableObjectValue<Indicator> closePriceIndicator;
+    private final ObjectProperty<TimeSeries> series;
+    private final ObjectProperty<Indicator> closePriceIndicator;
 
     /**
      * Constructor
@@ -88,14 +90,14 @@ public class ChartIndicatorBox {
      * @param series the new TimeSeries object for this indicator box
      */
     public void setTimeSeries(TimeSeries series){
-        if(series== null){
+        if(series == null){
             throw new IllegalArgumentException("Null not permitted for TimeSeries");
         }
         if(series == this.series.get()){
             return;
         }
-        this.series = new SimpleObjectProperty<>(series);
-        this.closePriceIndicator = new SimpleObjectProperty<>(new ClosePriceIndicator(series));
+        this.series.setValue(series);
+        this.closePriceIndicator.set(new ClosePriceIndicator(series));
         this.tempChartIndicatorBackup.clear();
         reloadAll();
     }
@@ -112,9 +114,13 @@ public class ChartIndicatorBox {
         return this.tradingRecordMap;
     }
 
-    public TimeSeries getTimeSeries(){return series.get();}
-    public ObservableObjectValue<TimeSeries> getObservableTimeSeries(){ return series;}
+    public TimeSeries getTimeSeries(){
+        return series.get();
+    }
 
+    public ObservableObjectValue<TimeSeries> getObservableTimeSeries(){
+        return series;
+    }
 
     // simple moving average
     private void loadSMAIndicator(String key) throws XPathException {
@@ -123,7 +129,7 @@ public class ChartIndicatorBox {
         TaStroke stroke = TaStroke.valueOf(parameter.getParameter(key, "Stroke"));
         TaShape shape = TaShape.valueOf(parameter.getParameter(key,"Shape"));
         TaChartType chartType = parameter.getChartType(key);
-        TaCategory category = parameter.getCategory(key);
+        IndicatorCategory category = parameter.getCategory(key);
 
         ChartIndicator sma = new ChartIndicator(new SMAIndicator(closePriceIndicator.get(), smaTimeFrame),
                 String.format("%s (%s) (%s)",getIdentifier(key),getID(key),smaTimeFrame),
@@ -140,7 +146,7 @@ public class ChartIndicatorBox {
         TaStroke stroke = TaStroke.valueOf(parameter.getParameter(key, "Stroke"));
         TaShape shape = TaShape.valueOf(parameter.getParameter(key,"Shape"));
         TaChartType chartType = parameter.getChartType(key);
-        TaCategory category = parameter.getCategory(key);
+        IndicatorCategory category = parameter.getCategory(key);
 
         addChartIndicator(key, new EMAIndicator(closePriceIndicator.get(), timeFrame),
                 String.format("%s [%s] (%s)",getIdentifier(key),getID(key),timeFrame),
@@ -156,7 +162,7 @@ public class ChartIndicatorBox {
         TaStroke stroke = TaStroke.valueOf(parameter.getParameter(key, "Stroke"));
         TaShape shape = TaShape.valueOf(parameter.getParameter(key,"Shape"));
         TaChartType chartType = parameter.getChartType(key);
-        TaCategory category = parameter.getCategory(key);
+        IndicatorCategory category = parameter.getCategory(key);
 
         addChartIndicator(key, new CCIIndicator(series.get(), timeFrame),
                 String.format("%s [%s] (%s)",getIdentifier(key),getID(key),timeFrame),
@@ -172,7 +178,7 @@ public class ChartIndicatorBox {
         TaStroke stroke = TaStroke.valueOf(parameter.getParameter(key, "Stroke"));
         TaShape shape = TaShape.valueOf(parameter.getParameter(key,"Shape"));
         TaChartType chartType = TaChartType.valueOf(parameter.getParameter(key, "Chart Type"));
-        TaCategory category = parameter.getCategory(key);
+        IndicatorCategory category = parameter.getCategory(key);
 
         addChartIndicator(key, new CMOIndicator(closePriceIndicator.get(), timeFrame),
                 String.format("%s [%s] (%s)",getIdentifier(key), getID(key), timeFrame),
@@ -202,7 +208,7 @@ public class ChartIndicatorBox {
         TaStroke stroke3 = TaStroke.valueOf(parameter.getParameter(key, "Stroke Lower Band"));
         TaShape shape3 = TaShape.valueOf(parameter.getParameter(key,"Shape Lower Band"));
         TaChartType chartType = TaChartType.valueOf(parameter.getParameter(key, "Chart Type"));
-        TaCategory category = parameter.getCategory(key);
+        IndicatorCategory category = parameter.getCategory(key);
 
         BollingerBandsMiddleIndicator bbm = new BollingerBandsMiddleIndicator(bollingerEMA);
         BollingerBandsUpperIndicator bbu = new BollingerBandsUpperIndicator(bbm,sd);
@@ -237,7 +243,7 @@ public class ChartIndicatorBox {
     public void loadBollingerBandsWidth(String key){
         addChartIndicator("Bollinger Bands Width_" + getID(key),
                 new BollingerBandWidthIndicator(bbu, bbm, bbl),
-                String.format("Bollinger Band Width [%s]", id),
+                String.ofFormat("Bollinger Band Width [%s]", id),
                 bbRenderer,
                 TaChartType.SUBCHART.toBoolean(),
                 category);
@@ -248,7 +254,7 @@ public class ChartIndicatorBox {
         int timeFrame =Integer.parseInt(parameter.getParameter(key, "Time Frame"));
         Decimal k = Decimal.valueOf(parameter.getParameter(key,"K Multiplier"));
         XYLineAndShapeRenderer renderer = createRenderer(key, "Color", "Shape", "Stroke");
-        TaCategory category = parameter.getCategory(key);
+        IndicatorCategory category = parameter.getCategory(key);
         TaChartType type = parameter.getChartType(key);
         addChartIndicator(key,
                 new PercentBIndicator(closePriceIndicator.get(), timeFrame, k),
@@ -262,7 +268,7 @@ public class ChartIndicatorBox {
     //Amount Indicator
     public void loadAmountIndicator(String key) throws XPathExpressionException {
         XYLineAndShapeRenderer renderer = createRenderer(key, "Color", "Shape", "Stroke");
-        TaCategory category = parameter.getCategory(key);
+        IndicatorCategory category = parameter.getCategory(key);
         TaChartType chartType = parameter.getChartType(key);
         addChartIndicator(key,
                 new AmountIndicator(series.get()),
@@ -275,7 +281,7 @@ public class ChartIndicatorBox {
     // RSI Indicator
     public void loadRSIIndicator(String key) throws XPathExpressionException {
         int timeFrame = Integer.parseInt(parameter.getParameter(key, "Time Frame"));
-        TaCategory category = parameter.getCategory(key);
+        IndicatorCategory category = parameter.getCategory(key);
         TaChartType chartType = parameter.getChartType(key);
         XYLineAndShapeRenderer renderer = createRenderer(key, "Color", "Shape", "Stroke");
 
@@ -290,7 +296,7 @@ public class ChartIndicatorBox {
     // SmoothedRSIIndicator
     public void loadSmoothedRSIIndicator(String key) throws XPathExpressionException {
         int timeFrame = Integer.parseInt(parameter.getParameter(key, "Time Frame"));
-        TaCategory category = parameter.getCategory(key);
+        IndicatorCategory category = parameter.getCategory(key);
         TaChartType chartType = parameter.getChartType(key);
         XYLineAndShapeRenderer renderer = createRenderer(key, "Color", "Shape", "Stroke");
 
@@ -304,7 +310,7 @@ public class ChartIndicatorBox {
 
     // PVIIndicator
     public void loadPVIIndicator(String key) throws XPathExpressionException {
-        TaCategory category = parameter.getCategory(key);
+        IndicatorCategory category = parameter.getCategory(key);
         TaChartType chartType = parameter.getChartType(key);
         XYLineAndShapeRenderer renderer = createRenderer(key, "Color", "Shape", "Stroke");
 
@@ -318,7 +324,7 @@ public class ChartIndicatorBox {
 
     // NVIIndicator
     public void loadNVIIndicator(String key) throws XPathExpressionException {
-        TaCategory category = parameter.getCategory(key);
+        IndicatorCategory category = parameter.getCategory(key);
         TaChartType chartType = parameter.getChartType(key);
         XYLineAndShapeRenderer renderer = createRenderer(key, "Color", "Shape", "Stroke");
         addChartIndicator(key,
@@ -331,7 +337,7 @@ public class ChartIndicatorBox {
 
     // OnBalanceVolumeIndicator
     public void loadOnBalanceVolumeIndicator(String key) throws XPathExpressionException {
-        TaCategory category = parameter.getCategory(key);
+        IndicatorCategory category = parameter.getCategory(key);
         TaChartType chartType = parameter.getChartType(key);
         XYLineAndShapeRenderer renderer = createRenderer(key, "Color", "Shape", "Stroke");
 
@@ -346,7 +352,7 @@ public class ChartIndicatorBox {
     // VWAPIndicator
     public void loadVWAPIndicator(String key) throws XPathExpressionException {
         int timeFrame = Integer.parseInt(parameter.getParameter(key, "Time Frame"));
-        TaCategory category = parameter.getCategory(key);
+        IndicatorCategory category = parameter.getCategory(key);
         TaChartType chartType = parameter.getChartType(key);
         XYLineAndShapeRenderer renderer = createRenderer(key, "Color", "Shape", "Stroke");
 
@@ -362,7 +368,7 @@ public class ChartIndicatorBox {
     public void loadMACDIndicator(String key) throws XPathExpressionException {
         int timeFrameShort = Integer.parseInt(parameter.getParameter(key, "Time Frame Short"));
         int timeFrameLong = Integer.parseInt(parameter.getParameter(key, "Time Frame Long"));
-        TaCategory category = parameter.getCategory(key);
+        IndicatorCategory category = parameter.getCategory(key);
         TaChartType chartType = parameter.getChartType(key);
         boolean signalLine = Boolean.valueOf(parameter.getParameter(key, "Add Signal Line"));
         XYLineAndShapeRenderer renderer = createRenderer(key, "Color", "Shape", "Stroke");
@@ -411,7 +417,7 @@ public class ChartIndicatorBox {
         TaStroke stroke2 = TaStroke.valueOf(parameter.getParameter(key, "Stroke Down"));
         TaShape shape2 = TaShape.valueOf(parameter.getParameter(key,"Shape Down"));
         TaChartType chartType = TaChartType.valueOf(parameter.getParameter(key, "Chart Type"));
-        TaCategory category = parameter.getCategory(key);
+        IndicatorCategory category = parameter.getCategory(key);
         int timeFrameUp = Integer.parseInt(parameter.getParameter(key, "Time Frame Up"));
         int timeFrameDown = Integer.parseInt(parameter.getParameter(key, "Time Frame Up"));
         List<Indicator> ilAdx = new ArrayList<>();
@@ -442,7 +448,7 @@ public class ChartIndicatorBox {
     public void loadTrueRangeIndicator(String key) throws XPathExpressionException {
         XYLineAndShapeRenderer renderer = createRenderer(key, "Color", "Shape", "Stroke");
         TaChartType chartType = parameter.getChartType(key);
-        TaCategory category = parameter.getCategory(key);
+        IndicatorCategory category = parameter.getCategory(key);
         addChartIndicator(key,
                 new TrueRangeIndicator(series.get()),
                 String.format("%s [%s]",getIdentifier(key), getID(key)),
@@ -465,7 +471,7 @@ public class ChartIndicatorBox {
         TaStroke strokeL = TaStroke.valueOf(parameter.getParameter(key, "Stroke Lower"));
         TaShape shapeL = TaShape.valueOf(parameter.getParameter(key,"Shape Lower"));
         TaChartType chartType = TaChartType.valueOf(parameter.getParameter(key, "Chart Type"));
-        TaCategory category = parameter.getCategory(key);
+        IndicatorCategory category = parameter.getCategory(key);
 
         XYLineAndShapeRenderer renderer = createRenderer(key, "Color Middle", "Shape Middle", "Stroke Middle");
         renderer.setSeriesStroke(1, strokeU.getStroke());
@@ -504,7 +510,7 @@ public class ChartIndicatorBox {
         TaStroke strokeD = TaStroke.valueOf(parameter.getParameter(key, "Stroke Down"));
         TaShape shapeD = TaShape.valueOf(parameter.getParameter(key, "Shape Down"));
         TaChartType chartType = parameter.getChartType(key);
-        TaCategory category = parameter.getCategory(key);
+        IndicatorCategory category = parameter.getCategory(key);
 
         List<Indicator> ilAroon = new ArrayList<>();
         List<String> nlAroon = new ArrayList<>();
@@ -529,21 +535,21 @@ public class ChartIndicatorBox {
     // Lower Shadown Indicator
     public  void loadLowerShadowIndicator(String key) throws XPathExpressionException {
         XYLineAndShapeRenderer renderer = createRenderer(key, "Color", "Shape", "Stroke");
-        TaCategory category = parameter.getCategory(key);
+        IndicatorCategory category = parameter.getCategory(key);
         addChartIndicator(key,new LowerShadowIndicator(series.get()),String.format("%s [%s]", getIdentifier(key), getID(key)),renderer, true, category);
     }
 
     // Upper Shadown Indicator
     public  void loadUpperShadowIndicator(String key) throws XPathExpressionException {
         XYLineAndShapeRenderer renderer = createRenderer(key, "Color", "Shape", "Stroke");
-        TaCategory category = parameter.getCategory(key);
+        IndicatorCategory category = parameter.getCategory(key);
         addChartIndicator(key,new UpperShadowIndicator(series.get()),String.format("%s [%s]", getIdentifier(key), getID(key)),renderer, true, category);
     }
 
     // Upper Shadown Indicator
     public  void loadRealBodyIndicator(String key) throws XPathExpressionException {
         XYLineAndShapeRenderer renderer = createRenderer(key, "Color", "Shape", "Stroke");
-        TaCategory category = parameter.getCategory(key);
+        IndicatorCategory category = parameter.getCategory(key);
         addChartIndicator(key, new RealBodyIndicator(series.get()),String.format("%s [%s]", getIdentifier(key), getID(key)),renderer, true, category);
     }
 
@@ -565,7 +571,7 @@ public class ChartIndicatorBox {
         wapRenderer.setSeriesPaint(1, vwapColor);
         wapRenderer.setSeriesStroke(1, vwapStroke.getStroke());
         wapRenderer.setSeriesShape(1, vwapShape.getShape());
-        TaCategory category = parameter.getCategory(key);
+        IndicatorCategory category = parameter.getCategory(key);
         TaChartType chartType = parameter.getChartType(key);
         ilVwap.add(mvwap);
         ilVwap.add(vwap);
@@ -579,7 +585,7 @@ public class ChartIndicatorBox {
         Double threshold = Double.parseDouble(parameter.getParameter(key, "Threshold"));
 
         TaChartType chartType = parameter.getChartType(key);
-        TaCategory category = parameter.getCategory(key);
+        IndicatorCategory category = parameter.getCategory(key);
         XYLineAndShapeRenderer xyLineAndShapeRenderer = createRenderer(key, "Color", "Shape", "Stroke");
         addChartIndicator(key,
                 new TrailingStopLossIndicator(closePriceIndicator.get(),Decimal.valueOf(threshold)),
@@ -594,7 +600,7 @@ public class ChartIndicatorBox {
         int timeFrame =Integer.parseInt(parameter.getParameter(key, "Time Frame"));
 
         TaChartType chartType = parameter.getChartType(key);
-        TaCategory category = parameter.getCategory(key);
+        IndicatorCategory category = parameter.getCategory(key);
         XYLineAndShapeRenderer xyLineAndShapeRenderer = createRenderer(key, "Color", "Shape", "Stroke");
         addChartIndicator(key,
                 new TripleEMAIndicator(closePriceIndicator.get(), timeFrame),
@@ -608,7 +614,7 @@ public class ChartIndicatorBox {
     public void loadUlcerIndexIndicator(String key) throws XPathException{
         XYLineAndShapeRenderer renderer = createRenderer(key, "Color", "Shape", "Stroke");
         int timeFrame = Integer.parseInt(parameter.getParameter(key, "Time Frame"));
-        TaCategory category = parameter.getCategory(key);
+        IndicatorCategory category = parameter.getCategory(key);
         TaChartType chartType = parameter.getChartType(key);
         addChartIndicator(key, new UlcerIndexIndicator(closePriceIndicator.get(), timeFrame),
                 String.format("%s [%s]", getIdentifier(key), getID(key)),renderer, chartType.toBoolean(), category);
@@ -619,7 +625,7 @@ public class ChartIndicatorBox {
     public void loadWMAIndicator(String key) throws XPathException{
         int timeFrame = Integer.parseInt(parameter.getParameter(key, "Time Frame"));
         XYLineAndShapeRenderer renderer = createRenderer(key, "Color", "Shape", "Stroke");
-        TaCategory category = parameter.getCategory(key);
+        IndicatorCategory category = parameter.getCategory(key);
         TaChartType chartType = parameter.getChartType(key);
         addChartIndicator(key, new WMAIndicator(closePriceIndicator.get(), timeFrame),String.format("%s [%s] (%s)",
                 getIdentifier(key), getID(key), timeFrame),renderer, chartType.toBoolean(), category);
@@ -630,7 +636,7 @@ public class ChartIndicatorBox {
     public void loadZLEMAIndicator(String key) throws XPathException{
         int ZLEMAIndicator_1 = Integer.parseInt(parameter.getParameter(key, "Time Frame"));
         XYLineAndShapeRenderer renderer = createRenderer(key, "Color", "Shape", "Stroke");
-        TaCategory category = parameter.getCategory(key);
+        IndicatorCategory category = parameter.getCategory(key);
         TaChartType chartType = parameter.getChartType(key);
         addChartIndicator(key,
                 new ZLEMAIndicator(closePriceIndicator.get(), ZLEMAIndicator_1),String.format("%s [%s] (%s)",
@@ -645,7 +651,7 @@ public class ChartIndicatorBox {
         int timeFrameShort = Integer.parseInt(parameter.getParameter(key, "Time Frame Short"));
         int timeFrameLong = Integer.parseInt(parameter.getParameter(key, "Time Frame Long"));
         XYLineAndShapeRenderer renderer = createRenderer(key, "Color", "Shape", "Stroke");
-        TaCategory category = parameter.getCategory(key);
+        IndicatorCategory category = parameter.getCategory(key);
         TaChartType chartType = parameter.getChartType(key);
 
         addChartIndicator(key,new RAVIIndicator(closePriceIndicator.get(), timeFrameShort, timeFrameLong),
@@ -658,7 +664,7 @@ public class ChartIndicatorBox {
     public void loadROCIndicator(String key) throws XPathException{
         int timeFrame = Integer.parseInt(parameter.getParameter(key, "Time Frame"));
         XYLineAndShapeRenderer renderer = createRenderer(key, "Color", "Shape", "Stroke");
-        TaCategory category = parameter.getCategory(key);
+        IndicatorCategory category = parameter.getCategory(key);
         TaChartType chartType = parameter.getChartType(key);
         addChartIndicator(key,
                 new ROCIndicator(closePriceIndicator.get(), timeFrame),String.format("%s [%s] (%s)",
@@ -670,7 +676,7 @@ public class ChartIndicatorBox {
         int timeFrame = Integer.parseInt(parameter.getParameter(key, "Time Frame"));
         double alpha = Double.parseDouble(parameter.getParameter(key, "Alpha"));
         double beta = Double.parseDouble(parameter.getParameter(key, "Beta"));
-        TaCategory category = parameter.getCategory(key);
+        IndicatorCategory category = parameter.getCategory(key);
         TaChartType chartType = parameter.getChartType(key);
         addChartIndicator(key, new FisherIndicator(closePriceIndicator.get(), timeFrame, Decimal.valueOf(alpha), Decimal.valueOf(beta)),
                 String.format("%s [%s] (%s, %s, %s)", getIdentifier(key), getID(key),timeFrame,alpha,beta),
@@ -681,7 +687,7 @@ public class ChartIndicatorBox {
     public void loadHMAIndicator(String key) throws XPathException {
         int timeFrame = Integer.parseInt(parameter.getParameter(key, "Time Frame"));
         XYLineAndShapeRenderer renderer = createRenderer(key, "Color", "Shape", "Stroke");
-        TaCategory category = parameter.getCategory(key);
+        IndicatorCategory category = parameter.getCategory(key);
         TaChartType chartType = parameter.getChartType(key);
         addChartIndicator(key, new HMAIndicator(closePriceIndicator.get(), timeFrame),
                 String.format("%s [%s] (%s)",getIdentifier(key), getID(key), timeFrame), chartType.toBoolean(),
@@ -694,7 +700,7 @@ public class ChartIndicatorBox {
         int timeFrameFast = Integer.parseInt(parameter.getParameter(key, "Time Frame Slow"));
         int timeFrameSlow = Integer.parseInt(parameter.getParameter(key, "Time Frame Fast"));
         XYLineAndShapeRenderer renderer = createRenderer(key, "Color", "Shape", "Stroke");
-        TaCategory category = parameter.getCategory(key);
+        IndicatorCategory category = parameter.getCategory(key);
         TaChartType chartType = parameter.getChartType(key);
 
         addChartIndicator(key,new KAMAIndicator(closePriceIndicator.get(),timeFrameEffRatio,timeFrameFast,timeFrameSlow),
@@ -706,7 +712,7 @@ public class ChartIndicatorBox {
     public void loadPreviousValueIndicator(String key) throws XPathException{
         int timeFrame = Integer.parseInt(parameter.getParameter(key,"Time Frame"));
         XYLineAndShapeRenderer renderer = createRenderer(key, "Color", "Shape", "Stroke");
-        TaCategory category = parameter.getCategory(key);
+        IndicatorCategory category = parameter.getCategory(key);
         addChartIndicator(key, new PreviousValueIndicator(closePriceIndicator.get(), timeFrame),
                 String.format("%s [%s](%s)",getIdentifier(key), getID(key),timeFrame), renderer,
                 false, category);
@@ -717,7 +723,7 @@ public class ChartIndicatorBox {
     public void loadStochasticRSIIndicator(String key) throws XPathExpressionException{
         int timeFrame = Integer.parseInt(parameter.getParameter(key, "Time Frame"));
         XYLineAndShapeRenderer renderer = createRenderer(key, "Color", "Shape", "Stroke");
-        TaCategory category = parameter.getCategory(key);
+        IndicatorCategory category = parameter.getCategory(key);
 
         addChartIndicator(key, new StochasticRSIIndicator(closePriceIndicator.get(),timeFrame),
                 String.format("%s [%s](%s)",getIdentifier(key), getID(key),timeFrame), renderer,true,category);
@@ -736,7 +742,7 @@ public class ChartIndicatorBox {
         renderer.setSeriesStroke(1,parameter.getStrokeOf(key, "Stroke K"));
         renderer.setSeriesShape(1, parameter.getShapeOf(key, "Shape K"));
         renderer.setSeriesPaint(1,parameter.getColorOf(key, "Color K"));
-        TaCategory category = parameter.getCategory(key);
+        IndicatorCategory category = parameter.getCategory(key);
 
         StochasticOscillatorDIndicator stochD = new StochasticOscillatorDIndicator(closePriceIndicator.get());
 
@@ -1060,11 +1066,11 @@ public class ChartIndicatorBox {
 
     }
         */
-    private void addChartIndicator(String identifier, List<Indicator> indicators, List<String> names, String generalName,XYLineAndShapeRenderer renderer, boolean isSubchart, TaCategory c){
+    private void addChartIndicator(String identifier, List<Indicator> indicators, List<String> names, String generalName,XYLineAndShapeRenderer renderer, boolean isSubchart, IndicatorCategory c){
         chartIndicatorMap.put(identifier, new ChartIndicator(indicators,names,generalName,renderer,isSubchart,c));
     }
 
-    public void addIndicator(String identifier, List<Indicator> indicators, List<String> names, String generalName,XYLineAndShapeRenderer renderer, boolean isSubchart, TaCategory c){
+    public void addIndicator(String identifier, List<Indicator> indicators, List<String> names, String generalName,XYLineAndShapeRenderer renderer, boolean isSubchart, IndicatorCategory c){
         //chartIndicatorMap.put(identifier,new ChartIndicator(indicators,names,generalName,renderer,isSubchart,c));
         tempChartIndicatorBackup.put(identifier,new ChartIndicator(indicators,names,generalName,renderer,isSubchart,c));
 
@@ -1095,7 +1101,7 @@ public class ChartIndicatorBox {
      * @param isSubchart flag if indicator should be plotted on su bchart
      * @param c the category colorOf the chart
      */
-    private void addChartIndicator(String identifier, Indicator indicator, boolean isSubchart, TaCategory c){
+    private void addChartIndicator(String identifier, Indicator indicator, boolean isSubchart, IndicatorCategory c){
         chartIndicatorMap.put(identifier, new ChartIndicator(indicator,indicator.toString(), isSubchart, c));
     }
 
@@ -1105,7 +1111,7 @@ public class ChartIndicatorBox {
      * @param isSubchart flag if indicator should be plotted on su bchart
      * @param c the category colorOf the chart
      */
-    public void addIndicator(String identifier, Indicator indicator, boolean isSubchart, TaCategory c){
+    public void addIndicator(String identifier, Indicator indicator, boolean isSubchart, IndicatorCategory c){
         //chartIndicatorMap.put(identifier, new ChartIndicator(indicator,indicator.toString(), isSubchart, c));
         tempChartIndicatorBackup.put(identifier, new ChartIndicator(indicator,indicator.toString(), isSubchart, c));
     }
@@ -1117,17 +1123,17 @@ public class ChartIndicatorBox {
      * @param name the name colorOf the indicator that should be displayed
      * @param c the category colorOf the chart
      */
-    private void addChartIndicator(String identifier, Indicator indicator, String name, boolean isSubchart, TaCategory c){
+    private void addChartIndicator(String identifier, Indicator indicator, String name, boolean isSubchart, IndicatorCategory c){
         chartIndicatorMap.put(identifier, new ChartIndicator(indicator, name, isSubchart, c));
         //tempChartIndicatorBackup.put(identifier, new ChartIndicator(indicator, name, isSubchart, c));
     }
 
-    public void addIndicator(String identifier, Indicator indicator, String name, XYLineAndShapeRenderer renderer, boolean isSubchart, TaCategory c){
+    public void addIndicator(String identifier, Indicator indicator, String name, XYLineAndShapeRenderer renderer, boolean isSubchart, IndicatorCategory c){
         //addIndicator(identifier, new ChartIndicator(indicator, name, renderer, isSubchart, c));
         tempChartIndicatorBackup.put(identifier, new ChartIndicator(indicator, name, renderer, isSubchart, c));
     }
 
-    private void addChartIndicator(String identifier, Indicator indicator, String name, XYLineAndShapeRenderer renderer, boolean isSubchart, TaCategory c){
+    private void addChartIndicator(String identifier, Indicator indicator, String name, XYLineAndShapeRenderer renderer, boolean isSubchart, IndicatorCategory c){
         chartIndicatorMap.put(identifier, new ChartIndicator(indicator, name, renderer, isSubchart, c));
         //tempChartIndicatorBackup.put(identifier,new ChartIndicator(indicator,name,renderer,isSubchart,c));
     }

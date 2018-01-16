@@ -1,4 +1,4 @@
-package chart;
+package chart.jfreechart;
 
 import org.jfree.chart.panel.Overlay;
 

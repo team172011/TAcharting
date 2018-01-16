@@ -37,9 +37,8 @@
  * 25-Jun-2014 : Version 1 (DG);
  *
  */
-package chart.handlers;
+package chart.jfreechart;
 
-import chart.TaChartCanvas;
 import chart.TaChartViewer;
 import javafx.scene.input.MouseEvent;
 import org.jfree.chart.fx.ChartCanvas;

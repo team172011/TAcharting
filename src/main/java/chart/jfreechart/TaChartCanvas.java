@@ -1,4 +1,4 @@
-package chart;
+package chart.jfreechart;
 
 /* ================================================
  * JFreeChart-FX : JavaFX extensions for JFreeChart
@@ -38,12 +38,11 @@ package chart;
  * --------
  * 25-Jun-2014 : Version 1 (DG);
  * 19-Jul-2014 : Add clearRect() call for each draw (DG);
- * 18-Feb-2017 : Add methods for auxiliary handlers, move dispatch handling
+ * 18-Feb-2017 : Add methods for auxiliary jfreechart, move dispatch handling
  *               methods to DispatchHandlerFX (DG);
  *
  */
 
-import chart.handlers.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.canvas.Canvas;
@@ -66,7 +65,6 @@ import org.jfree.chart.fx.interaction.TooltipHandlerFX;
 import org.jfree.chart.plot.PlotRenderingInfo;
 import org.jfree.chart.util.Args;
 import org.jfree.fx.FXGraphics2D;
-import org.jfree.fx.FXHints;
 
 import java.awt.*;
 import java.awt.geom.Point2D;
@@ -80,7 +78,7 @@ import java.util.List;
  * class (which embeds a canvas) is a better option as it provides additional
  * features.
  * <p>
- * The canvas installs several default mouse handlers, if you don't like the
+ * The canvas installs several default mouse jfreechart, if you don't like the
  * behaviour provided by these you can retrieve the handler by ID and
  * disable or remove it (the IDs are "tooltip", "scroll", "anchor", "pan" and
  * "dispatch").</p>
@@ -134,11 +132,11 @@ public class TaChartCanvas extends Canvas implements ChartChangeListener,
     private TaMouseHandlerFX liveHandler;
 
     /**
-     * The list colorOf available live mouse handlers (can be empty but not null).
+     * The list colorOf available live mouse jfreechart (can be empty but not null).
      */
     private java.util.List<TaMouseHandlerFX> availableMouseHandlers;
 
-    /** The auxiliary mouse handlers (can be empty but not null). */
+    /** The auxiliary mouse jfreechart (can be empty but not null). */
     private java.util.List<TaMouseHandlerFX> auxiliaryMouseHandlers;
 
     private ObservableList<TaOverlayFX> overlays;
@@ -176,7 +174,6 @@ public class TaChartCanvas extends Canvas implements ChartChangeListener,
         GraphicsContext gc = getGraphicsContext2D();
         gc.setFontSmoothingType(FontSmoothingType.LCD);
         FXGraphics2D fxg2 = new FXGraphics2D(gc);
-        fxg2.setRenderingHint(FXHints.KEY_USE_FX_FONT_METRICS, true);
         fxg2.setZeroStrokeWidth(0.1);
         fxg2.setRenderingHint(
                 RenderingHints.KEY_FRACTIONALMETRICS,
@@ -406,7 +403,7 @@ public class TaChartCanvas extends Canvas implements ChartChangeListener,
 
     /**
      * Returns the mouse handler with the specified ID, or {@code null} if
-     * there is no handler with that ID.  This method will look for handlers
+     * there is no handler with that ID.  This method will look for jfreechart
      * in both the regular and auxiliary handler lists.
      *
      * @param id  the ID ({@code null} not permitted).
@@ -428,9 +425,9 @@ public class TaChartCanvas extends Canvas implements ChartChangeListener,
     }
 
     /**
-     * Adds a mouse handler to the list colorOf available handlers (handlers that
+     * Adds a mouse handler to the list colorOf available jfreechart (jfreechart that
      * are candidates to take the position colorOf live handler).  The handler must
-     * have an ID that uniquely identifies it amongst the handlers registered
+     * have an ID that uniquely identifies it amongst the jfreechart registered
      * with this canvas.
      *
      * @param handler  the handler ({@code null} not permitted).
@@ -445,7 +442,7 @@ public class TaChartCanvas extends Canvas implements ChartChangeListener,
     }
 
     /**
-     * Removes a handler from the list colorOf available handlers.
+     * Removes a handler from the list colorOf available jfreechart.
      *
      * @param handler  the handler ({@code null} not permitted).
      */
@@ -454,8 +451,8 @@ public class TaChartCanvas extends Canvas implements ChartChangeListener,
     }
 
     /**
-     * Adds a handler to the list colorOf auxiliary handlers.  The handler must
-     * have an ID that uniquely identifies it amongst the handlers registered
+     * Adds a handler to the list colorOf auxiliary jfreechart.  The handler must
+     * have an ID that uniquely identifies it amongst the jfreechart registered
      * with this canvas.
      *
      * @param handler  the handler ({@code null} not permitted).
@@ -472,7 +469,7 @@ public class TaChartCanvas extends Canvas implements ChartChangeListener,
     }
 
     /**
-     * Removes a handler from the list colorOf auxiliary handlers.
+     * Removes a handler from the list colorOf auxiliary jfreechart.
      *
      * @param handler  the handler ({@code null} not permitted).
      *
@@ -484,7 +481,7 @@ public class TaChartCanvas extends Canvas implements ChartChangeListener,
 
     /**
      * Validates that the specified handler has an ID that uniquely identifies
-     * it amongst the existing handlers for this canvas.
+     * it amongst the existing jfreechart for this canvas.
      *
      * @param handler  the handler ({@code null} not permitted).
      *
@@ -506,7 +503,7 @@ public class TaChartCanvas extends Canvas implements ChartChangeListener,
 
     /**
      * Clears the current live handler.  This method is intended for use by the
-     * handlers themselves, you should not call it directly.
+     * jfreechart themselves, you should not call it directly.
      */
     public void clearLiveHandler() {
         this.liveHandler = null;
@@ -599,7 +596,7 @@ public class TaChartCanvas extends Canvas implements ChartChangeListener,
      * Handles a mouse pressed event by (1) selecting a live handler if one
      * is not already selected, (2) passing the event to the live handler if
      * there is one, and (3) passing the event to all enabled auxiliary
-     * handlers.
+     * jfreechart.
      *
      * @param e  the mouse event.
      */
@@ -616,7 +613,7 @@ public class TaChartCanvas extends Canvas implements ChartChangeListener,
             this.liveHandler.handleMousePressed(this, e);
         }
 
-        // pass on the event to the auxiliary handlers
+        // pass on the event to the auxiliary jfreechart
         for (TaMouseHandlerFX handler: this.auxiliaryMouseHandlers) {
             if (handler.isEnabled()) {
                 handler.handleMousePressed(this, e);
@@ -625,7 +622,7 @@ public class TaChartCanvas extends Canvas implements ChartChangeListener,
     }
 
     /**
-     * Handles a mouse moved event by passing it on to the registered handlers.
+     * Handles a mouse moved event by passing it on to the registered jfreechart.
      *
      * @param e  the mouse event.
      */
@@ -643,7 +640,7 @@ public class TaChartCanvas extends Canvas implements ChartChangeListener,
 
     /**
      * Handles a mouse dragged event by passing it on to the registered
-     * handlers.
+     * jfreechart.
      *
      * @param e  the mouse event.
      */
@@ -652,7 +649,7 @@ public class TaChartCanvas extends Canvas implements ChartChangeListener,
             this.liveHandler.handleMouseDragged(this, e);
         }
 
-        // pass on the event to the auxiliary handlers
+        // pass on the event to the auxiliary jfreechart
         for (TaMouseHandlerFX handler: this.auxiliaryMouseHandlers) {
             if (handler.isEnabled()) {
                 handler.handleMouseDragged(this, e);
@@ -662,7 +659,7 @@ public class TaChartCanvas extends Canvas implements ChartChangeListener,
 
     /**
      * Handles a mouse released event by passing it on to the registered
-     * handlers.
+     * jfreechart.
      *
      * @param e  the mouse event.
      */
@@ -671,7 +668,7 @@ public class TaChartCanvas extends Canvas implements ChartChangeListener,
             this.liveHandler.handleMouseReleased(this, e);
         }
 
-        // pass on the event to the auxiliary handlers
+        // pass on the event to the auxiliary jfreechart
         for (TaMouseHandlerFX handler: this.auxiliaryMouseHandlers) {
             if (handler.isEnabled()) {
                 handler.handleMouseReleased(this, e);
@@ -681,7 +678,7 @@ public class TaChartCanvas extends Canvas implements ChartChangeListener,
 
     /**
      * Handles a mouse released event by passing it on to the registered
-     * handlers.
+     * jfreechart.
      *
      * @param e  the mouse event.
      */
@@ -690,7 +687,7 @@ public class TaChartCanvas extends Canvas implements ChartChangeListener,
             this.liveHandler.handleMouseClicked(this, e);
         }
 
-        // pass on the event to the auxiliary handlers
+        // pass on the event to the auxiliary jfreechart
         for (TaMouseHandlerFX handler: this.auxiliaryMouseHandlers) {
             if (handler.isEnabled()) {
                 handler.handleMouseClicked(this, e);
@@ -699,7 +696,7 @@ public class TaChartCanvas extends Canvas implements ChartChangeListener,
     }
 
     /**
-     * Handles a scroll event by passing it on to the registered handlers.
+     * Handles a scroll event by passing it on to the registered jfreechart.
      *
      * @param e  the scroll event.
      */

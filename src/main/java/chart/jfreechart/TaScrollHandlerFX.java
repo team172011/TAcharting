@@ -1,6 +1,5 @@
-package chart.handlers;
+package chart.jfreechart;
 
-import chart.TaChartCanvas;
 import javafx.scene.input.ScrollEvent;
 import org.jfree.chart.ChartRenderingInfo;
 import org.jfree.chart.JFreeChart;

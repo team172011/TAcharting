@@ -33,14 +33,13 @@ import java.util.Locale;
 public  class Parameter {
 
 
-    /***********************************************************************************************/
-    // Header names
+    /** Header names *********************************************************************************************/
     public final static HashSet<String> HEADER_DATE = new HashSet<>(Arrays.asList("date", "timestamp"));
     public final static HashSet<String> HEADER_OPEN = new HashSet<>(Arrays.asList("open", "first", "open price", "first price"));
     public final static HashSet<String> HEADER_HIGH = new HashSet<>(Arrays.asList("high", "max", "high price", "max price"));
     public final static HashSet<String> HEADER_LOW = new HashSet<>(Arrays.asList("low", "min", "low price", "min price"));
     public final static HashSet<String> HEADER_CLOSE = new HashSet<>(Arrays.asList("close", "last", "last price", "close price", "price"));
-    public final static HashSet<String> HEADER_Volume = new HashSet<>(Arrays.asList("volume"));
+    public final static HashSet<String> HEADER_Volume = new HashSet<>(Arrays.asList("volume", "vol"));
     public final static HashSet<String> HEADER_DATE2 = new HashSet<>(Arrays.asList("time"));
 
     public enum Columns{
@@ -50,18 +49,17 @@ public  class Parameter {
         HIGH,
         LOW,
         CLOSE,
-        VOLUME;
+        VOLUME
     }
-    /***********************************************************************************************/
-    // Files
+
+    /** Files *********************************************************************************************/
     public final static String INDICATOR_PROPERTIES_FILE = "indicatorParameters.xml";
     public final static String API_PROPERTIES_FILE = "properties/api.properties";
 
     public final static FileChooser.ExtensionFilter EXTENSION_FILTER_CSV = new  FileChooser.ExtensionFilter("CSV","*.csv", "*.CSV");
     public final static FileChooser.ExtensionFilter EXTENSION_FILTER_EXCEL = new FileChooser.ExtensionFilter("Execl","*.xls", "*.xlsx");
 
-    /***********************************************************************************************/
-    // Property names
+    /** Property names *********************************************************************************************/
     public static final String PROPERTY_YAHOO_FROM = "yahoo_from";
     public static final String PROPERTY_YAHOO_TO = "yahoo_to";
     public static final String PROPERTY_YAHOO_INTERVAL = "yahoo_interval";
@@ -74,7 +72,7 @@ public  class Parameter {
         //TODO:Add more..
     public enum ApiProvider{
         Yahoo,
-        AlphaVantage;
+        AlphaVantage
     }
 
     /***********************************************************************************************/
@@ -82,8 +80,8 @@ public  class Parameter {
             //TODO implement settings file for this
     public final static DateTimeFormatter FORMATTER_y_M_d_hmsZ = DateTimeFormatter.ofPattern("yyyy-MM-dd H:m:s z");
     public final static DateTimeFormatter FORMATTER_yyyyMMd = DateTimeFormatter.ofPattern("yyyy/MM/dd");
-    public final static DateTimeFormatter FORMATTER_yyy_MM_dd = DateTimeFormatter.ofPattern("yyyy-MM-dd"); // yahoo
-    public final static DateTimeFormatter FORMATTER_dd_MMM_YYYY = DateTimeFormatter.ofPattern("dd MMM yyyy", Locale.US); // eodata
+    public final static DateTimeFormatter FORMATTER_yyy_MM_dd = DateTimeFormatter.ofPattern("yyyy-MM-dd"); // yahoo csv
+    public final static DateTimeFormatter FORMATTER_dd_MMM_YYYY = DateTimeFormatter.ofPattern("dd MMM yyyy", Locale.US); // eodata csv
 
     public enum TimeFormat{
         y_M_d_hmsZ(0),
@@ -98,7 +96,7 @@ public  class Parameter {
             this.id =i;
         }
 
-        public ZonedDateTime format(String date){
+        public ZonedDateTime ofFormat(String date){
             switch (this){
                 case yyyyMMdd:
                     return LocalDate.parse(date, FORMATTER_yyyyMMd).atStartOfDay(ZoneId.systemDefault());

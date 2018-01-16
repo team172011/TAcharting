@@ -1,6 +1,5 @@
-package chart.handlers;
+package chart.jfreechart;
 
-import chart.TaChartCanvas;
 import javafx.scene.input.MouseEvent;
 
 import java.awt.geom.Point2D;
