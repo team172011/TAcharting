@@ -24,6 +24,7 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.*;
@@ -37,6 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
@@ -50,6 +52,7 @@ public class CsvSettingsManager {
     @FXML private ComboBox<String> seperatorBox;
     @FXML private ComboBox<String> lineEndBox;
     @FXML private Button btnShowTimeIds;
+    @FXML private Label lblLineEnd;
 
     public CsvSettingsManager(){
         Dialog<Boolean> settingsDialog = new Dialog<>();
@@ -76,16 +79,21 @@ public class CsvSettingsManager {
                 }
                 return false;
             });
-            btnShowTimeIds.setOnAction(event -> {
+
+            btnShowTimeIds.setOnAction((ActionEvent event) -> {
+
                 Dialog dialog = new Dialog();
 
                 TableView<TimeFormatColumn> list = new TableView<>();
                 TableColumn<TimeFormatColumn, Integer> colId = new TableColumn<>("Id");
                 TableColumn<TimeFormatColumn, String> colFormat= new TableColumn<>("Time Format");
-                colId.setCellValueFactory(new PropertyValueFactory<TimeFormatColumn,Integer>("id"));
-                colFormat.setCellValueFactory(new PropertyValueFactory<TimeFormatColumn,String>("TimeFormat"));
+                TableColumn<TimeFormatColumn, String> colComment= new TableColumn<>("Comment");
+                colId.setCellValueFactory(new PropertyValueFactory<>("id"));
+                colFormat.setCellValueFactory(new PropertyValueFactory<>("TimeFormat"));
+                colComment.setCellValueFactory(new PropertyValueFactory<>("Comment"));
                 list.getColumns().add(colId);
                 list.getColumns().add(colFormat);
+                list.getColumns().add(colComment);
                 for(TimeFormatType tt: TimeFormatType.values()){
                     list.getItems().add(new TimeFormatColumn(tt));
                 }
@@ -110,18 +118,15 @@ public class CsvSettingsManager {
         return properties;
     }
 
-    //TODO: it is the same file for all...
     private static void loadProperties() {
-        try{
-            InputStream is = new FileInputStream(CsvSettingsManager.class.getClassLoader().getResource(Parameter.API_PROPERTIES_FILE).getFile());
+        try(InputStream is = new FileInputStream(Parameter.API_PROPERTIES_FILE)){
             properties.load(is);
-            is.close();
         } catch (IOException e){
             e.printStackTrace();
         }
     }
 
-    // TODO add position colorOf info line and maybe possibility to set info line in properties
+    // TODO add position of info line and maybe possibility to set info line in properties
     class CsvProperties{
         private final StringProperty separator;
         private final StringProperty lineBreak;
@@ -134,6 +139,12 @@ public class CsvSettingsManager {
         public void save(){
             getProperties().setProperty(Parameter.PROPERTY_CSV_ENDLINE, lineBreak.get());
             getProperties().setProperty(Parameter.PROPERTY_CSV_SEPERATOR, separator.get());
+            try(FileOutputStream outputStream = new FileOutputStream((Parameter.API_PROPERTIES_FILE))){
+                getProperties().store(outputStream, null);
+            } catch (IOException ioe){
+                ioe.printStackTrace();
+            }
+
             logger.debug("Properties saved: {}, {}",lineBreak.get(),separator.get());
         }
 
@@ -155,11 +166,12 @@ public class CsvSettingsManager {
     }
 
     public class TimeFormatColumn {
-        private final StringProperty timeFormat;
+        private final StringProperty timeFormat, comment;
         private final IntegerProperty id;
 
         public TimeFormatColumn(TimeFormatType tt){
             timeFormat = new SimpleStringProperty(tt.pattern);
+            comment = new SimpleStringProperty(tt.comment);
             id = new SimpleIntegerProperty(tt.id);
         }
 
@@ -177,6 +189,14 @@ public class CsvSettingsManager {
 
         public IntegerProperty idProperty() {
             return id;
+        }
+
+        public String getComment() {
+            return comment.get();
+        }
+
+        public StringProperty commentProperty() {
+            return comment;
         }
     }
 }

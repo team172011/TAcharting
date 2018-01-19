@@ -10,7 +10,8 @@
     <packaging>pom</packaging>
 
     <name>TAcharting</name>
-    <description>TAcharting is a charting application for downloading, store and plot financial data and indicators</description>
+    <description>TAcharting is a charting application for downloading, store and plot financial
+        org.sjwimmer.tacharting.data and indicators</description>
     <url>https://github.com/team172011/ta4j-charting</url>
     <inceptionYear>2017</inceptionYear>
 
@@ -51,28 +52,33 @@
         <url>http://github.com/ta4j/ta4j</url>
         <tag>0.1-SNAPSHOT</tag>
     </scm>
-
+    <!-- mvn assembly:assembly -DdescriptorId=jar-with-dependencies-->
     <build>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.7.0</version>
                 <configuration>
                     <source>1.8</source>
                     <target>1.8</target>
                 </configuration>
             </plugin>
-            <!-- full jar: mvn clean compile assembly:single -->
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>example.Example</mainClass>
+                            <mainClass>org.sjwimmer.tacharting.example.Example</mainClass>
                         </manifest>
-                        <manifestEntries>
-                            <Class-Path>.</Class-Path> <!-- find resources -->
-                        </manifestEntries>
                     </archive>
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
@@ -115,6 +121,12 @@
         <groupId>org.apache.poi</groupId>
         <artifactId>poi-ooxml</artifactId>
         <version>LATEST</version>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/org.xerial/sqlite-jdbc -->
+    <dependency>
+        <groupId>org.xerial</groupId>
+        <artifactId>sqlite-jdbc</artifactId>
+        <version>3.21.0.1</version>
     </dependency>
 </dependencies>
 </project>

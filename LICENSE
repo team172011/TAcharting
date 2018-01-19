@@ -37,7 +37,7 @@ distributors to deny you these rights or to ask you to surrender these
 rights.  These restrictions translate to certain responsibilities for
 you if you distribute copies of the library or if you modify it.
 
-  For example, if you distribute copies of the library, whether gratis
+  For org.sjwimmer.tacharting.example, if you distribute copies of the library, whether gratis
 or for a fee, you must give the recipients all the rights that we gave
 you.  You must make sure that they, too, receive or can get the source
 code.  If you link other code with the library, you must provide
@@ -86,7 +86,7 @@ are the reason we use the ordinary General Public License for many
 libraries.  However, the Lesser license provides advantages in certain
 special circumstances.
 
-  For example, on rare occasions, there may be a special need to
+  For org.sjwimmer.tacharting.example, on rare occasions, there may be a special need to
 encourage the widest possible use of a certain library, so that it becomes
 a de-facto standard.  To achieve this, non-free programs must be
 allowed to use the library.  A more frequent case is that a free
@@ -96,7 +96,7 @@ software only, so we use the Lesser General Public License.
 
   In other cases, permission to use a particular library in non-free
 programs enables a greater number of people to use a large body of
-free software.  For example, permission to use the GNU C Library in
+free software.  For org.sjwimmer.tacharting.example, permission to use the GNU C Library in
 non-free programs enables many more people to use the whole GNU
 operating system, as well as its variant, the GNU/Linux operating
 system.
@@ -121,9 +121,9 @@ other authorized party saying it may be distributed under the terms of
 this Lesser General Public License (also called "this License").
 Each licensee is addressed as "you".
 
-  A "library" means a collection of software functions and/or data
+  A "library" means a collection of software functions and/or org.sjwimmer.tacharting.data
 prepared so as to be conveniently linked with application programs
-(which use some of those functions and data) to form executables.
+(which use some of those functions and org.sjwimmer.tacharting.data) to form executables.
 
   The "Library", below, refers to any such software library or work
 which has been distributed under these terms.  A "work based on the
@@ -173,14 +173,14 @@ above, provided that you also meet all of these conditions:
     charge to all third parties under the terms of this License.
 
     d) If a facility in the modified Library refers to a function or a
-    table of data to be supplied by an application program that uses
+    table of org.sjwimmer.tacharting.data to be supplied by an application program that uses
     the facility, other than as an argument passed when the facility
     is invoked, then you must make a good faith effort to ensure that,
     in the event an application does not supply such function or
     table, the facility still operates, and performs whatever part of
     its purpose remains meaningful.
 
-    (For example, a function in a library to compute square roots has
+    (For org.sjwimmer.tacharting.example, a function in a library to compute square roots has
     a purpose that is entirely well-defined independent of the
     application.  Therefore, Subsection 2d requires that any
     application-supplied function or table used by this function must
@@ -256,7 +256,7 @@ Whether this is true is especially significant if the work can be
 linked without the Library, or if the work is itself a library.  The
 threshold for this to be true is not precisely defined by law.
 
-  If such an object file uses only numerical parameters, data
+  If such an object file uses only numerical parameters, org.sjwimmer.tacharting.data
 structure layouts and accessors, and small macros and small inline
 functions (ten lines or less in length), then the use of the object
 file is unrestricted, regardless of whether it is legally a derivative
@@ -316,7 +316,7 @@ of these things:
     materials or that you have already sent this user a copy.
 
   For an executable, the required form of the "work that uses the
-Library" must include any data and utility programs needed for
+Library" must include any org.sjwimmer.tacharting.data and utility programs needed for
 reproducing the executable from it.  However, as a special exception,
 the materials to be distributed need not include anything that is
 normally distributed (in either source or binary form) with the major
@@ -378,7 +378,7 @@ otherwise) that contradict the conditions of this License, they do not
 excuse you from the conditions of this License.  If you cannot
 distribute so as to satisfy simultaneously your obligations under this
 License and any other pertinent obligations, then as a consequence you
-may not distribute the Library at all.  For example, if a patent
+may not distribute the Library at all.  For org.sjwimmer.tacharting.example, if a patent
 license would not permit royalty-free redistribution of the Library by
 all those who receive copies directly or indirectly through you, then
 the only way you could satisfy both it and this License would be to

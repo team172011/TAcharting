@@ -4,11 +4,11 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import org.sjwimmer.tacharting.chart.utils.FormatUtils;
+import org.sjwimmer.tacharting.chart.utils.ConverterUtils;
 
 /**
  * Class represents an indicator parameter. A pair of {@link IndicatorParameterType} and a {@code value}. The value (
- * saved as String) can be transformed to the data type described by the IndicatorParameterType through the
+ * saved as String) can be transformed to the org.sjwimmer.tacharting.data type described by the IndicatorParameterType through the
  * {@link #getValue()} function
  */
 public class IndicatorParameter{
@@ -63,7 +63,7 @@ public class IndicatorParameter{
     public Object getValue(){
         switch (type.get()){
             case COLOR:{
-                return FormatUtils.ColorAWTConverter.fromString(value.get());
+                return ConverterUtils.ColorAWTConverter.fromString(value.get());
             }
             case SHAPE:{
                 return ShapeType.valueOf(value.get());

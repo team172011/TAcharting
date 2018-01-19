@@ -1,26 +1,25 @@
 package org.sjwimmer.tacharting.chart.parameters;
 
 /**
- * Enum for the different time formats that can be in a csv file or in api data streams
+ * Enum for the different time formats that can be in a csv file or in api org.sjwimmer.tacharting.data streams
  */
 public enum TimeFormatType {
 
-    yyyy_MM_ddHmsz(1, "yyyy-MM-dd H:m:s z"),
-    yyyyMMdd(2, "yyyy/MM/dd"),
-    YAHOO(3, "yyyy-MM-dd"),
-    EODATA(4, "dd MM yyyy");
+    // e.g  2017-01-27, 16:00:00 ok
+    yyyy_MM_ddHmsz(1, "yyyy-MM-dd H:m:s z","Date and Time in two columns (2017-01-27, 16:00:00)"),
+    // e.g. 2017/08/18 ok
+    yyyyMMdd(2, "yyyy/MM/dd", "(2017/08/18)"),
+    // e.g  2017-12-31 ok
+    YAHOO(3, "yyyy-MM-dd", "Format of Yahoo financial api (2017-12-31)"),
+    // e.g  02 Jan 2017
+    EODATA(4, "dd MMM yyyy", "Format of Eoddata (http://eoddata.com/) 02 Jan 2017");
 
     public final int id;
-    public final String pattern;
+    public final String pattern, comment;
 
-    TimeFormatType(int id, String pattern) {
+    TimeFormatType(int id, String pattern, String comment) {
         this.id = id;
         this.pattern = pattern;
+        this.comment = comment;
     }
 }
-/*
-    public final static DateTimeFormatter FORMATTER_y_M_d_hmsZ = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd H:m:s z");
-    public final static DateTimeFormatter FORMATTER_yyyyMMd = java.time.format.DateTimeFormatter.ofPattern("yyyy/MM/dd");
-    public final static DateTimeFormatter FORMATTER_yyy_MM_dd = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd"); // yahoo csv
-    public final static DateTimeFormatter FORMATTER_dd_MMM_YYYY = java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy", Locale.US); // eodata csv
-*/

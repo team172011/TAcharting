@@ -5,7 +5,10 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.sjwimmer.tacharting.chart.TaTimeSeries;
+import org.sjwimmer.tacharting.chart.parameters.GeneralTimePeriod;
 import org.sjwimmer.tacharting.chart.parameters.Parameter;
+import org.sjwimmer.tacharting.chart.parameters.TimeFormatType;
 import org.sjwimmer.tacharting.chart.utils.FormatUtils;
 import org.ta4j.core.BaseTimeSeries;
 import org.ta4j.core.Tick;
@@ -17,12 +20,14 @@ import java.io.IOException;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
+/**
+ * Connector class for reading financial data from excel files
+ */
 public class ExcelConnector implements Connector<File> {
 
-
     @Override
-    public TimeSeries getSeries(File file) throws IOException {
-        FileInputStream inputStream = new FileInputStream(file);
+    public TaTimeSeries getSeries(File resource) throws IOException {
+        FileInputStream inputStream = new FileInputStream(resource);
         Workbook wb = new XSSFWorkbook(inputStream);
         Sheet sheet = wb.getSheetAt(0);
         Iterator<Row> rowIterator = sheet.rowIterator();
@@ -31,10 +36,14 @@ public class ExcelConnector implements Connector<File> {
         Row infoRow = rowIterator.next();
         String name = infoRow.getCell(0).getStringCellValue();
         String timeFormat = infoRow.getCell(1).getStringCellValue();
-        int id = Integer.parseInt(timeFormat);
-        boolean isTwoColumnDate = id== Parameter.TimeFormat.y_M_d_hmsZ.id;
+        int id =FormatUtils.extractInteger(timeFormat);
+        boolean isTwoColumnDate = id== TimeFormatType.yyyy_MM_ddHmsz.id;
         DateTimeFormatter dateFormatter = FormatUtils.getDateTimeFormatter(id);
-
+        String currencyString = infoRow.getCell(2).getStringCellValue().replaceAll("\\s","").toUpperCase();
+        if(currencyString==null){
+            currencyString = Parameter.DEFAULT_CURRENCY;
+        }
+        Currency currency = Currency.getInstance(currencyString);
 
         // second row with header description
         infoRow = rowIterator.next();
@@ -60,6 +69,8 @@ public class ExcelConnector implements Connector<File> {
         if(ticks.get(ticks.size()-1).getEndTime().isBefore(ticks.get(0).getEndTime())){
             Collections.reverse(ticks);
         }
-        return new BaseTimeSeries(name==null?"unnamed":name,ticks);
+        TimeSeries series = new BaseTimeSeries(name==null?"unnamed":name,ticks);
+        GeneralTimePeriod period = FormatUtils.extractPeriod(series);
+        return new TaTimeSeries(series,currency,period);
     }
 }

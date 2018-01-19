@@ -535,11 +535,11 @@ public class TaChartCanvas extends Canvas implements ChartChangeListener,
     }
 
     /**
-     * Returns the data area (the area inside the axes) for the plot or subplot.
+     * Returns the org.sjwimmer.tacharting.data area (the area inside the axes) for the plot or subplot.
      *
      * @param point  the selection point (for subplot selection).
      *
-     * @return The data area.
+     * @return The org.sjwimmer.tacharting.data area.
      */
     public Rectangle2D findDataArea(Point2D point) {
         PlotRenderingInfo plotInfo = this.info.getPlotInfo();

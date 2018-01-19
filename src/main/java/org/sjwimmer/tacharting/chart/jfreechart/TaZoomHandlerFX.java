@@ -155,7 +155,7 @@ public class TaZoomHandlerFX extends TaAbstractMouseHandlerFX {
         double w = 0;
         double h = 0;
         if (hZoom && vZoom) {
-            // selected rectangle shouldn't extend outside the data area...
+            // selected rectangle shouldn't extend outside the org.sjwimmer.tacharting.data area...
             double xmax = Math.min(e.getX(), dataArea.getMaxX());
             double ymax = Math.min(e.getY(), dataArea.getMaxY());
             w = xmax - this.startPoint.getX();

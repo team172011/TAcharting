@@ -33,21 +33,19 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.FileChooser;
-import org.sjwimmer.tacharting.chart.api.CSVConnector;
-import org.sjwimmer.tacharting.chart.api.ExcelConnector;
-import org.sjwimmer.tacharting.chart.api.YahooConnector;
+import org.sjwimmer.tacharting.chart.api.*;
 import org.sjwimmer.tacharting.chart.api.settings.CsvSettingsManager;
 import org.sjwimmer.tacharting.chart.api.settings.YahooSettingsManager;
 import org.sjwimmer.tacharting.chart.parameters.Parameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.ta4j.core.TimeSeries;
 import org.ta4j.core.TradingRecord;
 
 import javax.xml.xpath.XPathException;
 import javax.xml.xpath.XPathExpressionException;
 import java.awt.*;
 import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,34 +53,48 @@ import java.util.Map;
 import static org.sjwimmer.tacharting.chart.parameters.Parameter.EXTENSION_FILTER_CSV;
 import static org.sjwimmer.tacharting.chart.parameters.Parameter.EXTENSION_FILTER_EXCEL;
 
-public class RootController implements MapChangeListener<String, ChartIndicator>{
+public class Controller implements MapChangeListener<String, ChartIndicator>{
 
-    private final Logger logger = LoggerFactory.getLogger(RootController.class);
+    private final Logger logger = LoggerFactory.getLogger(Controller.class);
     private TaChart chart;
     private final Map<String, CheckMenuItem> itemMap = new HashMap<>();
     private final ObservableList<TimeSeriesTableCell> tableData = FXCollections.observableArrayList();
 
-    @FXML BorderPane borderPane;
+    @FXML private BorderPane borderPane;
 
-    @FXML Menu indicatorsMenu;
-    @FXML Menu candles;
-    @FXML Menu def;
-    @FXML Menu custom;
-    @FXML Menu bollinger;
-    @FXML Menu statistics;
-    @FXML Menu volume;
-    @FXML Menu ichimoku;
-    @FXML Menu helpers;
-    @FXML Menu keltner;
-    @FXML Menu strategy;
-    @FXML Menu tradingRecords;
+    @FXML private Menu indicatorsMenu;
+    @FXML private Menu candles;
+    @FXML private Menu def;
+    @FXML private Menu custom;
+    @FXML private Menu bollinger;
+    @FXML private Menu statistics;
+    @FXML private Menu volume;
+    @FXML private Menu ichimoku;
+    @FXML private Menu helpers;
+    @FXML private Menu keltner;
+    @FXML private Menu strategy;
+    @FXML private Menu tradingRecords;
 
-    @FXML ToolBar toolBarIndicators;
-    @FXML ComboBox<Parameter.ApiProvider> choiceBoxAPI;
+    @FXML private ToolBar toolBarIndicators;
+    @FXML private ComboBox<Parameter.ApiProvider> choiceBoxAPI;
 
     @FXML private TableView<TimeSeriesTableCell> tblSymbol;
-    @FXML TableColumn<TimeSeriesTableCell, String> colSymbol;
-    @FXML TextField fieldSearch;
+    @FXML private TableColumn<TimeSeriesTableCell, String> colSymbol;
+    @FXML private TextField fieldSearch;
+    @FXML private ToggleButton tbnStoreData;
+
+    public Controller(){
+        SQLConnector SQLConnector = new SqlLiteConnector();
+
+        // create api properties file if not exists
+        File file = new File(Parameter.API_PROPERTIES_FILE);
+        try{
+            file.getParentFile().mkdirs(); //properties folder
+            file.createNewFile(); // api.properties file
+        }catch (IOException ioe){
+            logger.error("Could not create api properties file {}",Parameter.API_PROPERTIES_FILE);
+        }
+    }
 
     @FXML
     public void initialize(){
@@ -92,7 +104,7 @@ public class RootController implements MapChangeListener<String, ChartIndicator>
         colSymbol.getTableView().setItems(tableData);
         colSymbol.getTableView().setOnMouseClicked(e -> {
             if (e.getClickCount() == 2) {
-                TimeSeries series = colSymbol.getTableView().getSelectionModel().getSelectedItem().getTimeSeries();
+                TaTimeSeries series = colSymbol.getTableView().getSelectionModel().getSelectedItem().getTimeSeries();
                 this.chart.getChartIndicatorBox().setTimeSeries(series);
             }
         });
@@ -137,7 +149,7 @@ public class RootController implements MapChangeListener<String, ChartIndicator>
      */
     private void buildMenuEntries(ChartIndicatorBox box){
 
-        final PropertiesManager propsManager = box.getPropertiesManager();
+        final IndicatorsPropertiesManager propsManager = box.getPropertiesManager();
 
         for (Map.Entry<String, ChartIndicator> entry : chart.getChartIndicatorBox().getChartIndicatorMap().entrySet()) {
             addToCategory(entry.getKey(), entry.getValue().getCategory());
@@ -282,7 +294,7 @@ public class RootController implements MapChangeListener<String, ChartIndicator>
     }
 
     /**
-     * Opens a FileChooser dialog and adds excel or csv ohlc data as TimeSeries to the current watchlist
+     * Opens a FileChooser dialog and adds excel or csv ohlc org.sjwimmer.tacharting.data as TimeSeries to the current watchlist
      */
     public void openCsvExcelDialog(){
         FileChooser fileChooser = new FileChooser();
@@ -315,7 +327,7 @@ public class RootController implements MapChangeListener<String, ChartIndicator>
     private void addCSV(File file){
         try{
             CSVConnector csvConnector = new CSVConnector();
-            TimeSeries series = csvConnector.getSeries(file);
+            TaTimeSeries series = csvConnector.getSeries(file);
             Platform.runLater(() -> tableData.add(new TimeSeriesTableCell(series)));
         } catch (Exception ioe){
             ioe.printStackTrace();
@@ -338,7 +350,7 @@ public class RootController implements MapChangeListener<String, ChartIndicator>
     public void addExcel(File file){
         try{
             ExcelConnector excelConnector = new ExcelConnector();
-            TimeSeries series = excelConnector.getSeries(file);
+            TaTimeSeries series = excelConnector.getSeries(file);
             Platform.runLater(() -> tableData.add(new TimeSeriesTableCell(series)));
         } catch (Exception e){
             e.printStackTrace(); //TODO
@@ -366,7 +378,7 @@ public class RootController implements MapChangeListener<String, ChartIndicator>
         if(!symbol.equals("")) {
             YahooConnector yahooConnector = new YahooConnector();
             try {
-                TimeSeries series = yahooConnector.getSeries(symbol);
+                TaTimeSeries series = yahooConnector.getSeries(symbol);
                 Platform.runLater(()->tableData.add(new TimeSeriesTableCell(series)));
             } catch (Exception io) {
                 io.printStackTrace();

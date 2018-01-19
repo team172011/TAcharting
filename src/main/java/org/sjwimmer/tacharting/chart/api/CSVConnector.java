@@ -3,10 +3,16 @@ package org.sjwimmer.tacharting.chart.api;
 import com.opencsv.CSVParser;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
+import org.sjwimmer.tacharting.chart.TaTimeSeries;
 import org.sjwimmer.tacharting.chart.api.settings.CsvSettingsManager;
+import org.sjwimmer.tacharting.chart.api.settings.YahooSettingsManager;
+import org.sjwimmer.tacharting.chart.parameters.GeneralTimePeriod;
 import org.sjwimmer.tacharting.chart.parameters.Parameter;
 import org.sjwimmer.tacharting.chart.parameters.TimeFormatType;
+import org.sjwimmer.tacharting.chart.parameters.YahooTimePeriod;
 import org.sjwimmer.tacharting.chart.utils.FormatUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.ta4j.core.BaseTimeSeries;
 import org.ta4j.core.Tick;
 import org.ta4j.core.TimeSeries;
@@ -20,20 +26,30 @@ import java.util.*;
 public class CSVConnector implements Connector<File> {
 
     private final Properties properties;
+    private final Logger log = LoggerFactory.getLogger(CSVConnector.class);
 
     public CSVConnector(){
         properties = CsvSettingsManager.getProperties();
     }
 
     @Override
-    public TimeSeries getSeries(File file) throws IOException{
-        CSVReader reader = new CSVReaderBuilder(new FileReader(file)).withCSVParser(new CSVParser()).build();
+    public TaTimeSeries getSeries(File resource) throws IOException{
+        CSVReader reader = new CSVReaderBuilder(new FileReader(resource)).withCSVParser(new CSVParser()).build();
         String line[];
         line = reader.readNext();
         String name = line[0];
         int id = FormatUtils.extractInteger(line[1]);
         boolean isDateTwoColumn = id == TimeFormatType.yyyy_MM_ddHmsz.id;
         DateTimeFormatter dateTimeFormatter = FormatUtils.getDateTimeFormatter(id);
+
+        String currencyString = null;
+        if(line.length>2) {
+            currencyString = line[2].replaceAll("\\s", "");
+        }
+        if(currencyString == null || currencyString.length() != 3)
+            currencyString = Parameter.DEFAULT_CURRENCY;
+        Currency currency = Currency.getInstance(currencyString);
+
 
         line = reader.readNext();
         Map<Parameter.Columns, Integer> headers = FormatUtils.getHeaderMap(Arrays.asList(line));
@@ -45,29 +61,37 @@ public class CSVConnector implements Connector<File> {
         if(ticks.get(ticks.size()-1).getEndTime().isBefore(ticks.get(0).getEndTime())){
             Collections.reverse(ticks);
         }
-       return new BaseTimeSeries(name==null?"unnamed":name,ticks);
+        //TODO: remove daily
+        TimeSeries series = new BaseTimeSeries(name==null?"unnamed":name,ticks);
+        GeneralTimePeriod period =  FormatUtils.extractPeriod(series);
+        log.info("Extracted period: "+period);
+       return new TaTimeSeries(series,currency,period);
     }
 
     /**
-     * Reads file with yahoo api structure. No first line with name and timeFormatId, just header line and
+     * Reads a csv file with structure of yahoo api: No info line with name and timeFormatId, just header line and
      * {@link TimeFormatType timeFormat YAHOO}
-     * @param name the name to display for this symbol
+     * @param name the name of this symbol
      * @param file the csv file with financial data in yahoo format
      * @return the corresponding TimeSeries object
      * @throws IOException IOException
      */
-    public TimeSeries getSeriesFromYahooFile(String name, File file) throws IOException{
+    public TaTimeSeries getSeriesFromYahooFile(String name, File file) throws IOException{
         CSVReader reader = new CSVReaderBuilder(new FileReader(file)).withCSVParser(new CSVParser()).build();
         String line[];
         line = reader.readNext();
         Map<Parameter.Columns, Integer> headers = FormatUtils.getHeaderMap(Arrays.asList(line));
         List<Tick> ticks = new ArrayList<>();
         while((line = reader.readNext()) != null) {
-            ticks.add(FormatUtils.extractOHLCData(headers, DateTimeFormatter.ofPattern(TimeFormatType.YAHOO.pattern),line,false));
+            ticks.add(FormatUtils.extractOHLCData(
+                    headers, DateTimeFormatter.ofPattern(TimeFormatType.YAHOO.pattern),line,false));
         }
         if(ticks.get(ticks.size()-1).getEndTime().isBefore(ticks.get(0).getEndTime())){
             Collections.reverse(ticks);
         }
-        return new BaseTimeSeries(name==null?"unnamed":name,ticks);
+        String yahooIntervall = YahooSettingsManager.getProperties().getProperty(Parameter.PROPERTY_YAHOO_INTERVAL);
+        GeneralTimePeriod timePeriod = YahooTimePeriod.of(yahooIntervall).generalTimePeriod;
+        return new TaTimeSeries(name==null?"unnamed":name,ticks,Currency.getInstance("USD"),timePeriod);
     }
+
 }

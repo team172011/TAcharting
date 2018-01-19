@@ -18,6 +18,7 @@
 */
 package org.sjwimmer.tacharting.chart.api.settings;
 
+
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -25,6 +26,8 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import org.sjwimmer.tacharting.chart.parameters.Parameter;
+import org.sjwimmer.tacharting.chart.parameters.TimeFormatType;
+import org.sjwimmer.tacharting.chart.parameters.YahooTimePeriod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +36,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Properties;
 
 public class YahooSettingsManager{
@@ -41,14 +45,14 @@ public class YahooSettingsManager{
     private VBox rootPane = new VBox(5);
     private static final Properties properties = new Properties();
 
-    @FXML private ComboBox<Parameter.YahooInterval> intervalBox;
+    @FXML private ComboBox<YahooTimePeriod> intervalBox;
     @FXML private DatePicker pickerFrom;
     @FXML private DatePicker pickerTo;
 
     public YahooSettingsManager() {
         Dialog<Boolean> settingDialog = new Dialog();
         settingDialog.setTitle("Yahoo Api Settings");
-        settingDialog.setHeaderText("Yahoo connections and data settings");
+        settingDialog.setHeaderText("Yahoo connections and org.sjwimmer.tacharting.data settings");
 
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getClassLoader().getResource(("fxml/charting-YahooSettings.fxml")));
         fxmlLoader.setController(this);
@@ -58,7 +62,7 @@ public class YahooSettingsManager{
         try{
             fxmlLoader.load();
             YahooProperties yahooProperties = new YahooProperties();
-            intervalBox.setItems(FXCollections.observableArrayList(Parameter.YahooInterval.values()));
+            intervalBox.setItems(FXCollections.observableArrayList(YahooTimePeriod.values()));
             intervalBox.valueProperty().bindBidirectional(yahooProperties.intervalProperty());
 
             pickerFrom.valueProperty().bindBidirectional(yahooProperties.fromProperty());
@@ -85,10 +89,8 @@ public class YahooSettingsManager{
     }
 
     private static void loadProperties() {
-        try{
-            InputStream is = new FileInputStream(YahooSettingsManager.class.getClassLoader().getResource(Parameter.API_PROPERTIES_FILE).getFile());
+        try(InputStream is = new FileInputStream(Parameter.API_PROPERTIES_FILE)){
             properties.load(is);
-            is.close();
         } catch (IOException e){
             e.printStackTrace();
         }
@@ -104,16 +106,16 @@ public class YahooSettingsManager{
     class YahooProperties{
         private final SimpleObjectProperty<LocalDate> from;
         private final SimpleObjectProperty<LocalDate> to;
-        private final SimpleObjectProperty<Parameter.YahooInterval> interval;
+        private final SimpleObjectProperty<YahooTimePeriod> interval;
 
         /**
          * Constructor.
          */
         YahooProperties(){
-            interval = new SimpleObjectProperty<>(Parameter.YahooInterval.valueOf(getProperties().getProperty(Parameter.PROPERTY_YAHOO_INTERVAL, "daily")));
+            interval = new SimpleObjectProperty<>(YahooTimePeriod.valueOf(getProperties().getProperty(Parameter.PROPERTY_YAHOO_INTERVAL, "daily")));
             LocalDate now = LocalDate.now();
-            to = new SimpleObjectProperty<>(Parameter.TimeFormat.yahoo.ofFormat(getProperties().getProperty(Parameter.PROPERTY_YAHOO_TO, now.format(Parameter.FORMATTER_yyy_MM_dd))).toLocalDate());
-            from = new SimpleObjectProperty<>(Parameter.TimeFormat.yahoo.ofFormat(getProperties().getProperty(Parameter.PROPERTY_YAHOO_FROM, now.minusYears(1).format(Parameter.FORMATTER_yyy_MM_dd))).toLocalDate());
+            to = new SimpleObjectProperty<>();
+            from = new SimpleObjectProperty<>();
         }
 
         public LocalDate getFrom() {
@@ -132,35 +134,33 @@ public class YahooSettingsManager{
             return to;
         }
 
-        public Parameter.YahooInterval getInterval() {
+        public YahooTimePeriod getInterval() {
             return interval.get();
         }
 
-        public SimpleObjectProperty<Parameter.YahooInterval> intervalProperty() {
+        public SimpleObjectProperty<YahooTimePeriod> intervalProperty() {
             return interval;
         }
 
         public void save() {
-            try {
-                getProperties().setProperty(Parameter.PROPERTY_YAHOO_INTERVAL, interval.get().toString());
+
+                getProperties().setProperty(Parameter.PROPERTY_YAHOO_INTERVAL, (interval.get().toYahooString()));
                 if(from.get().isBefore(to.get())) {
-                    getProperties().setProperty(Parameter.PROPERTY_YAHOO_TO, to.get().format(Parameter.FORMATTER_yyy_MM_dd));
-                    getProperties().setProperty(Parameter.PROPERTY_YAHOO_FROM, from.get().format(Parameter.FORMATTER_yyy_MM_dd));
+                    getProperties().setProperty(Parameter.PROPERTY_YAHOO_TO, to.get().format(DateTimeFormatter.ofPattern(TimeFormatType.YAHOO.pattern)));
+                    getProperties().setProperty(Parameter.PROPERTY_YAHOO_FROM, from.get().format(DateTimeFormatter.ofPattern(TimeFormatType.YAHOO.pattern)));
                 } else{
-                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                    alert.setTitle("Cannot save dates");
-                    alert.setContentText(String.format("Properties not saved: from (%s) is after to (%s)",from,to));
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION,String.format("Properties not saved: from (%s) is after to (%s)",from,to));
+                    alert.setTitle("Could not save dates");
                     alert.show();
                 }
-                getProperties().store(new FileOutputStream(getClass().getClassLoader().getResource(Parameter.API_PROPERTIES_FILE).getFile()), null);
+            try (FileOutputStream outputStream = new FileOutputStream(Parameter.API_PROPERTIES_FILE)){
+                getProperties().store(outputStream, null);
                 logger.debug("Properties saved: {}, {}, {}", from.get(), to.get(), interval.get().toString());
             } catch (IOException io){
-                Alert alert = new Alert(Alert.AlertType.ERROR);
+                Alert alert = new Alert(Alert.AlertType.ERROR, io.getMessage());
                 alert.setTitle("Could not save YAHOO_PROPS");
-                alert.setHeaderText("Could not save YAHOO_PROPS");
-                alert.setContentText(io.getMessage());
                 alert.show();
-                logger.warn("Could not load properties");
+                logger.warn("Could not load properties {}",io.getMessage());
             }
         }
 

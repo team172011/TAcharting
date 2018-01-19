@@ -29,7 +29,7 @@ import org.sjwimmer.tacharting.chart.parameters.ChartType;
 import org.sjwimmer.tacharting.chart.parameters.Parameter.IndicatorCategory;
 import org.sjwimmer.tacharting.chart.parameters.ShapeType;
 import org.sjwimmer.tacharting.chart.parameters.StrokeType;
-import org.sjwimmer.tacharting.chart.utils.FormatUtils;
+import org.sjwimmer.tacharting.chart.utils.ConverterUtils;
 import org.ta4j.core.Decimal;
 import org.ta4j.core.Indicator;
 import org.ta4j.core.TimeSeries;
@@ -63,14 +63,14 @@ public class ChartIndicatorBox {
     private final ObservableMap<String, ChartIndicator> chartIndicatorMap; // currently loaded indicators
     private final ObservableMap<String, TradingRecord> tradingRecordMap; // stored trading records
     private final ObservableMap<String, ChartIndicator> tempChartIndicatorBackup; // indicators that are dynamically added
-    private final PropertiesManager parameter;
-    private final ObjectProperty<TimeSeries> series;
+    private final IndicatorsPropertiesManager parameter;
+    private final ObjectProperty<TaTimeSeries> series;
     private final ObjectProperty<Indicator> closePriceIndicator;
 
     /**
      * Constructor
      */
-    public ChartIndicatorBox(TimeSeries series){
+    public ChartIndicatorBox(TaTimeSeries series){
         if(series==null){
             throw new IllegalArgumentException("Null not permitted for TimeSeries");
         }
@@ -79,7 +79,7 @@ public class ChartIndicatorBox {
         this.tempChartIndicatorBackup =  FXCollections.observableMap(new HashMap<>());
         this.series = new SimpleObjectProperty<>(series);
         this.closePriceIndicator = new SimpleObjectProperty<>(new ClosePriceIndicator(this.series.get()));
-        this.parameter = new PropertiesManager();
+        this.parameter = new IndicatorsPropertiesManager();
     }
 
     /**
@@ -89,7 +89,7 @@ public class ChartIndicatorBox {
      * @apiNote  All dynamically added indicators will be deleted if <tt>series</tt> != this.series.get()
      * @param series the new TimeSeries object for this indicator box
      */
-    public void setTimeSeries(TimeSeries series){
+    public void setTimeSeries(TaTimeSeries series){
         if(series == null){
             throw new IllegalArgumentException("Null not permitted for TimeSeries");
         }
@@ -114,18 +114,18 @@ public class ChartIndicatorBox {
         return this.tradingRecordMap;
     }
 
-    public TimeSeries getTimeSeries(){
+    public TaTimeSeries getTimeSeries(){
         return series.get();
     }
 
-    public ObservableObjectValue<TimeSeries> getObservableTimeSeries(){
+    public ObservableObjectValue<TaTimeSeries> getObservableTimeSeries(){
         return series;
     }
 
     // simple moving average
     private void loadSMAIndicator(String key) throws XPathException {
         int smaTimeFrame = Integer.parseInt(parameter.getParameter(key,"Time Frame"));
-        Color color = FormatUtils.ColorAWTConverter.fromString(parameter.getParameter(key, "Color"));
+        Color color = ConverterUtils.ColorAWTConverter.fromString(parameter.getParameter(key, "Color"));
         StrokeType stroke = StrokeType.valueOf(parameter.getParameter(key, "Stroke"));
         ShapeType shape = ShapeType.valueOf(parameter.getParameter(key,"Shape"));
         ChartType chartType = parameter.getChartType(key);
@@ -142,7 +142,7 @@ public class ChartIndicatorBox {
     // exponential moving average
     private void loadEMAIndicator(String key)throws XPathException {
         int timeFrame = Integer.parseInt(parameter.getParameter(key,"Time Frame"));
-        Color color = FormatUtils.ColorAWTConverter.fromString(parameter.getParameter(key, "Color"));
+        Color color = ConverterUtils.ColorAWTConverter.fromString(parameter.getParameter(key, "Color"));
         StrokeType stroke = StrokeType.valueOf(parameter.getParameter(key, "Stroke"));
         ShapeType shape = ShapeType.valueOf(parameter.getParameter(key,"Shape"));
         ChartType chartType = parameter.getChartType(key);
@@ -158,7 +158,7 @@ public class ChartIndicatorBox {
     //CCI
     private void loadCCIIndicator(String key)throws XPathException{
         int timeFrame = Integer.parseInt(parameter.getParameter(key,"Time Frame"));
-        Color color = FormatUtils.ColorAWTConverter.fromString(parameter.getParameter(key, "Color"));
+        Color color = ConverterUtils.ColorAWTConverter.fromString(parameter.getParameter(key, "Color"));
         StrokeType stroke = StrokeType.valueOf(parameter.getParameter(key, "Stroke"));
         ShapeType shape = ShapeType.valueOf(parameter.getParameter(key,"Shape"));
         ChartType chartType = parameter.getChartType(key);
@@ -174,7 +174,7 @@ public class ChartIndicatorBox {
     //CMO
     private void loadCMOIndicator(String key)throws XPathException{
         int timeFrame = Integer.parseInt(parameter.getParameter(key,"Time Frame"));
-        Color color = FormatUtils.ColorAWTConverter.fromString(parameter.getParameter(key, "Color"));
+        Color color = ConverterUtils.ColorAWTConverter.fromString(parameter.getParameter(key, "Color"));
         StrokeType stroke = StrokeType.valueOf(parameter.getParameter(key, "Stroke"));
         ShapeType shape = ShapeType.valueOf(parameter.getParameter(key,"Shape"));
         ChartType chartType = ChartType.valueOf(parameter.getParameter(key, "Chart Type"));
@@ -198,13 +198,13 @@ public class ChartIndicatorBox {
 
         StandardDeviationIndicator sd = new StandardDeviationIndicator(closePriceIndicator.get(), timeFrame);
         EMAIndicator bollingerEMA = new EMAIndicator(closePriceIndicator.get(),timeFrame);
-        Color color1 = FormatUtils.ColorAWTConverter.fromString(parameter.getParameter(key, "Color Middle Band"));
+        Color color1 = ConverterUtils.ColorAWTConverter.fromString(parameter.getParameter(key, "Color Middle Band"));
         StrokeType stroke1 = StrokeType.valueOf(parameter.getParameter(key, "Stroke Middle Band"));
         ShapeType shape1 = ShapeType.valueOf(parameter.getParameter(key,"Shape Middle Band"));
-        Color color2 = FormatUtils.ColorAWTConverter.fromString(parameter.getParameter(key, "Color Upper Band"));
+        Color color2 = ConverterUtils.ColorAWTConverter.fromString(parameter.getParameter(key, "Color Upper Band"));
         StrokeType stroke2 = StrokeType.valueOf(parameter.getParameter(key, "Stroke Upper Band"));
         ShapeType shape2 = ShapeType.valueOf(parameter.getParameter(key,"Shape Upper Band"));
-        Color color3 = FormatUtils.ColorAWTConverter.fromString(parameter.getParameter(key, "Color Lower Band"));
+        Color color3 = ConverterUtils.ColorAWTConverter.fromString(parameter.getParameter(key, "Color Lower Band"));
         StrokeType stroke3 = StrokeType.valueOf(parameter.getParameter(key, "Stroke Lower Band"));
         ShapeType shape3 = ShapeType.valueOf(parameter.getParameter(key,"Shape Lower Band"));
         ChartType chartType = ChartType.valueOf(parameter.getParameter(key, "Chart Type"));
@@ -389,7 +389,7 @@ public class ChartIndicatorBox {
             indicators.add(new EMAIndicator(mcd, timeFrameSignal));
             names.add(String.format("%s [%s] (%s, %s)",getIdentifier(key), getID(key), timeFrameShort,timeFrameLong));
             names.add(String.format("Signal Line [%s] (%s)",getID(key),timeFrameSignal));
-            Color color = FormatUtils.ColorAWTConverter.fromString(parameter.getParameter(key, "Color Signal Line"));
+            Color color = ConverterUtils.ColorAWTConverter.fromString(parameter.getParameter(key, "Color Signal Line"));
             ShapeType shape = ShapeType.valueOf(parameter.getParameter(key, "Shape Signal Line"));
             StrokeType stroke = StrokeType.valueOf(parameter.getParameter(key, "Stroke Signal Line"));
             renderer.setSeriesPaint(1,color);
@@ -410,10 +410,10 @@ public class ChartIndicatorBox {
 
     //Average Directional Movement Down and Up
     public void loadAverageDirectionalMovementUP_DOWN(String key) throws XPathExpressionException {
-        Color color1 = FormatUtils.ColorAWTConverter.fromString(parameter.getParameter(key, "Color Up"));
+        Color color1 = ConverterUtils.ColorAWTConverter.fromString(parameter.getParameter(key, "Color Up"));
         StrokeType stroke1 = StrokeType.valueOf(parameter.getParameter(key, "Stroke Up"));
         ShapeType shape1 = ShapeType.valueOf(parameter.getParameter(key,"Shape Up"));
-        Color color2 = FormatUtils.ColorAWTConverter.fromString(parameter.getParameter(key, "Color Down"));
+        Color color2 = ConverterUtils.ColorAWTConverter.fromString(parameter.getParameter(key, "Color Down"));
         StrokeType stroke2 = StrokeType.valueOf(parameter.getParameter(key, "Stroke Down"));
         ShapeType shape2 = ShapeType.valueOf(parameter.getParameter(key,"Shape Down"));
         ChartType chartType = ChartType.valueOf(parameter.getParameter(key, "Chart Type"));
@@ -464,10 +464,10 @@ public class ChartIndicatorBox {
         int timeFrame = Integer.parseInt(parameter.getParameter(key, "Time Frame"));
         Decimal ratio = Decimal.valueOf(parameter.getParameter(key, "Ratio"));
         int atr = Integer.parseInt(parameter.getParameter(key, "Time Frame ATR"));
-        Color colorU = FormatUtils.ColorAWTConverter.fromString(parameter.getParameter(key, "Color Upper"));
+        Color colorU = ConverterUtils.ColorAWTConverter.fromString(parameter.getParameter(key, "Color Upper"));
         StrokeType strokeU = StrokeType.valueOf(parameter.getParameter(key, "Stroke Upper"));
         ShapeType shapeU = ShapeType.valueOf(parameter.getParameter(key,"Shape Upper"));
-        Color colorL = FormatUtils.ColorAWTConverter.fromString(parameter.getParameter(key, "Color Lower"));
+        Color colorL = ConverterUtils.ColorAWTConverter.fromString(parameter.getParameter(key, "Color Lower"));
         StrokeType strokeL = StrokeType.valueOf(parameter.getParameter(key, "Stroke Lower"));
         ShapeType shapeL = ShapeType.valueOf(parameter.getParameter(key,"Shape Lower"));
         ChartType chartType = ChartType.valueOf(parameter.getParameter(key, "Chart Type"));
@@ -506,7 +506,7 @@ public class ChartIndicatorBox {
     public void loadAroonUP_DOWN(String key) throws XPathException{
         int arronUp = Integer.parseInt(parameter.getParameter(key, "Time Frame Up"));
         int arronDown = Integer.parseInt(parameter.getParameter(key, "Time Frame Down"));
-        Color colorD = FormatUtils.ColorAWTConverter.fromString(parameter.getParameter(key, "Color Down"));
+        Color colorD = ConverterUtils.ColorAWTConverter.fromString(parameter.getParameter(key, "Color Down"));
         StrokeType strokeD = StrokeType.valueOf(parameter.getParameter(key, "Stroke Down"));
         ShapeType shapeD = ShapeType.valueOf(parameter.getParameter(key, "Shape Down"));
         ChartType chartType = parameter.getChartType(key);
@@ -565,7 +565,7 @@ public class ChartIndicatorBox {
         List<String> nlVwap = new ArrayList<>();
 
         XYLineAndShapeRenderer wapRenderer = createRenderer(key, "Color MVWAP", "Shape MVWAP", "Stroke MVWAP");
-        Color vwapColor = FormatUtils.ColorAWTConverter.fromString(parameter.getParameter(key, "Color VWAP"));
+        Color vwapColor = ConverterUtils.ColorAWTConverter.fromString(parameter.getParameter(key, "Color VWAP"));
         
         StrokeType vwapStroke = StrokeType.valueOf(parameter.getParameter(key, "Stroke VWAP"));
         ShapeType vwapShape = ShapeType.valueOf(parameter.getParameter(key, "Shape VWAP"));
@@ -1182,7 +1182,7 @@ public class ChartIndicatorBox {
         return this.chartIndicatorMap.get(identifier);
     }
 
-    public PropertiesManager getPropertiesManager(){
+    public IndicatorsPropertiesManager getPropertiesManager(){
         return this.parameter;
     }
 
@@ -1394,7 +1394,7 @@ public class ChartIndicatorBox {
     }
 
     private XYLineAndShapeRenderer createRenderer(String key, String color, String shape, String stroke) throws XPathExpressionException {
-        Color c = FormatUtils.ColorAWTConverter.fromString(parameter.getParameter(key,color));
+        Color c = ConverterUtils.ColorAWTConverter.fromString(parameter.getParameter(key,color));
         StrokeType st = StrokeType.valueOf(parameter.getParameter(key,stroke));
         ShapeType sh = ShapeType.valueOf(parameter.getParameter(key,shape));
         return createRenderer(c,st,sh);

@@ -33,6 +33,7 @@ import org.sjwimmer.tacharting.chart.parameters.ChartType;
 import org.sjwimmer.tacharting.chart.parameters.IndicatorParameter;
 import org.sjwimmer.tacharting.chart.parameters.ShapeType;
 import org.sjwimmer.tacharting.chart.parameters.StrokeType;
+import org.sjwimmer.tacharting.chart.utils.ConverterUtils;
 import org.sjwimmer.tacharting.chart.utils.FormatUtils;
 
 import javax.xml.transform.TransformerException;
@@ -46,7 +47,7 @@ public class IndicatorPopUpWindow extends PopupControl {
 
     private static IndicatorPopUpWindow open;
 
-    private final PropertiesManager propertiesManager;
+    private final IndicatorsPropertiesManager propertiesManager;
     private final String key;
     private final ChartIndicatorBox indicatorBox;
 
@@ -123,7 +124,7 @@ public class IndicatorPopUpWindow extends PopupControl {
                         final String valueToStore ;
                         switch (parameter.getType()){
                             case COLOR:{
-                                valueToStore = FormatUtils.ColorAWTConverter.toString((java.awt.Color)parameter.getValue());
+                                valueToStore = ConverterUtils.ColorAWTConverter.toString((java.awt.Color)parameter.getValue());
                                 break;
                             } default:{
                                 valueToStore = parameter.getValue().toString();
@@ -220,31 +221,31 @@ public class IndicatorPopUpWindow extends PopupControl {
         switch (parameter.getType()){
             case COLOR:{
                 ColorPicker colorPicker = new ColorPicker(FormatUtils.awtColorToJavaFX((java.awt.Color)value));
-                Bindings.bindBidirectional(parameter.valueProperty(),colorPicker.valueProperty(), FormatUtils.ColorFxConverter);
+                Bindings.bindBidirectional(parameter.valueProperty(),colorPicker.valueProperty(), ConverterUtils.ColorFxConverter);
                 return colorPicker;
             }
             case SHAPE:{
                 ComboBox<ShapeType> cbox = new ComboBox<ShapeType>(FXCollections.observableArrayList(ShapeType.values()));
                 cbox.setValue((ShapeType)value);
-                Bindings.bindBidirectional(parameter.valueProperty(),cbox.valueProperty(),FormatUtils.ShapeTypeConverter);
+                Bindings.bindBidirectional(parameter.valueProperty(),cbox.valueProperty(),ConverterUtils.ShapeTypeConverter);
                 return cbox;
             }
             case STROKE:{
                 ComboBox<StrokeType> cbox = new ComboBox<StrokeType>(FXCollections.observableArrayList(StrokeType.values()));
-                Bindings.bindBidirectional(parameter.valueProperty(),cbox.valueProperty(),FormatUtils.StrokeTypeConverter);
+                Bindings.bindBidirectional(parameter.valueProperty(),cbox.valueProperty(),ConverterUtils.StrokeTypeConverter);
                 cbox.setValue((StrokeType)value);
                 return cbox;
             }
             case BOOLEAN:{
                 CheckBox checkBox = new CheckBox("yes/no:");
                 checkBox.setSelected((boolean)value);
-                Bindings.bindBidirectional(parameter.valueProperty(),checkBox.selectedProperty(),FormatUtils.BooleanypeConverter);
+                Bindings.bindBidirectional(parameter.valueProperty(),checkBox.selectedProperty(),ConverterUtils.BooleanypeConverter);
                 return checkBox;
             }
             case CHARTTYPE:{
                 ComboBox<ChartType> cbox = new ComboBox<ChartType>(FXCollections.observableArrayList(ChartType.values()));
                 cbox.setValue((ChartType)value);
-                Bindings.bindBidirectional(parameter.valueProperty(),cbox.valueProperty(),FormatUtils.ChartTypeConverter);
+                Bindings.bindBidirectional(parameter.valueProperty(),cbox.valueProperty(),ConverterUtils.ChartTypeConverter);
                 return cbox;
             }
         }

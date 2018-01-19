@@ -4,15 +4,15 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
-<?import javafx.scene.text.Font?>
-<fx:root fx:id="borderPane" prefHeight="444.0" prefWidth="448.0" type="javafx.scene.layout.VBox" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+<?import javafx.scene.text.*?>
+<fx:root fx:id="borderPane" prefHeight="458.0" prefWidth="510.0" type="javafx.scene.layout.VBox" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
     <children>
       <Label text="The csv/excel files must fullfil some criterias: " wrapText="true">
          <font>
             <Font name="System Bold" size="16.0" />
          </font>
       </Label>
-      <TextArea editable="false" text="The first row: must contain the name of the symbol and the TimeFormatID&#10;&#10;The second: row must cotain the column names of the following data. (no matter in what order) &#10;&#10;Third row until end of  file: the open, high, low, close, volume data (other columns will be ignored) " wrapText="true" />
+      <TextArea editable="false" text="The first row: must contain the name of the symbol and the TimeFormatID&#10;&#10;The second: row must cotain the column names of the following org.sjwimmer.tacharting.data. (no matter in what order) &#10;&#10;Third row until end of  file: the open, high, low, close, volume org.sjwimmer.tacharting.data (other columns will be ignored) " wrapText="true" />
         <Separator orientation="HORIZONTAL" />
       <HBox spacing="5.0">
          <children>
@@ -20,6 +20,9 @@
                <padding>
                   <Insets top="5.0" />
                </padding>
+               <font>
+                  <Font size="10.0" />
+               </font>
             </Label>
               <ComboBox fx:id="seperatorBox" />
             <Separator orientation="VERTICAL" />
@@ -27,6 +30,9 @@
                <padding>
                   <Insets top="5.0" />
                </padding>
+               <font>
+                  <Font size="10.0" />
+               </font>
             </Label>
               <ComboBox fx:id="lineEndBox" />
             <Separator orientation="VERTICAL" />
@@ -36,7 +42,7 @@
       <Separator prefWidth="200.0" />
         <Label text="Example of csv input file:">
             <font>
-                <Font name="System Bold" size="16"/>
+                <Font name="System Bold" size="16" />
 
             </font>
         </Label>

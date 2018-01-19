@@ -2,7 +2,7 @@
 
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.sjwimmer.tacharting.chart.RootController">
+<AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.sjwimmer.tacharting.chart.Controller">
    <children>
       <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
@@ -41,10 +41,11 @@
                      <ToolBar fx:id="toolBarSearch">
                          <items>
                              <TextField fx:id="fieldSearch" />
-                        <Button mnemonicParsing="false" text="Add" onAction="#loadDataFromSelectedApi" />
+                        <Button mnemonicParsing="false" onAction="#loadDataFromSelectedApi" text="Add" />
                         <ComboBox fx:id="choiceBoxAPI" />
                              <Separator orientation="VERTICAL" />
                              <Button fx:id="loadCSV" onAction="#openCsvExcelDialog" text="Import excel/csv" />
+                        <ToggleButton fx:id="tbnStoreData" mnemonicParsing="false" text="Store Data in DB" selected="true" />
                          </items>
                      </ToolBar>
                  </top>

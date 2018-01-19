@@ -17,7 +17,7 @@
  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package example;
+package org.sjwimmer.tacharting.example;
 
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
@@ -26,8 +26,7 @@ import org.ta4j.core.BaseTimeSeries;
 import org.ta4j.core.Tick;
 import org.ta4j.core.TimeSeries;
 
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.net.URL;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -38,7 +37,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Class for loading example/testing data from this repository
+ * Class for loading org.sjwimmer.tacharting.example/testing org.sjwimmer.tacharting.data from this repository
  */
 public class Loader {
 
@@ -82,17 +81,20 @@ public class Loader {
         return getHourlyTimeSeries(file, name);
     }
 
-    public static TimeSeries getDailyTimeSeries(URL file, String name){
+    public static TimeSeries getDailyTimeSeries(String fileName){
+        // load a TimeSeries
+        InputStream inputStream = Loader.class.getClassLoader().getResourceAsStream(fileName);
+        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
 
         List<Tick> ticks = new ArrayList<>();
         CSVReader reader;
         String nameInCSV="";
         try {
-            reader = new CSVReaderBuilder(new FileReader(file.getFile())).withSkipLines(1).build();
+            reader = new CSVReaderBuilder(bufferedReader).withSkipLines(1).build();
             String[] line;
             nameInCSV = reader.readNext()[0];
             if(nameInCSV==null||nameInCSV.equals("")){
-                nameInCSV=name;
+                nameInCSV=fileName;
             }
             while ((line = reader.readNext()) != null) {
                 ZonedDateTime date = LocalDate.parse(line[0], DATE_FORMAT_Daily).atStartOfDay(ZoneId.systemDefault());
@@ -104,6 +106,7 @@ public class Loader {
 
                 ticks.add(new BaseTick(date, open, high, low, close, volume));
             }
+            bufferedReader.close();
         } catch (IOException e) {
             e.printStackTrace();
         }

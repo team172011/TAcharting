@@ -18,12 +18,16 @@
  */
 package org.sjwimmer.tacharting.chart.utils;
 
-import javafx.util.StringConverter;
-import org.sjwimmer.tacharting.chart.parameters.*;
+import org.sjwimmer.tacharting.chart.parameters.GeneralTimePeriod;
+import org.sjwimmer.tacharting.chart.parameters.IndicatorParameterType;
+import org.sjwimmer.tacharting.chart.parameters.Parameter;
+import org.sjwimmer.tacharting.chart.parameters.TimeFormatType;
 import org.ta4j.core.BaseTick;
 import org.ta4j.core.Tick;
+import org.ta4j.core.TimeSeries;
 
 import java.awt.*;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -33,15 +37,7 @@ import java.util.Map;
 
 import static org.sjwimmer.tacharting.chart.parameters.IndicatorParameterType.*;
 
-/**
- * Class for several transformations.<p/>
- * In the most cases this class will be needed to transform a String value (from property,
- * database or another file, to the corresponding java object. Mapping between String value and java object is defined
- * by enums (see {@link ChartType}, {@link ShapeType}, {@link StrokeType}, {@link TimeFormatType}), or static variables
- * (see {@link Parameter}
- * This class stores a bunch of static functions and static {@link StringConverter StringConverters} to allow theses
- * transformations.
- */
+
 public class FormatUtils {
 
     /**
@@ -82,11 +78,11 @@ public class FormatUtils {
     }
 
     /**
-     * Extracts the OHLC data from a string array into a tick object
+     * Extracts the OHLC org.sjwimmer.tacharting.data from a string array into a tick object
      * @param headerMap the header maps that maps indices colorOf the <tt>line</tt> to the {@link Parameter.Columns columns}
-     * @param formatPattern the {@link org.sjwimmer.tacharting.chart.parameters.Parameter.TimeFormat time ofFormat}
+     * @param formatPattern the {@link DateTimeFormatter dateTimeFormatter}
      * @param line the string array with corresponding entries for the tick
-     * @return a {@link Tick tick} object with the ohlc data
+     * @return a {@link Tick tick} object with the ohlc org.sjwimmer.tacharting.data
      */
     public static Tick extractOHLCData(Map<Parameter.Columns, Integer> headerMap, DateTimeFormatter formatPattern, String[] line,boolean twoDateColumns){
         ZonedDateTime date;
@@ -94,7 +90,7 @@ public class FormatUtils {
             date = ZonedDateTime.parse(line[headerMap.get(Parameter.Columns.DATE)]
                     +" "+line[headerMap.get(Parameter.Columns.DATE2)]+" PST", formatPattern);
         } else {
-            //TODO: workaround...
+            //TODO: its a workaround, because some formats do not allow directly convert to ZonedDateTime because of missing ZoneId...
             LocalDate localDate = LocalDate.parse(line[headerMap.get(Parameter.Columns.DATE)],formatPattern);
             ZonedDateTime zonedDateTime = localDate.atStartOfDay(ZoneId.systemDefault());
             date = zonedDateTime;
@@ -123,6 +119,60 @@ public class FormatUtils {
         String clean = string.replaceAll("\\s","");
         return Integer.parseInt(clean);
     }
+
+    public static double extractDouble(String string){
+        String clean = string.replaceAll("\\s","");
+        return Double.parseDouble(clean);
+    }
+
+    /**
+     * Run over the ticks of a time series and return their {@link GeneralTimePeriod}
+     * @param series the time series
+     * @return the underlying {@link GeneralTimePeriod} (minimum gap between end time of two consecutive ticks of the
+     * complete time series or the minimum gap of at least 20 percent of consecutive ticks of the <tt>series</tt>
+     */
+    public static GeneralTimePeriod extractPeriod(TimeSeries series){
+        long minDiff = Long.MAX_VALUE;
+        int counter=0;
+        double threshold = series.getTickCount()*0.2;
+        // get the index i and i+1 of the ticks with min diff
+        // stop if 20% of the series have the same minDiff
+        for(int i=0;i<series.getTickCount()-1;i++){
+            Tick tick = series.getTick(i);
+            Tick next = series.getTick(i+1);
+            long diff =  Duration.between(tick.getEndTime(),next.getEndTime()).toMinutes();
+            if(diff < minDiff){
+                minDiff = diff;
+            } else if(minDiff == diff){
+                if(counter++>threshold){
+                    System.out.println("threshold reached");
+                    break;
+                }
+            }
+        }
+        if(minDiff<1){
+            return GeneralTimePeriod.REALTIME;
+        } else if(minDiff<5) {
+            return GeneralTimePeriod.MINUTE;
+        } else if(minDiff<60){
+            return GeneralTimePeriod.FIVE_MINUTE;
+        } else if(minDiff < 60*24) {
+            return GeneralTimePeriod.HOUR;
+        } else if(minDiff < 60*24*5){
+            return GeneralTimePeriod.DAY;
+        } else if(minDiff < 60*24*19){
+            return GeneralTimePeriod.FIVE_DAY;
+        } else if(minDiff < 60*24*19*3){
+            return GeneralTimePeriod.MONTH;
+        } else if(minDiff < 60*24*19*12){
+            return GeneralTimePeriod.QUARTER;
+        } else if(minDiff < 60*24*19*12 *2 ){
+            return GeneralTimePeriod.YEAR;
+        }
+        throw new IllegalArgumentException(
+                String.format("TimePeriod of series %s could not be extracted minDiff (seconds): %s",series.getName(),minDiff));
+    }
+
 
     /**
      * Returns a javaFX Color object that represents the same color as the awt color object
@@ -167,101 +217,5 @@ public class FormatUtils {
             }
         }
     }
-
-    public static StringConverter<javafx.scene.paint.Color> ColorFxConverter = new StringConverter<javafx.scene.paint.Color>() {
-        @Override
-        public String toString(javafx.scene.paint.Color color) {
-            return String.format("%s,%s,%s,%s",color.getRed(),color.getGreen(),color.getBlue(),color.getBrightness());
-        }
-
-        @Override
-        public javafx.scene.paint.Color fromString(String color) {
-            String[] rgb = color.split(",");
-            if (rgb.length == 3) {
-                return javafx.scene.paint.Color.rgb((int)Float.parseFloat(rgb[0])*255, (int)Float.parseFloat(rgb[1])*255,(int)Float.parseFloat(rgb[2])*255);
-            } else if (rgb.length == 4) {
-                return javafx.scene.paint.Color.rgb((int)Float.parseFloat(rgb[0])*255,(int)Float.parseFloat(rgb[1])*255, (int)Float.parseFloat(rgb[2])*255, Float.parseFloat(rgb[3]));
-            }
-            return javafx.scene.paint.Color.rgb(0,0,255,1); // default
-        }
-    };
-
-    public static StringConverter<Color> ColorAWTConverter = new StringConverter<Color>() {
-
-        @Override
-        public String toString(Color color) {
-            return String.format("%s,%s,%s,%s",(float)color.getRed()/255,(float)color.getGreen()/255,(float)color.getBlue()/255,(float)color.getAlpha()/255);
-        }
-
-        @Override
-        public Color fromString(String color) {
-            try {
-                String[] rgb = color.split(",");
-                if (rgb.length == 3) {
-                    return new Color(Float.parseFloat(rgb[0]), Float.parseFloat(rgb[1]), Float.parseFloat(rgb[2]));
-                } else if (rgb.length == 4) {
-                    return new Color(Float.parseFloat(rgb[0]), Float.parseFloat(rgb[1]), Float.parseFloat(rgb[2]), Float.parseFloat(rgb[3]));
-                }
-            } catch (IllegalArgumentException ille){
-                return new Color(0.0f, 0.0f,0.1f, 0.1f); // default
-            }
-            return new Color(0.0f, 0.0f,0.1f, 0.1f); // default
-        }
-    };
-
-    /** Converter ****************************************************************************************************/
-
-    public static StringConverter<ShapeType> ShapeTypeConverter = new StringConverter<ShapeType>() {
-        @Override
-        public String toString(ShapeType object) {
-            return object.toString();
-        }
-
-        @Override
-        public ShapeType fromString(String string) {
-            string = string.toUpperCase().replace("\\s","");
-            return ShapeType.valueOf(string);
-        }
-    };
-
-    public static StringConverter<StrokeType> StrokeTypeConverter = new StringConverter<StrokeType>() {
-        @Override
-        public String toString(StrokeType object) {
-            if(object==null){
-                return null; // Don't know why object is null at start /TODO
-            }
-            return object.toString();
-        }
-
-        @Override
-        public StrokeType fromString(String string) {
-            string = string.toUpperCase().replace("\\s","");
-            return StrokeType.valueOf(string);
-        }
-    };
-
-    public static StringConverter<Boolean> BooleanypeConverter = new StringConverter<Boolean>() {
-        @Override
-        public String toString(Boolean object) {
-            return object.toString();
-        }
-
-        @Override
-        public Boolean fromString(String string) {
-            return Boolean.valueOf(string);
-        }
-    };
-
-    public static StringConverter<ChartType> ChartTypeConverter = new StringConverter<ChartType>() {
-        @Override
-        public String toString(ChartType object) {
-            return object.toString();
-        }
-
-        @Override
-        public ChartType fromString(String string) {
-            return ChartType.valueOf(string);
-        }
-    };
 
 }

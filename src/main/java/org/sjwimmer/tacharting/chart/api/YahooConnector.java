@@ -18,12 +18,13 @@
 */
 package org.sjwimmer.tacharting.chart.api;
 
+import org.sjwimmer.tacharting.chart.TaTimeSeries;
 import org.sjwimmer.tacharting.chart.api.settings.YahooSettingsManager;
 import org.sjwimmer.tacharting.chart.parameters.Parameter;
 import org.sjwimmer.tacharting.chart.parameters.TimeFormatType;
+import org.sjwimmer.tacharting.chart.parameters.YahooTimePeriod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.ta4j.core.TimeSeries;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -54,17 +55,17 @@ public class YahooConnector implements Connector<String>{
         properties = YahooSettingsManager.getProperties();
     }
 
-    public TimeSeries getSeries(String symbol) throws IOException{
+    public TaTimeSeries getSeries(String resource) throws IOException{
 
-        String from = properties.getProperty(Parameter.PROPERTY_YAHOO_FROM, ZonedDateTime.now().format(Parameter.FORMATTER_yyy_MM_dd));
+        String from = properties.getProperty(Parameter.PROPERTY_YAHOO_FROM, ZonedDateTime.now().format(DateTimeFormatter.ofPattern(TimeFormatType.YAHOO.pattern)));
         LocalDate localDateFrom = LocalDate.parse(from, dateTimeFormatter);
         LocalDateTime dateTimeFrom = localDateFrom.atStartOfDay();
 
-        String to = properties.getProperty(Parameter.PROPERTY_YAHOO_TO, ZonedDateTime.now().format(Parameter.FORMATTER_yyy_MM_dd));
+        String to = properties.getProperty(Parameter.PROPERTY_YAHOO_TO, ZonedDateTime.now().format(DateTimeFormatter.ofPattern(TimeFormatType.YAHOO.pattern)));
         LocalDate localDateTo= LocalDate.parse(to, dateTimeFormatter);
         LocalDateTime dateTimeTo = localDateTo.atStartOfDay();
 
-        String interval = Parameter.YahooInterval.valueOf(properties.getProperty(Parameter.PROPERTY_YAHOO_INTERVAL, "daily")).toYahooString();
+        String interval = YahooTimePeriod.of(properties.getProperty(Parameter.PROPERTY_YAHOO_INTERVAL, "daily")).toYahooString();
         Map<String, String> params = new LinkedHashMap<String, String>();
         params.put("period1", String.valueOf(dateTimeFrom.toEpochSecond(ZoneOffset.UTC)));
         params.put("period2", String.valueOf(dateTimeTo.toEpochSecond(ZoneOffset.UTC)));
@@ -72,7 +73,7 @@ public class YahooConnector implements Connector<String>{
         params.put("interval", interval);
 
         params.put("crumb", CrumbManager.getCrumb());
-        String url = REQ_BASE_URL + URLEncoder.encode(symbol , "UTF-8") + "?" + createURLParameters(params);
+        String url = REQ_BASE_URL + URLEncoder.encode(resource, "UTF-8") + "?" + createURLParameters(params);
 
         Map<String, String> requestProperties = new HashMap<String, String>();
         requestProperties.put("Cookie", CrumbManager.getCookie());
@@ -110,7 +111,7 @@ public class YahooConnector implements Connector<String>{
         } else {
             InputStreamReader is = new InputStreamReader(connection.getInputStream());
             BufferedReader br = new BufferedReader(is);
-            File file = new File("temp.csv");
+            File file = new File(Parameter.PROGRAM_FOLDER+Parameter.S+"temp.csv");
             FileOutputStream fos = new FileOutputStream(file);
             BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(fos));
             String header = br.readLine();
@@ -120,9 +121,7 @@ public class YahooConnector implements Connector<String>{
                 bufferedWriter.write(line);
             }
             bufferedWriter.close();
-            CSVConnector csvConnector = new CSVConnector();
-            String description = String.format("%s (%s)",symbol,params.get("interval"));
-            return csvConnector.getSeriesFromYahooFile(description,file);
+            return new CSVConnector().getSeriesFromYahooFile(resource,file);
         }
     }
 

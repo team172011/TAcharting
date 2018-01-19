@@ -19,22 +19,22 @@
 package org.sjwimmer.tacharting.chart;
 
 import javafx.beans.property.SimpleObjectProperty;
-import org.ta4j.core.TimeSeries;
 
 public class TimeSeriesTableCell {
 
-    private final SimpleObjectProperty<TimeSeries> timeSeries;
+    private final SimpleObjectProperty<TaTimeSeries> timeSeries;
 
-    public TimeSeriesTableCell(TimeSeries timeSeries){
+    public TimeSeriesTableCell(TaTimeSeries timeSeries){
         this.timeSeries = new SimpleObjectProperty<>(timeSeries);
     }
 
 
     public String getName(){
-        return timeSeries.get().getName();
+        TaTimeSeries series = timeSeries.get();
+        return String.format("%s (%s)",series.getName(),series.getTimeFormatType());
     }
 
-    public TimeSeries getTimeSeries(){
+    public TaTimeSeries getTimeSeries(){
         return timeSeries.get();
     }
 }

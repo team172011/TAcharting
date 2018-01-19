@@ -1,5 +1,5 @@
 /*Style for the labels of the parameters*/
-Label{
+#smallLabel{
     -fx-font: 10px "Arial";
     -fx-color: green;
     -fx-text-fill: black;

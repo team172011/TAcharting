@@ -65,7 +65,7 @@ public class TaScrollHandlerFX extends TaAbstractMouseHandlerFX implements TaMou
      */
     private void handleZoomable(TaChartCanvas canvas, Zoomable zoomable,
                                 ScrollEvent e) {
-        // don't zoom unless the mouse pointer is in the plot's data area
+        // don't zoom unless the mouse pointer is in the plot's org.sjwimmer.tacharting.data area
         ChartRenderingInfo info = canvas.getRenderingInfo();
         PlotRenderingInfo pinfo = info.getPlotInfo();
         Point2D p = new Point2D.Double(e.getX(), e.getY());

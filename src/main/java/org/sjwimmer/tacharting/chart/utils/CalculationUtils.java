@@ -18,10 +18,49 @@
  */
 package org.sjwimmer.tacharting.chart.utils;
 
+import org.ta4j.core.Decimal;
+
+import java.util.Currency;
+
 public class CalculationUtils {
 
 
     public static String roundToString(Double value, int d){
         return String.format("%."+d+"f",value);
+    }
+
+    public static Decimal integerToCurrencyValue(int value, Currency currency){
+        //TODO: add more
+        switch (currency.getCurrencyCode()){
+            case "USD":{
+                return Decimal.valueOf(value/100);
+            }
+            case "EUR":{
+                return Decimal.valueOf(value/100);
+            }
+            default:{
+                throw new IllegalArgumentException(String.format("Currency code not supported: %S", currency.getCurrencyCode()));
+            }
+        }
+    }
+
+    public static Decimal stringToCurrencyValue(String stringValue, Currency currency){
+        String value = stringValue.replaceAll("\\s","");
+        return integerToCurrencyValue(Integer.parseInt(value), currency);
+    }
+
+    public static int currencyValueToInteger(Decimal value, Currency currency){
+        //TODO: add more
+        switch (currency.getCurrencyCode()){
+            case "USD":{
+                return (int)value.toDouble()*100; //TODO: ta4j version 10 provides "BigDecimal getDelegate()" for higher precision
+            }
+            case "EUR":{
+                return (int)value.toDouble()*100;
+            }
+            default:{
+                throw new IllegalArgumentException(String.format("Currency code not supported: %S", currency.getCurrencyCode()));
+            }
+        }
     }
 }

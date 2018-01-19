@@ -191,7 +191,7 @@ public class TaChart extends StackPane implements MapChangeListener<String, Char
                 seriesCounter++;
             }
         }
-        int anonymID = 1; // 0 = candlestick data
+        int anonymID = 1; // 0 = candlestick org.sjwimmer.tacharting.data
         for(String identifier: indicatorIdentifiers) {
             ChartIndicator chartIndicator = chartIndicatorBox.getChartIndicator(identifier);
             overlays.add(chartIndicator);

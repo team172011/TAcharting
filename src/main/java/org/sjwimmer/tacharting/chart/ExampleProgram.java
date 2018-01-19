@@ -19,11 +19,12 @@
 
 package org.sjwimmer.tacharting.chart;
 
-import example.Loader;
 import javafx.stage.Stage;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
+import org.sjwimmer.tacharting.chart.parameters.GeneralTimePeriod;
 import org.sjwimmer.tacharting.chart.parameters.Parameter.IndicatorCategory;
 import org.sjwimmer.tacharting.chart.parameters.ShapeType;
+import org.sjwimmer.tacharting.example.Loader;
 import org.ta4j.core.*;
 import org.ta4j.core.indicators.EMAIndicator;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
@@ -31,8 +32,8 @@ import org.ta4j.core.trading.rules.CrossedDownIndicatorRule;
 import org.ta4j.core.trading.rules.CrossedUpIndicatorRule;
 
 import java.awt.*;
-import java.net.URL;
 import java.util.ArrayList;
+import java.util.Currency;
 import java.util.List;
 
 
@@ -46,13 +47,7 @@ public class ExampleProgram extends AbstractProgram {
     @Override
     public ChartIndicatorBox createIndicatorBox() {
 
-        // load a TimeSeries
-        ClassLoader cl = getClass().getClassLoader();
-        URL file = cl.getResource("fb_daily.csv");
-        if(file == null){
-            return new ChartIndicatorBox(new BaseTimeSeries("no data"));
-        }
-        TimeSeries series = Loader.getDailyTimeSeries(file, "fb");
+        TimeSeries series = Loader.getDailyTimeSeries("fb_daily.csv");
 
         // define indicators
         ClosePriceIndicator cp = new ClosePriceIndicator(series);
@@ -65,8 +60,9 @@ public class ExampleProgram extends AbstractProgram {
         BaseStrategy strategyLong = new BaseStrategy(entry,exit);
         BaseStrategy strategyShort = new BaseStrategy(exit, entry);
 
-        // initialize and add your individual indicators to org.sjwimmer.tacharting.chart
-        ChartIndicatorBox chartIndicatorBox = new ChartIndicatorBox(series);
+        // initialize and add your individual indicators to the ChartIndicatorBox
+        TaTimeSeries taTimeSeries = new TaTimeSeries(series, Currency.getInstance("USD"), GeneralTimePeriod.DAY);
+        ChartIndicatorBox chartIndicatorBox = new ChartIndicatorBox(taTimeSeries);
 
         XYLineAndShapeRenderer emaShortRenderer = new XYLineAndShapeRenderer(); // specify how the lines should be rendered
         emaShortRenderer.setSeriesShape(0, ShapeType.NONE.shape);

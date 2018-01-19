@@ -44,9 +44,9 @@ public abstract class AbstractProgram extends Application {
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getClassLoader().getResource("fxml/charting-root.fxml"));
 
         Parent root = fxmlLoader.load();
-        RootController rootController = fxmlLoader.<RootController>getController();
+        Controller controller = fxmlLoader.<Controller>getController();
         final ChartIndicatorBox indicatorBox = createIndicatorBox();
-        rootController.setIndicatorBox(indicatorBox);
+        controller.setIndicatorBox(indicatorBox);
         Scene rootScene = new Scene(root);
         URL stylesheetPath = getClass().getClassLoader().getResource(("fxml/charting-root.css"));
         if(stylesheetPath != null){

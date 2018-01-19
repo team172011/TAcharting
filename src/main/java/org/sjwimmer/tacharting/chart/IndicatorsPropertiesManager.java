@@ -21,7 +21,9 @@ package org.sjwimmer.tacharting.chart;
 import com.sun.org.apache.xml.internal.dtm.ref.DTMNodeList;
 import org.sjwimmer.tacharting.chart.parameters.*;
 import org.sjwimmer.tacharting.chart.parameters.Parameter.IndicatorCategory;
+import org.sjwimmer.tacharting.chart.utils.ConverterUtils;
 import org.sjwimmer.tacharting.chart.utils.FormatUtils;
+import org.sjwimmer.tacharting.chart.utils.InitUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -42,27 +44,44 @@ import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.*;
 import java.awt.*;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Class to read and write parameters and settings of {@link ChartIndicator ChartIndicators} to and from XML files
- * Mostly used from the {@link ChartIndicatorBox} to init the indicators and from the {@link RootController} to show
+ * Mostly used from the {@link ChartIndicatorBox} to init the indicators and from the {@link Controller} to show
  * controls for the settings and to store the settings.
  */
 //TODO extract interface
-public class PropertiesManager {
+public class IndicatorsPropertiesManager {
 
-    private final Logger log = LoggerFactory.getLogger(PropertiesManager.class);
+    private final Logger log = LoggerFactory.getLogger(IndicatorsPropertiesManager.class);
     private Document doc;
     private XPath xPath;
     private StreamResult result;
     private Transformer transformer;
 
 
-    public PropertiesManager() {
+    public IndicatorsPropertiesManager() {
+        if(new File(Parameter.PROGRAM_FOLDER).mkdirs()){
+            log.debug("New Program folder in user home created");
+        }
+        File indicatorParametersFile = new File(Parameter.USER_INDICATOR_PROPERTIES_FILE);
+        if(indicatorParametersFile.exists()){
+            log.info("Found user indicator file");
+        } else {
+            try{
+                InitUtils.exportResource(Parameter.INDICATOR_PROPERTIES_FILE, Parameter.USER_INDICATOR_PROPERTIES_FILE);
+                log.info("No user indicator file found. Default file exported");
+            } catch (Exception e){
+                e.printStackTrace();
+                log.error("Could not export default properties file");
+            }
+
+
+        }
         loadParametersFile();
     }
 
@@ -71,19 +90,11 @@ public class PropertiesManager {
      */
     private void loadParametersFile() {
         try {
-            URL fileURL = getClass().getClassLoader().getResource(Parameter.INDICATOR_PROPERTIES_FILE);
-
-            File propertiesFile;
-            if (fileURL == null) {
-                log.info("No parameters file found");
-                propertiesFile = new File(Parameter.INDICATOR_PROPERTIES_FILE);
-                if(propertiesFile.createNewFile()){
-                    log.info("New parameters file created {}", propertiesFile.getPath());
-                }
-            } else {
-                propertiesFile = new File(fileURL.getFile());
+            File propertiesFile = new File(Parameter.USER_INDICATOR_PROPERTIES_FILE);
+            if(!propertiesFile.exists()){
+                throw new FileNotFoundException(
+                        String.format("Properties file could not be found. Should be in %s",Parameter.USER_INDICATOR_PROPERTIES_FILE));
             }
-
             DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
             doc = dBuilder.parse(propertiesFile);
@@ -166,7 +177,7 @@ public class PropertiesManager {
         XPathExpression expr = xPath.compile(command);
         Node paramNode = (Node) expr.evaluate(node,XPathConstants.NODE);
         String color = paramNode.getTextContent();
-        return FormatUtils.ColorAWTConverter.fromString(color);
+        return ConverterUtils.ColorAWTConverter.fromString(color);
     }
 
     /**

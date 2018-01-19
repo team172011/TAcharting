@@ -17,7 +17,7 @@
  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package example;
+package org.sjwimmer.tacharting.example;
 
 import javafx.application.Application;
 import org.sjwimmer.tacharting.chart.AbstractProgram;
