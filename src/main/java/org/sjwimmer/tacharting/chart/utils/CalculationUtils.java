@@ -31,7 +31,7 @@ public class CalculationUtils {
 
     public static Decimal integerToCurrencyValue(int value, Currency currency){
         int fractionDigits = currency.getDefaultFractionDigits();
-        int base = (int)Math.pow(10,fractionDigits);
+        double base = Math.pow(10,fractionDigits);
 
         return Decimal.valueOf(value/base);
     }

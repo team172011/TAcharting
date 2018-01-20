@@ -151,7 +151,7 @@ public class SqlLiteConnector implements SQLConnector {
         log.debug("Query: {}",query);
 
         ResultSet rset = statement.executeQuery(query);
-        return transformResultSet_T(rset, type);
+        return transformResultSet(rset, type);
     }
 
     /**
@@ -160,7 +160,7 @@ public class SqlLiteConnector implements SQLConnector {
      * @return a TimeSeries object
      * @throws SQLException d
      */
-    private TaTimeSeries transformResultSet_T(ResultSet rset, GeneralTimePeriod timeFormatType) throws SQLException {
+    private TaTimeSeries transformResultSet(ResultSet rset, GeneralTimePeriod timeFormatType) throws SQLException {
         List<Tick> ticks = new ArrayList<>();
 
         String name=null;
