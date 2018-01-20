@@ -1,11 +1,12 @@
 # ta4j-charting
 ## A charting application for plotting and analysing time series, indicators, strategies and trading records
 
--[x] Supports all (Decimal based) Indicators from Ta4j.
--[x] Add your own indicator easy to the application
--[x] Yahoo api connection
--[x] Import Excel and Csv Files
--[x] Store and update financial data in SQLlite database
+- [x] Supports all (Decimal based) Indicators from Ta4j.
+- [x] Stores settings and parameters of indicators permanently
+- [x] Possiblity to add your custom indicator implementation to the application
+- [x] Yahoo api connection
+- [x] Import Excel and Csv Files
+- [x] Store and update financial data in SQLlite database
 
 
 * Start at the [Wiki](https://github.com/team172011/ta4j-charting/wiki) or take a look at the [Example](https://github.com/team172011/ta4j-charting/blob/master/src/example/Example.java)
