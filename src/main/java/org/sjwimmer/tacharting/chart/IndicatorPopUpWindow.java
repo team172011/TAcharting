@@ -29,10 +29,10 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
-import org.sjwimmer.tacharting.chart.parameters.ChartType;
 import org.sjwimmer.tacharting.chart.parameters.IndicatorParameter;
-import org.sjwimmer.tacharting.chart.parameters.ShapeType;
-import org.sjwimmer.tacharting.chart.parameters.StrokeType;
+import org.sjwimmer.tacharting.chart.types.ChartType;
+import org.sjwimmer.tacharting.chart.types.ShapeType;
+import org.sjwimmer.tacharting.chart.types.StrokeType;
 import org.sjwimmer.tacharting.chart.utils.ConverterUtils;
 import org.sjwimmer.tacharting.chart.utils.FormatUtils;
 

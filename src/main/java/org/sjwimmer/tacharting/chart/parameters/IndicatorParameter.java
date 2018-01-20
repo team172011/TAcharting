@@ -4,12 +4,17 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import org.sjwimmer.tacharting.chart.types.ChartType;
+import org.sjwimmer.tacharting.chart.types.IndicatorParameterType;
+import org.sjwimmer.tacharting.chart.types.ShapeType;
+import org.sjwimmer.tacharting.chart.types.StrokeType;
 import org.sjwimmer.tacharting.chart.utils.ConverterUtils;
 
 /**
  * Class represents an indicator parameter. A pair of {@link IndicatorParameterType} and a {@code value}. The value (
- * saved as String) can be transformed to the org.sjwimmer.tacharting.data type described by the IndicatorParameterType through the
- * {@link #getValue()} function
+ * saved as String) can be transformed to the type described by the IndicatorParameterType through the
+ * {@link #getValue()} function.
+ * This class is used to transport and transform input from gui to properties files or inversely
  */
 public class IndicatorParameter{
 

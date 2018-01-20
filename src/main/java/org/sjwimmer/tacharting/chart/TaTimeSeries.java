@@ -1,6 +1,6 @@
 package org.sjwimmer.tacharting.chart;
 
-import org.sjwimmer.tacharting.chart.parameters.GeneralTimePeriod;
+import org.sjwimmer.tacharting.chart.types.GeneralTimePeriod;
 import org.ta4j.core.BaseTimeSeries;
 import org.ta4j.core.Tick;
 import org.ta4j.core.TimeSeries;

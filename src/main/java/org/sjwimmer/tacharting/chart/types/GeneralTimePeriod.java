@@ -1,4 +1,4 @@
-package org.sjwimmer.tacharting.chart.parameters;
+package org.sjwimmer.tacharting.chart.types;
 
 import org.sjwimmer.tacharting.chart.api.SQLConnector;
 

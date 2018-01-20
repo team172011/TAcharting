@@ -16,29 +16,26 @@
  COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-package org.sjwimmer.tacharting.chart.parameters;
+package org.sjwimmer.tacharting.chart.types;
 
 /**
- * (In progress..)
- * Enum colorOf all available indicators with names
- *
+ * Enum for the types of parameters that could be needed to create an chart indicator instance
+ * see {@link org.sjwimmer.tacharting.chart.ChartIndicator ChartIndicator}
  */
-public enum IndicatorNames {
-        OPEN("Open Price"),
-        HIGH("High Price"),
-        LOW("Low Price"),
-        CLOSE("Close Price"),
-        BOLLINGER_BANDS("Bollinger Bands"),
-        BOLLINGER_BANDS_WIDTH("Bollinger Bands Width"),
-        SMA("Simple Moving Average"),
-        TRUE_RANGE("True Range"),
-        AVERAGE_TRUE_RANGE("Aberage True Range"),
-        MACD("MACD"),
-        EMA("Exponential Moving Average");
 
-    private final String name;
+public enum IndicatorParameterType{
+    BOOLEAN("Boolean"),
+    INTEGER("Integer"),
+    DOUBLE("Double"),
+    STRING("String"),
+    SHAPE("Shape"),
+    STROKE("Stroke"),
+    COLOR("Color"),
+    CHARTTYPE("ChartType");
 
-    IndicatorNames(String name){
-            this.name = name;
+    public final String name;
+
+    IndicatorParameterType(String name){
+        this.name = name;
     }
 }

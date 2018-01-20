@@ -21,9 +21,9 @@ package org.sjwimmer.tacharting.chart;
 
 import javafx.stage.Stage;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
-import org.sjwimmer.tacharting.chart.parameters.GeneralTimePeriod;
 import org.sjwimmer.tacharting.chart.parameters.Parameter.IndicatorCategory;
-import org.sjwimmer.tacharting.chart.parameters.ShapeType;
+import org.sjwimmer.tacharting.chart.types.GeneralTimePeriod;
+import org.sjwimmer.tacharting.chart.types.ShapeType;
 import org.sjwimmer.tacharting.example.Loader;
 import org.ta4j.core.*;
 import org.ta4j.core.indicators.EMAIndicator;

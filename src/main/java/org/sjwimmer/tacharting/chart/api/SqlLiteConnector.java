@@ -2,18 +2,17 @@ package org.sjwimmer.tacharting.chart.api;
 
 
 import org.sjwimmer.tacharting.chart.TaTimeSeries;
-import org.sjwimmer.tacharting.chart.parameters.GeneralTimePeriod;
 import org.sjwimmer.tacharting.chart.parameters.Parameter;
-import org.sjwimmer.tacharting.chart.parameters.TimeFormatType;
+import org.sjwimmer.tacharting.chart.types.GeneralTimePeriod;
+import org.sjwimmer.tacharting.chart.types.TimeFormatType;
 import org.sjwimmer.tacharting.chart.utils.CalculationUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.ta4j.core.BaseTick;
 import org.ta4j.core.Decimal;
 import org.ta4j.core.Tick;
-import org.ta4j.core.TimeSeries;
 
-import java.io.File;
+import java.io.IOException;
 import java.sql.*;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -24,7 +23,7 @@ import java.util.Currency;
 import java.util.List;
 
 /**
- * Connection Manager for the "in app" SQL-LIte database
+ * Connection Manager for a SQLLite database
  *
  * Database structure:
  *     SQLLite database with one table for each {@link TimeFormatType}
@@ -37,27 +36,26 @@ import java.util.List;
  *         Close INTEGER,
  *         Volume INTEGER,
  *         Currency VARCHAR (3))
+ * TODO: work with PreparedStatements instead of Strings simple Statements. Currently this is not possible because
+ * TODO: prepared statements wrap the data in the wrong format
+ * TODO: must be possible because date is stored as long value now
  */
 
 public class SqlLiteConnector implements SQLConnector {
-    private final Logger log = LoggerFactory.getLogger(SqlLiteConnector.class);
 
+    private final Logger log = LoggerFactory.getLogger(SqlLiteConnector.class);
     private Connection con = null;
 
     static {
         try {
             Class.forName("org.sqlite.JDBC");
         } catch (ClassNotFoundException e) {
-            System.err.println("Fehler beim Laden des JDBC-Treibers");
+            System.err.println("Error while loading JDBC-Driver");
             e.printStackTrace();
         }
     }
 
     public SqlLiteConnector() {
-        File dataBaseFile = new File(Parameter.DATABASE_PATH);
-        if( dataBaseFile.mkdirs()){
-            log.debug("Created new directory for database: {} ", dataBaseFile.getPath());
-        }
         try {
             getConnection();
             Statement statement = con.createStatement();
@@ -67,7 +65,7 @@ public class SqlLiteConnector implements SQLConnector {
                }
             }
         } catch (SQLException s){
-            log.warn("Failed to connect to sql-lite database: {} ", s.getMessage());
+            log.error("Failed to connect to sql-lite database: {} ", s.getMessage());
         }
     }
 
@@ -83,21 +81,23 @@ public class SqlLiteConnector implements SQLConnector {
         }
     }
 
-    public synchronized List<String> getSymbolList(GeneralTimePeriod table) throws SQLException{
+    public synchronized List<SQLKey> getKeyList(GeneralTimePeriod table) throws SQLException{
         getConnection();
-        String procedure = String.format("SELECT DISTINCT Symbol FROM %s", table);
+        String procedure = String.format("SELECT DISTINCT Symbol, Currency FROM %s", table);
         Statement stmt = con.createStatement();
         ResultSet res = stmt.executeQuery(procedure);
-        ArrayList<String> symbols = new ArrayList<>();
+        ArrayList<SQLKey> keys = new ArrayList<>();
         while(res.next()){
-            symbols.add(res.getString("Symbol"));
+            String symbol = res.getString("Symbol");
+            Currency currency = Currency.getInstance(res.getString("Currency"));
+            keys.add(new SQLKey(symbol,table,currency));
             //symbols.add(res.getString("Symbol").replaceAll("\\s",""));
         }
-        return symbols;
+        return keys;
     }
 
     @Override
-    public void removeData(TimeSeries series) throws SQLException {
+    public void removeData(TaTimeSeries series) throws SQLException {
         //TODO: implement
     }
 
@@ -107,26 +107,39 @@ public class SqlLiteConnector implements SQLConnector {
         Statement statement = con.createStatement();
         getConnection();
         String table = series.getTimeFormatType().toString();
-        String insert = "INSERT INTO";
+        String insert = "INSERT OR IGNORE INTO";
         if(shouldReplace) {
             insert = "INSERT OR REPLACE INTO";
         }
+
+        int fractionDigits = series.getCurrency().getDefaultFractionDigits();
+        int base = (int) Math.pow(10,fractionDigits);
         for (Tick cd : series.getTickData()) {
             String procedure =
-                    String.format("%s %s (Symbol, Currency, Date, Open, High, Low, Close, Volume) VALUES('%s', '%s', '%s', '%s', %s, %s, %s, %s)",
-                            insert,table,series.getName(), series.getCurrency().getCurrencyCode(), cd.getEndTime().toEpochSecond(), cd.getOpenPrice(), cd.getMaxPrice(), cd.getMinPrice(), cd.getClosePrice(), cd.getVolume());
+                    String.format("%s %s (Symbol, Currency, Date, Open, High, Low, Close, Volume) " +
+                                    "VALUES('%s', '%s', '%s', '%s', %s, %s, %s, %s)",
+                            insert,
+                            table,
+                            series.getName(),
+                            series.getCurrency().getCurrencyCode(),
+                            cd.getEndTime().toEpochSecond(),
+                            cd.getOpenPrice().multipliedBy(Decimal.valueOf(base)),
+                            cd.getMaxPrice().multipliedBy(Decimal.valueOf(base)),
+                            cd.getMinPrice().multipliedBy(Decimal.valueOf(base)),
+                            cd.getClosePrice().multipliedBy(Decimal.valueOf(base)),
+                            cd.getVolume());
             statement.execute(procedure);
         }
     }
 
     /**
      * returns data for the symbol <p>
-     * @param symbol
+     * @param symbol the symbol
      * @return Data from corresponding symbol
-     * @throws SQLException
+     * @throws SQLException SQLException
      */
     @Override
-    public synchronized TimeSeries getTimeSeries(String symbol, Currency currency, GeneralTimePeriod type, ZonedDateTime from, ZonedDateTime to) throws SQLException{
+    public synchronized TaTimeSeries getSeries(String symbol, Currency currency, GeneralTimePeriod type, ZonedDateTime from, ZonedDateTime to) throws SQLException{
         String table = type.toString();
         String query = String.format(
                 "SELECT * FROM %s WHERE Symbol = '%s' AND Currency = '%s' AND Date >= '%s' AND Date <= '%s' order by Date asc, Symbol desc;",
@@ -138,7 +151,7 @@ public class SqlLiteConnector implements SQLConnector {
         log.debug("Query: {}",query);
 
         ResultSet rset = statement.executeQuery(query);
-        return transformResultSet_T(rset,type);
+        return transformResultSet_T(rset, type);
     }
 
     /**
@@ -147,7 +160,7 @@ public class SqlLiteConnector implements SQLConnector {
      * @return a TimeSeries object
      * @throws SQLException d
      */
-    private TimeSeries transformResultSet_T(ResultSet rset, GeneralTimePeriod timeFormatType) throws SQLException {
+    private TaTimeSeries transformResultSet_T(ResultSet rset, GeneralTimePeriod timeFormatType) throws SQLException {
         List<Tick> ticks = new ArrayList<>();
 
         String name=null;
@@ -168,7 +181,9 @@ public class SqlLiteConnector implements SQLConnector {
                 ticks.add(line);
             } catch (DateTimeParseException dte){
                 dte.printStackTrace();
-                log.error("Could not be transformed: {} {}",name==null?"unnamed":name,rset.getString("Datum"));
+                log.error("Could not be transformed: {} {}",
+                        name==null?"unnamed":name,
+                        rset.getString("Datum"));
 
             }
         }
@@ -176,9 +191,40 @@ public class SqlLiteConnector implements SQLConnector {
     }
 
     private static String createTableStatement(String tableName){
-        return String.format("CREATE TABLE IF NOT EXISTS %s (Symbol VARCHAR (50), Date INTEGER, Open INTEGER, High INTEGER, Low INTEGER, Close INTEGER, Volume INTEGER,Currency VARCHAR (3));",tableName);
+        return String.format("CREATE TABLE IF NOT EXISTS %s (" +
+                "Symbol VARCHAR (50), " +
+                "Date INTEGER, " +
+                "Open INTEGER, " +
+                "High INTEGER, " +
+                "Low INTEGER, " +
+                "Close INTEGER, " +
+                "Volume INTEGER, " +
+                "Currency VARCHAR (3)," +
+                        "PRIMARY KEY (" +
+                        "Symbol," +
+                        "Date," +
+                        "Currency)" +
+                        ");"
+                ,tableName);
     }
 
+    public TaTimeSeries getSeries(SQLKey resource, ZonedDateTime from, ZonedDateTime to) throws IOException {
+        try{
+            return getSeries(resource.symbol,resource.currency,resource.period,from,to);
+        } catch (SQLException sqle){
+            sqle.printStackTrace();
+        }
+        return null;
 
+    }
 
+    @Override
+    public TaTimeSeries getSeries(SQLKey resource) throws IOException {
+        try {
+            return getSeries(resource.symbol, resource.currency, resource.period, ZonedDateTime.now().minusYears(100), ZonedDateTime.now());
+        } catch (SQLException sqle){
+            sqle.printStackTrace();
+        }
+        return null;
+    }
 }

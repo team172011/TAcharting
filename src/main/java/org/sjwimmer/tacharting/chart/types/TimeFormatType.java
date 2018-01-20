@@ -1,4 +1,4 @@
-package org.sjwimmer.tacharting.chart.parameters;
+package org.sjwimmer.tacharting.chart.types;
 
 /**
  * Enum for the different time formats that can be in a csv file or in api org.sjwimmer.tacharting.data streams

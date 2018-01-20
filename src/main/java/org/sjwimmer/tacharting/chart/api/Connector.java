@@ -16,5 +16,5 @@ public interface Connector<T> {
      * @return a {@link TaTimeSeries series} of the financial data
      * @throws IOException IOException
      */
-    TaTimeSeries getSeries(T resource) throws IOException;
+    TaTimeSeries getSeries(T resource) throws Exception;
 }

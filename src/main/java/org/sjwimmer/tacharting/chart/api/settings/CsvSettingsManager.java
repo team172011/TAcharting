@@ -19,21 +19,20 @@
 package org.sjwimmer.tacharting.chart.api.settings;
 
 import com.opencsv.CSVParser;
+import javafx.application.Platform;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.stage.Window;
+import javafx.util.Callback;
 import org.sjwimmer.tacharting.chart.parameters.Parameter;
-import org.sjwimmer.tacharting.chart.parameters.TimeFormatType;
+import org.sjwimmer.tacharting.chart.types.TimeFormatType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,8 +50,12 @@ public class CsvSettingsManager {
 
     @FXML private ComboBox<String> seperatorBox;
     @FXML private ComboBox<String> lineEndBox;
-    @FXML private Button btnShowTimeIds;
     @FXML private Label lblLineEnd;
+    @FXML private TableView<ExampleRow> tblExample;
+    @FXML private TableColumn<ExampleRow, String> colTimeFormat;
+    @FXML private TableColumn<ExampleRow, String> colTimeFormatID;
+    @FXML private TableColumn<ExampleRow, String> colComment;
+    @FXML private TableColumn<ExampleRow, String> colExample;
 
     public CsvSettingsManager(){
         Dialog<Boolean> settingsDialog = new Dialog<>();
@@ -80,30 +83,71 @@ public class CsvSettingsManager {
                 return false;
             });
 
-            btnShowTimeIds.setOnAction((ActionEvent event) -> {
+            colTimeFormatID.setCellValueFactory(new PropertyValueFactory<>("id"));
+            colTimeFormat.setCellValueFactory(new PropertyValueFactory<>("TimeFormat"));
+            colComment.setCellValueFactory(new PropertyValueFactory<>("Comment"));
+            colExample.setCellValueFactory(new PropertyValueFactory<>("Example"));
 
-                Dialog dialog = new Dialog();
+            Callback<TableColumn<ExampleRow, String>, TableCell<ExampleRow,String>> cellFactory =
+                    new Callback<TableColumn<ExampleRow, String>, TableCell<ExampleRow, String>>() {
+                @Override
+                public TableCell<ExampleRow, String> call(TableColumn<ExampleRow, String> param) {
+                    final TableCell<ExampleRow, String> cell = new TableCell<ExampleRow, String>(){
+                        final Button btn = new Button("Show Example");
+                        @Override
+                        public void updateItem(String string, boolean empty){
+                            super.updateItem(string,empty);
+                            if(empty){
+                                setGraphic(null);
+                                setText(null);
+                            } else {
+                                btn.setOnAction(event -> {
+                                    ExampleRow row = tblExample.getItems().get(getIndex());
+                                    int id = row.getId();
+                                    String path = null;
+                                    if(id == TimeFormatType.yyyy_MM_ddHmsz.id){
+                                        path = getClass().getClassLoader().getResource("aapl_hourly.csv").getPath();
+                                    } else if(id == TimeFormatType.yyyyMMdd.id){
+                                        path = getClass().getClassLoader().getResource("aapl_daily.csv").getPath();
+                                    } else if(id == TimeFormatType.YAHOO.id){
+                                        path = getClass().getClassLoader().getResource("example3.csv").getPath();
+                                    } else if (id == TimeFormatType.EODATA.id){
+                                        path = getClass().getClassLoader().getResource("AAAP_daily_eodata.csv").getPath();
+                                    }
+                                    try {
+                                        if(Parameter.OS.contains("win")){
+                                            Runtime.getRuntime().exec("rundll32 url.dll,FileProtocolHandler"  + path);
+                                        } else if(Parameter.OS.contains("nix")||Parameter.OS.contains("nux")){
+                                            Runtime.getRuntime().exec("xdg-open " + path);
+                                        }
+                                        else{
+                                            final String path2 = path;
+                                            Platform.runLater(() ->
+                                                    new Alert(Alert.AlertType.INFORMATION,
+                                                    "No editor found for your System. Inspect file: "+path2).show());
+                                        }
 
-                TableView<TimeFormatColumn> list = new TableView<>();
-                TableColumn<TimeFormatColumn, Integer> colId = new TableColumn<>("Id");
-                TableColumn<TimeFormatColumn, String> colFormat= new TableColumn<>("Time Format");
-                TableColumn<TimeFormatColumn, String> colComment= new TableColumn<>("Comment");
-                colId.setCellValueFactory(new PropertyValueFactory<>("id"));
-                colFormat.setCellValueFactory(new PropertyValueFactory<>("TimeFormat"));
-                colComment.setCellValueFactory(new PropertyValueFactory<>("Comment"));
-                list.getColumns().add(colId);
-                list.getColumns().add(colFormat);
-                list.getColumns().add(colComment);
-                for(TimeFormatType tt: TimeFormatType.values()){
-                    list.getItems().add(new TimeFormatColumn(tt));
+                                    } catch (IOException | NullPointerException e){
+                                        e.printStackTrace();
+                                        new Alert(Alert.AlertType.INFORMATION,
+                                                "No editor found. Inspect file: " + path).show();
+                                    }
+                                });
+                                setGraphic(btn);
+                                setText(null);
+                            }
+                        }
+                    };
+                    return cell;
                 }
-                StackPane pane = new StackPane(list);
-                dialog.getDialogPane().setMaxHeight(200);
-                dialog.getDialogPane().setContent(pane);
-                Window window = dialog.getDialogPane().getScene().getWindow();
-                window.setOnCloseRequest(event2 -> window.hide());
-                dialog.showAndWait();
-            });
+            };
+            colExample.setCellFactory(cellFactory);
+
+
+            for(TimeFormatType tt: TimeFormatType.values()){
+                tblExample.getItems().add(new ExampleRow(tt));
+            }
+
             settingsDialog.showAndWait();
 
         } catch (IOException ioe){
@@ -132,8 +176,10 @@ public class CsvSettingsManager {
         private final StringProperty lineBreak;
 
         public CsvProperties(){
-            separator = new SimpleStringProperty(getProperties().getProperty(Parameter.PROPERTY_CSV_SEPERATOR, String.valueOf(CSVParser.DEFAULT_SEPARATOR)));
-            lineBreak = new SimpleStringProperty(getProperties().getProperty(Parameter.PROPERTY_CSV_ENDLINE, String.valueOf(CSVParser.DEFAULT_ESCAPE_CHARACTER)));
+            separator = new SimpleStringProperty(getProperties()
+                    .getProperty(Parameter.PROPERTY_CSV_SEPERATOR, String.valueOf(CSVParser.DEFAULT_SEPARATOR)));
+            lineBreak = new SimpleStringProperty(getProperties()
+                    .getProperty(Parameter.PROPERTY_CSV_ENDLINE, String.valueOf(CSVParser.DEFAULT_ESCAPE_CHARACTER)));
         }
 
         public void save(){
@@ -165,11 +211,11 @@ public class CsvSettingsManager {
         }
     }
 
-    public class TimeFormatColumn {
+    public class ExampleRow {
         private final StringProperty timeFormat, comment;
         private final IntegerProperty id;
 
-        public TimeFormatColumn(TimeFormatType tt){
+        public ExampleRow(TimeFormatType tt){
             timeFormat = new SimpleStringProperty(tt.pattern);
             comment = new SimpleStringProperty(tt.comment);
             id = new SimpleIntegerProperty(tt.id);

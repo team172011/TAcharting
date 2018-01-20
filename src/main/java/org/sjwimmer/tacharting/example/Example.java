@@ -19,9 +19,10 @@
 
 package org.sjwimmer.tacharting.example;
 
-import javafx.application.Application;
+import com.sun.javafx.application.LauncherImpl;
 import org.sjwimmer.tacharting.chart.AbstractProgram;
 import org.sjwimmer.tacharting.chart.ExampleProgram;
+import org.sjwimmer.tacharting.chart.Preloader;
 
 /**
  * Example class with main entry point that launch the charting application
@@ -35,6 +36,6 @@ public class Example {
      * @param args command line arguments
      */
     public static void main(String[] args){
-        Application.launch(ExampleProgram.class);
+        LauncherImpl.launchApplication(ExampleProgram.class, Preloader.class, args);
     }
 }

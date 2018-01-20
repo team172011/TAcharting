@@ -18,10 +18,10 @@
  */
 package org.sjwimmer.tacharting.chart.utils;
 
-import org.sjwimmer.tacharting.chart.parameters.GeneralTimePeriod;
-import org.sjwimmer.tacharting.chart.parameters.IndicatorParameterType;
 import org.sjwimmer.tacharting.chart.parameters.Parameter;
-import org.sjwimmer.tacharting.chart.parameters.TimeFormatType;
+import org.sjwimmer.tacharting.chart.types.GeneralTimePeriod;
+import org.sjwimmer.tacharting.chart.types.IndicatorParameterType;
+import org.sjwimmer.tacharting.chart.types.TimeFormatType;
 import org.ta4j.core.BaseTick;
 import org.ta4j.core.Tick;
 import org.ta4j.core.TimeSeries;
@@ -35,7 +35,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.sjwimmer.tacharting.chart.parameters.IndicatorParameterType.*;
+import static org.sjwimmer.tacharting.chart.types.IndicatorParameterType.*;
 
 
 public class FormatUtils {

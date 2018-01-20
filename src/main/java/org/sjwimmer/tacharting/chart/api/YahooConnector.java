@@ -21,8 +21,8 @@ package org.sjwimmer.tacharting.chart.api;
 import org.sjwimmer.tacharting.chart.TaTimeSeries;
 import org.sjwimmer.tacharting.chart.api.settings.YahooSettingsManager;
 import org.sjwimmer.tacharting.chart.parameters.Parameter;
-import org.sjwimmer.tacharting.chart.parameters.TimeFormatType;
-import org.sjwimmer.tacharting.chart.parameters.YahooTimePeriod;
+import org.sjwimmer.tacharting.chart.types.TimeFormatType;
+import org.sjwimmer.tacharting.chart.types.YahooTimePeriod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +41,10 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
 
-
+/**
+ * Connector class to request financial data from yahoo
+ * following https://github.com/sstrickx/yahoofinance-api>
+ */
 public class YahooConnector implements Connector<String>{
 
     private final Logger log = LoggerFactory.getLogger(YahooConnector.class);
@@ -65,7 +68,7 @@ public class YahooConnector implements Connector<String>{
         LocalDate localDateTo= LocalDate.parse(to, dateTimeFormatter);
         LocalDateTime dateTimeTo = localDateTo.atStartOfDay();
 
-        String interval = YahooTimePeriod.of(properties.getProperty(Parameter.PROPERTY_YAHOO_INTERVAL, "daily")).toYahooString();
+        String interval = YahooTimePeriod.of(properties.getProperty(Parameter.PROPERTY_YAHOO_INTERVAL, "1d")).toYahooString();
         Map<String, String> params = new LinkedHashMap<String, String>();
         params.put("period1", String.valueOf(dateTimeFrom.toEpochSecond(ZoneOffset.UTC)));
         params.put("period2", String.valueOf(dateTimeTo.toEpochSecond(ZoneOffset.UTC)));
@@ -111,7 +114,7 @@ public class YahooConnector implements Connector<String>{
         } else {
             InputStreamReader is = new InputStreamReader(connection.getInputStream());
             BufferedReader br = new BufferedReader(is);
-            File file = new File(Parameter.PROGRAM_FOLDER+Parameter.S+"temp.csv");
+            File file = new File(Parameter.PROGRAM_FOLDER+Parameter.S+ "example3.csv");
             FileOutputStream fos = new FileOutputStream(file);
             BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(fos));
             String header = br.readLine();
@@ -139,7 +142,6 @@ public class YahooConnector implements Connector<String>{
                 value = URLEncoder.encode(value, "UTF-8");
             } catch (UnsupportedEncodingException ex) {
                 log.debug(ex.getMessage());
-                // Still try to continue with unencoded values
             }
             sb.append(String.format("%s=%s", key, value));
         }
@@ -241,7 +243,8 @@ public class YahooConnector implements Connector<String>{
                             }
                         }
                     }
-                    log.warn("Failed to set cookie from http request. Historical quote requests will most likely fail.");
+                    log.warn("Failed to get cookie!");
+                    throw new IOException("Could not get Cookie from yahoo request");
                 }
 
             }catch (MalformedURLException mue){

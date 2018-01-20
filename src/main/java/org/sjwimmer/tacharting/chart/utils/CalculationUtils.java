@@ -30,18 +30,10 @@ public class CalculationUtils {
     }
 
     public static Decimal integerToCurrencyValue(int value, Currency currency){
-        //TODO: add more
-        switch (currency.getCurrencyCode()){
-            case "USD":{
-                return Decimal.valueOf(value/100);
-            }
-            case "EUR":{
-                return Decimal.valueOf(value/100);
-            }
-            default:{
-                throw new IllegalArgumentException(String.format("Currency code not supported: %S", currency.getCurrencyCode()));
-            }
-        }
+        int fractionDigits = currency.getDefaultFractionDigits();
+        int base = (int)Math.pow(10,fractionDigits);
+
+        return Decimal.valueOf(value/base);
     }
 
     public static Decimal stringToCurrencyValue(String stringValue, Currency currency){
@@ -50,17 +42,9 @@ public class CalculationUtils {
     }
 
     public static int currencyValueToInteger(Decimal value, Currency currency){
-        //TODO: add more
-        switch (currency.getCurrencyCode()){
-            case "USD":{
-                return (int)value.toDouble()*100; //TODO: ta4j version 10 provides "BigDecimal getDelegate()" for higher precision
-            }
-            case "EUR":{
-                return (int)value.toDouble()*100;
-            }
-            default:{
-                throw new IllegalArgumentException(String.format("Currency code not supported: %S", currency.getCurrencyCode()));
-            }
-        }
+        int fractionDigits = currency.getDefaultFractionDigits();
+        int base = (int)Math.pow(10,fractionDigits);
+
+        return (int)value.toDouble()*base;
     }
 }

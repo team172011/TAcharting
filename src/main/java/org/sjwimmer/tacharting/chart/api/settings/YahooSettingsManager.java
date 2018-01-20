@@ -26,8 +26,8 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import org.sjwimmer.tacharting.chart.parameters.Parameter;
-import org.sjwimmer.tacharting.chart.parameters.TimeFormatType;
-import org.sjwimmer.tacharting.chart.parameters.YahooTimePeriod;
+import org.sjwimmer.tacharting.chart.types.TimeFormatType;
+import org.sjwimmer.tacharting.chart.types.YahooTimePeriod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -112,7 +112,7 @@ public class YahooSettingsManager{
          * Constructor.
          */
         YahooProperties(){
-            interval = new SimpleObjectProperty<>(YahooTimePeriod.valueOf(getProperties().getProperty(Parameter.PROPERTY_YAHOO_INTERVAL, "daily")));
+            interval = new SimpleObjectProperty<>(YahooTimePeriod.of(getProperties().getProperty(Parameter.PROPERTY_YAHOO_INTERVAL, "1d")));
             LocalDate now = LocalDate.now();
             to = new SimpleObjectProperty<>();
             from = new SimpleObjectProperty<>();

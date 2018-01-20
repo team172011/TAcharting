@@ -6,10 +6,10 @@ import com.opencsv.CSVReaderBuilder;
 import org.sjwimmer.tacharting.chart.TaTimeSeries;
 import org.sjwimmer.tacharting.chart.api.settings.CsvSettingsManager;
 import org.sjwimmer.tacharting.chart.api.settings.YahooSettingsManager;
-import org.sjwimmer.tacharting.chart.parameters.GeneralTimePeriod;
 import org.sjwimmer.tacharting.chart.parameters.Parameter;
-import org.sjwimmer.tacharting.chart.parameters.TimeFormatType;
-import org.sjwimmer.tacharting.chart.parameters.YahooTimePeriod;
+import org.sjwimmer.tacharting.chart.types.GeneralTimePeriod;
+import org.sjwimmer.tacharting.chart.types.TimeFormatType;
+import org.sjwimmer.tacharting.chart.types.YahooTimePeriod;
 import org.sjwimmer.tacharting.chart.utils.FormatUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,7 +62,7 @@ public class CSVConnector implements Connector<File> {
             Collections.reverse(ticks);
         }
         //TODO: remove daily
-        TimeSeries series = new BaseTimeSeries(name==null?"unnamed":name,ticks);
+        TimeSeries series = new BaseTimeSeries(name==null?"unnamed":name.toUpperCase(),ticks);
         GeneralTimePeriod period =  FormatUtils.extractPeriod(series);
         log.info("Extracted period: "+period);
        return new TaTimeSeries(series,currency,period);
@@ -91,7 +91,7 @@ public class CSVConnector implements Connector<File> {
         }
         String yahooIntervall = YahooSettingsManager.getProperties().getProperty(Parameter.PROPERTY_YAHOO_INTERVAL);
         GeneralTimePeriod timePeriod = YahooTimePeriod.of(yahooIntervall).generalTimePeriod;
-        return new TaTimeSeries(name==null?"unnamed":name,ticks,Currency.getInstance("USD"),timePeriod);
+        return new TaTimeSeries(name==null?"unnamed":name.toUpperCase(),ticks,Currency.getInstance("USD"),timePeriod);
     }
 
 }

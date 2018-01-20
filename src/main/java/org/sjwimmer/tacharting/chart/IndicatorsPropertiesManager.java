@@ -19,11 +19,14 @@
 package org.sjwimmer.tacharting.chart;
 
 import com.sun.org.apache.xml.internal.dtm.ref.DTMNodeList;
-import org.sjwimmer.tacharting.chart.parameters.*;
+import org.sjwimmer.tacharting.chart.parameters.IndicatorParameter;
+import org.sjwimmer.tacharting.chart.parameters.Parameter;
 import org.sjwimmer.tacharting.chart.parameters.Parameter.IndicatorCategory;
+import org.sjwimmer.tacharting.chart.types.ChartType;
+import org.sjwimmer.tacharting.chart.types.ShapeType;
+import org.sjwimmer.tacharting.chart.types.StrokeType;
 import org.sjwimmer.tacharting.chart.utils.ConverterUtils;
 import org.sjwimmer.tacharting.chart.utils.FormatUtils;
-import org.sjwimmer.tacharting.chart.utils.InitUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -52,7 +55,7 @@ import java.util.List;
 /**
  * Class to read and write parameters and settings of {@link ChartIndicator ChartIndicators} to and from XML files
  * Mostly used from the {@link ChartIndicatorBox} to init the indicators and from the {@link Controller} to show
- * controls for the settings and to store the settings.
+ * controls for the settings in gui and to store the settings in xml file.
  */
 //TODO extract interface
 public class IndicatorsPropertiesManager {
@@ -65,23 +68,6 @@ public class IndicatorsPropertiesManager {
 
 
     public IndicatorsPropertiesManager() {
-        if(new File(Parameter.PROGRAM_FOLDER).mkdirs()){
-            log.debug("New Program folder in user home created");
-        }
-        File indicatorParametersFile = new File(Parameter.USER_INDICATOR_PROPERTIES_FILE);
-        if(indicatorParametersFile.exists()){
-            log.info("Found user indicator file");
-        } else {
-            try{
-                InitUtils.exportResource(Parameter.INDICATOR_PROPERTIES_FILE, Parameter.USER_INDICATOR_PROPERTIES_FILE);
-                log.info("No user indicator file found. Default file exported");
-            } catch (Exception e){
-                e.printStackTrace();
-                log.error("Could not export default properties file");
-            }
-
-
-        }
         loadParametersFile();
     }
 
@@ -294,6 +280,7 @@ public class IndicatorsPropertiesManager {
     }
 
     /**
+     * Dublicates a node that represents an indicator instance
      * @param key The key colorOf the Indicator in the xml file (ofFormat "name_id")
      * @return the key colorOf the duplicated indicator
      * @throws XPathExpressionException xpath expression exception

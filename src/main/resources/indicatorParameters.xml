@@ -6,7 +6,7 @@
         </description>
         <instance category="DEFAULT" id="1">
             <param name="Time Frame" type="Integer">20</param>
-            <param name="Color" type="Color">0.3019607961177826,0.20000000298023224,0.6000000238418579,153.00000607967377</param>
+            <param name="Color" type="Color">0.3019607961177826,0.20000000298023224,0.6000000238418579,0.90000607967377</param>
             <param name="Shape" type="Shape">NONE</param>
             <param name="Stroke" type="Stroke">DOT_DOT_LINE</param>
             <param name="Chart Type" type="ChartType">OVERLAY</param>
@@ -18,7 +18,7 @@
         </description>
         <instance category="DEFAULT" id="1">
             <param name="Time Frame" type="Integer">50</param>
-            <param name="Color" type="Color">0.10196078568696976,0.20000000298023224,0.6000000238418579,153.00000607967377</param>
+            <param name="Color" type="Color">0.10196078568696976,0.20000000298023224,0.6000000238418579,0.90000607967377</param>
             <param name="Shape" type="Shape">NONE</param>
             <param name="Stroke" type="Stroke">SMALL_LINE</param>
             <param name="Chart Type" type="ChartType">OVERLAY</param>
@@ -29,7 +29,7 @@
         </description>
         <instance category="DEFAULT" id="1">
             <param name="Time Frame" type="Integer">14</param>
-            <param name="Color" type="Color">1.0,0.4000000059604645,0.4000000059604645,255.0</param>
+            <param name="Color" type="Color">1.0,0.4000000059604645,0.4000000059604645,0.90</param>
             <param name="Shape" type="Shape">NONE</param>
             <param name="Stroke" type="Stroke">SMALL_LINE</param>
             <param name="Chart Type" type="ChartType">SUBCHART</param>
@@ -56,10 +56,10 @@
             <param name="Color Middle Band" type="Color">1.0,1.0,0.501960813999176,255.0</param>
             <param name="Shape Middle Band" type="Shape">NONE</param>
             <param name="Stroke Middle Band" type="Stroke">SMALL_LINE</param>
-            <param name="Color Upper Band" type="Color">0.10196078568696976,0.20000000298023224,0.6000000238418579,153.00000607967377</param>
+            <param name="Color Upper Band" type="Color">0.10196078568696976,0.20000000298023224,0.6000000238418579,0.90000607967377</param>
             <param name="Shape Upper Band" type="Shape">NONE</param>
             <param name="Stroke Upper Band" type="Stroke">SMALL_LINE</param>
-            <param name="Color Lower Band" type="Color">0.10196078568696976,0.20000000298023224,0.6000000238418579,153.00000607967377</param>
+            <param name="Color Lower Band" type="Color">0.10196078568696976,0.20000000298023224,0.6000000238418579,0.900607967377</param>
             <param name="Shape Lower Band" type="Shape">NONE</param>
             <param name="Stroke Lower Band" type="Stroke">SMALL_LINE</param>
             <param name="Chart Type" type="ChartType">OVERLAY</param>
@@ -82,7 +82,7 @@
         </description>
         <instance category="DEFAULT" id="1">
             <param name="Time Frame" type="Integer">14</param>
-            <param name="Color" type="Color">0.9019607901573181,0.9019607901573181,0.3019607961177826,230.00000149011612</param>
+            <param name="Color" type="Color">0.9019607901573181,0.9019607901573181,0.3019607961177826,0.00000149011612</param>
             <param name="Shape" type="Shape">NONE</param>
             <param name="Stroke" type="Stroke">SMALL_LINE</param>
             <param name="Chart Type" type="ChartType">SUBCHART</param>
@@ -93,7 +93,7 @@
         </description>
         <instance category="DEFAULT" id="1">
             <param name="Time Frame" type="Integer">14</param>
-            <param name="Color" type="Color">0.800000011920929,0.20000000298023224,0.20000000298023224,204.00000303983688</param>
+            <param name="Color" type="Color">0.800000011920929,0.20000000298023224,0.20000000298023224,0.00000303983688</param>
             <param name="Shape" type="Shape">NONE</param>
             <param name="Stroke" type="Stroke">SMALL_LINE</param>
             <param name="Chart Type" type="ChartType">SUBCHART</param>
@@ -157,7 +157,7 @@
             <param name="Chart Type" type="ChartType">SUBCHART</param>
             <param name="Add Signal Line" type="TaBoolean">TRUE</param>
             <param name="Time Frame Signal Line" type="Integer">9</param>
-            <param name="Color Signal Line" type="Color">1.0,0.4000000059604645,0.4000000059604645,255.0</param>
+            <param name="Color Signal Line" type="Color">1.0,0.4000000059604645,0.4000000059604645,0.50</param>
             <param name="Shape Signal Line" type="Shape">NONE</param>
             <param name="Stroke Signal Line" type="Stroke">SMALL_LINE</param>
         </instance>

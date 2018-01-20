@@ -23,6 +23,8 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.MapChangeListener;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Service;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.geometry.Orientation;
 import javafx.scene.control.*;
@@ -37,6 +39,7 @@ import org.sjwimmer.tacharting.chart.api.*;
 import org.sjwimmer.tacharting.chart.api.settings.CsvSettingsManager;
 import org.sjwimmer.tacharting.chart.api.settings.YahooSettingsManager;
 import org.sjwimmer.tacharting.chart.parameters.Parameter;
+import org.sjwimmer.tacharting.chart.types.GeneralTimePeriod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.ta4j.core.TradingRecord;
@@ -45,7 +48,7 @@ import javax.xml.xpath.XPathException;
 import javax.xml.xpath.XPathExpressionException;
 import java.awt.*;
 import java.io.File;
-import java.io.IOException;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,6 +62,8 @@ public class Controller implements MapChangeListener<String, ChartIndicator>{
     private TaChart chart;
     private final Map<String, CheckMenuItem> itemMap = new HashMap<>();
     private final ObservableList<TimeSeriesTableCell> tableData = FXCollections.observableArrayList();
+
+    private final SQLConnector sqlConnector;
 
     @FXML private BorderPane borderPane;
 
@@ -84,16 +89,7 @@ public class Controller implements MapChangeListener<String, ChartIndicator>{
     @FXML private ToggleButton tbnStoreData;
 
     public Controller(){
-        SQLConnector SQLConnector = new SqlLiteConnector();
-
-        // create api properties file if not exists
-        File file = new File(Parameter.API_PROPERTIES_FILE);
-        try{
-            file.getParentFile().mkdirs(); //properties folder
-            file.createNewFile(); // api.properties file
-        }catch (IOException ioe){
-            logger.error("Could not create api properties file {}",Parameter.API_PROPERTIES_FILE);
-        }
+        sqlConnector = new SqlLiteConnector();
     }
 
     @FXML
@@ -112,6 +108,8 @@ public class Controller implements MapChangeListener<String, ChartIndicator>{
         colSymbol.getTableView().setContextMenu(buildContextMenu());
         choiceBoxAPI.setItems(FXCollections.observableArrayList(Parameter.ApiProvider.values()));
         choiceBoxAPI.setValue(Parameter.ApiProvider.Yahoo);
+        RequestData requestData = new RequestData();
+        requestData.start();
     }
 
     private ContextMenu buildContextMenu(){
@@ -127,7 +125,7 @@ public class Controller implements MapChangeListener<String, ChartIndicator>{
 
 
     /**
-     * This function has to be called before showing the org.sjwimmer.tacharting.chart stage
+     * This function has to be called before showing the stage
      * @param box the {@link ChartIndicatorBox ChartIndicatorBox} with ChartIndicators, TimeSeries
      *            and TradingRecords for the org.sjwimmer.tacharting.chart
      */
@@ -135,11 +133,22 @@ public class Controller implements MapChangeListener<String, ChartIndicator>{
         if (box != null) {
             chart = new TaChart(box);
             borderPane.setCenter(chart);
-            chart.getStylesheets().add(getClass().getClassLoader().getResource("charting-chartStackPane.css").toExternalForm());
             box.getChartIndicatorMap().addListener(this);
             buildMenuEntries(box);
-            Platform.runLater(()->tableData.add(new TimeSeriesTableCell(box.getTimeSeries())));
+            TaTimeSeries series = box.getTimeSeries();
+            addToWatchlist(series);
         }
+    }
+
+    private void addToWatchlist(TaTimeSeries series) {
+        if(tbnStoreData.isSelected()){
+            try {
+                sqlConnector.insertData(series, false);
+            } catch (SQLException sqle){
+                sqle.printStackTrace();
+            }
+        }
+        Platform.runLater(()->tableData.add(new TimeSeriesTableCell(series)));
     }
 
 
@@ -175,7 +184,6 @@ public class Controller implements MapChangeListener<String, ChartIndicator>{
         item.setOnAction(event -> { chart.plotTradingRecord(value, item.isSelected()); });
         tradingRecords.getItems().add(item);
     }
-
 
     private void addToCategory(String key, Parameter.IndicatorCategory category){
         final String[] el = key.split("_");
@@ -328,7 +336,7 @@ public class Controller implements MapChangeListener<String, ChartIndicator>{
         try{
             CSVConnector csvConnector = new CSVConnector();
             TaTimeSeries series = csvConnector.getSeries(file);
-            Platform.runLater(() -> tableData.add(new TimeSeriesTableCell(series)));
+            addToWatchlist(series);
         } catch (Exception ioe){
             ioe.printStackTrace();
             //TODO: handle..
@@ -351,7 +359,7 @@ public class Controller implements MapChangeListener<String, ChartIndicator>{
         try{
             ExcelConnector excelConnector = new ExcelConnector();
             TaTimeSeries series = excelConnector.getSeries(file);
-            Platform.runLater(() -> tableData.add(new TimeSeriesTableCell(series)));
+            addToWatchlist(series);
         } catch (Exception e){
             e.printStackTrace(); //TODO
         }
@@ -371,7 +379,7 @@ public class Controller implements MapChangeListener<String, ChartIndicator>{
     }
 
     //TODO: store as csv to get possibility to reload the file
-    public void addYahoo(){
+    private void addYahoo(){
         logger.debug("Start Yahoo request...");
         String symbol = fieldSearch.getText();
 
@@ -379,7 +387,7 @@ public class Controller implements MapChangeListener<String, ChartIndicator>{
             YahooConnector yahooConnector = new YahooConnector();
             try {
                 TaTimeSeries series = yahooConnector.getSeries(symbol);
-                Platform.runLater(()->tableData.add(new TimeSeriesTableCell(series)));
+                addToWatchlist(series);
             } catch (Exception io) {
                 io.printStackTrace();
                 Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -426,6 +434,37 @@ public class Controller implements MapChangeListener<String, ChartIndicator>{
                 setText("unnamed");
             }
             setText(item.toString());
+        }
+    }
+
+    class RequestData extends Service<Void>{
+
+        @Override
+        protected Task<Void> createTask() {
+            Task<Void> task = new Task<Void>() {
+                @Override
+                protected Void call() throws Exception {
+
+                    try {
+                        List<SQLKey> symbols = sqlConnector.getKeyList(GeneralTimePeriod.DAY);
+                        int i = 0;
+                        updateProgress(i, symbols.size()-1);
+                        logger.debug("Request symbol list");
+                        for(SQLKey key: symbols){
+                            addToWatchlist(sqlConnector.getSeries(key));
+                            logger.debug("Added '{}' to watchlist",key);
+                            updateMessage("Added '{}' to watchlist");
+                            updateProgress(++i, symbols.size()-1);
+                        }
+                    } catch (Exception e){
+                        logger.error("Error while requesting data from database: {}"+e.getMessage());
+                        e.printStackTrace();
+                    }
+
+                    return null;
+                }
+            };
+            return task;
         }
     }
 }

@@ -1,7 +1,10 @@
-package org.sjwimmer.tacharting.chart.parameters;
+package org.sjwimmer.tacharting.chart.types;
 
 import java.awt.*;
 
+/**
+ * Enum for different types of {@link Stroke Strokes} with that a ChartIndicator can be rendered with
+ */
 public enum StrokeType {
     SMALL_LINE(new BasicStroke(1f)),
     DOT_DOT_LINE(new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1.0f, new float[]{6.0f, 4.0f, 3.0f, 3.0f}, 0.0f)),

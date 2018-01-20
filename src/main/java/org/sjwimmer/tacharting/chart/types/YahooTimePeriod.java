@@ -1,4 +1,4 @@
-package org.sjwimmer.tacharting.chart.parameters;
+package org.sjwimmer.tacharting.chart.types;
 
 /**
  * Enum for available time periods that can be requested from the yahoo api

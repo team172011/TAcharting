@@ -20,7 +20,11 @@ package org.sjwimmer.tacharting.chart.utils;
 
 import javafx.scene.paint.Color;
 import javafx.util.StringConverter;
-import org.sjwimmer.tacharting.chart.parameters.*;
+import org.sjwimmer.tacharting.chart.parameters.Parameter;
+import org.sjwimmer.tacharting.chart.types.ChartType;
+import org.sjwimmer.tacharting.chart.types.ShapeType;
+import org.sjwimmer.tacharting.chart.types.StrokeType;
+import org.sjwimmer.tacharting.chart.types.TimeFormatType;
 
 /**
  * Class for several transformations.<p/>

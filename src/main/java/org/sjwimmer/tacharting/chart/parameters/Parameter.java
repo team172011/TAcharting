@@ -19,6 +19,7 @@
 package org.sjwimmer.tacharting.chart.parameters;
 
 import javafx.stage.FileChooser;
+import org.sjwimmer.tacharting.chart.types.TimeFormatType;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -26,6 +27,8 @@ import java.util.Locale;
 
 public  class Parameter {
 
+
+    public final static String OS = System.getProperty("os.name").toLowerCase();
 
     /** Header names of financial org.sjwimmer.tacharting.data ********************************************************************************/
     public final static HashSet<String> HEADER_DATE = new HashSet<>(Arrays.asList("date", "timestamp"));
