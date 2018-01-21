@@ -44,7 +44,7 @@ public abstract class AbstractProgram extends Application {
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getClassLoader().getResource("fxml/charting-root.fxml"));
 
         Parent root = fxmlLoader.load();
-        Controller controller = fxmlLoader.<Controller>getController();
+        ChartController controller = fxmlLoader.<ChartController>getController();
         final ChartIndicatorBox indicatorBox = createIndicatorBox();
         controller.setIndicatorBox(indicatorBox);
         Scene rootScene = new Scene(root);

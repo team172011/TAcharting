@@ -25,19 +25,15 @@ import javafx.collections.MapChangeListener;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
-import javafx.event.EventHandler;
-import javafx.event.EventType;
 import javafx.fxml.FXML;
 import javafx.geometry.Orientation;
 import javafx.scene.control.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.Menu;
-import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.KeyCode;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
@@ -53,7 +49,6 @@ import org.ta4j.core.TradingRecord;
 import javax.xml.xpath.XPathException;
 import javax.xml.xpath.XPathExpressionException;
 import java.awt.*;
-import java.awt.event.KeyEvent;
 import java.io.File;
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -63,9 +58,9 @@ import java.util.Map;
 import static org.sjwimmer.tacharting.chart.parameters.Parameter.EXTENSION_FILTER_CSV;
 import static org.sjwimmer.tacharting.chart.parameters.Parameter.EXTENSION_FILTER_EXCEL;
 
-public class Controller implements MapChangeListener<String, ChartIndicator>{
+public class ChartController implements MapChangeListener<String, ChartIndicator>{
 
-    private final Logger logger = LoggerFactory.getLogger(Controller.class);
+    private final Logger logger = LoggerFactory.getLogger(ChartController.class);
     private TaChart chart;
     private final Map<String, CheckMenuItem> itemMap = new HashMap<>();
     private final ObservableList<TimeSeriesTableCell> tableData = FXCollections.observableArrayList();
@@ -95,7 +90,7 @@ public class Controller implements MapChangeListener<String, ChartIndicator>{
     @FXML private TextField fieldSearch;
     @FXML private ToggleButton tbnStoreData;
 
-    public Controller(){
+    public ChartController(){
         sqlConnector = new SqlLiteConnector();
     }
 
@@ -154,7 +149,11 @@ public class Controller implements MapChangeListener<String, ChartIndicator>{
         }
     }
 
-    private void addToWatchlist(TaTimeSeries series) {
+    /**
+     * Adds a {@link TaTimeSeries} to the watchlist that can be analysed
+     * @param series a TaTimeSeries
+     */
+    public void addToWatchlist(TaTimeSeries series) {
         if(tbnStoreData.isSelected()){
             try {
                 sqlConnector.insertData(series, false);

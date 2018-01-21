@@ -54,7 +54,7 @@ import java.util.List;
 
 /**
  * Class to read and write parameters and settings of {@link ChartIndicator ChartIndicators} to and from XML files
- * Mostly used from the {@link ChartIndicatorBox} to init the indicators and from the {@link Controller} to show
+ * Mostly used from the {@link ChartIndicatorBox} to init the indicators and from the {@link ChartController} to show
  * controls for the settings in gui and to store the settings in xml file.
  */
 //TODO extract interface
