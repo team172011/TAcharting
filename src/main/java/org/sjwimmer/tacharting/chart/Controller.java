@@ -25,6 +25,8 @@ import javafx.collections.MapChangeListener;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
+import javafx.event.EventHandler;
+import javafx.event.EventType;
 import javafx.fxml.FXML;
 import javafx.geometry.Orientation;
 import javafx.scene.control.*;
@@ -34,6 +36,7 @@ import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -50,6 +53,7 @@ import org.ta4j.core.TradingRecord;
 import javax.xml.xpath.XPathException;
 import javax.xml.xpath.XPathExpressionException;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -98,6 +102,11 @@ public class Controller implements MapChangeListener<String, ChartIndicator>{
     @FXML
     public void initialize(){
         fieldSearch.textProperty().addListener((ov, oldValue, newValue) -> fieldSearch.setText(newValue.toUpperCase()));
+        fieldSearch.setOnKeyPressed(event->{
+            if(event.getCode() == KeyCode.ENTER){
+                addYahoo();
+            }
+        });
         colSymbol.setCellValueFactory(new PropertyValueFactory<>("Name"));
         //colSymbol.setCellFactory(column -> new SymbolTableCell());
         colSymbol.getTableView().setItems(tableData);
@@ -395,19 +404,14 @@ public class Controller implements MapChangeListener<String, ChartIndicator>{
                 addToWatchlist(series);
             } catch (Exception io) {
                 io.printStackTrace();
-                Alert alert = new Alert(Alert.AlertType.ERROR);
+                Alert alert = new Alert(Alert.AlertType.ERROR, "Could not found Symbol: " + symbol);
                 alert.setTitle("Symbol not found");
-                alert.setHeaderText(null);
-                alert.setContentText("Could not found Symbol: " + symbol);
-                alert.showAndWait();
+                alert.show();
             }
         } else{
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            Alert alert = new Alert(Alert.AlertType.INFORMATION,"Empty input");
             alert.setTitle("Symbol not found");
-            alert.setHeaderText(null);
-            alert.setContentText("Empty input");
-
-            alert.showAndWait();
+            alert.show();
         }
     }
 
@@ -416,9 +420,7 @@ public class Controller implements MapChangeListener<String, ChartIndicator>{
        //TODO: https://www.alphavantage.co/
     }
 
-    /****************************************************************************************/
-    // Table Cells and logic
-    /****************************************************************************************/
+    /***** Table Cells and logic **************************************************************************************/
 
     /**
      * Symbol table cell (not needed at the moment)
@@ -435,7 +437,7 @@ public class Controller implements MapChangeListener<String, ChartIndicator>{
                 setText(null);
                 return;
             }
-            if(item.toString().equals("")){
+            if(item.equals("")){
                 setText("unnamed");
             }
             setText(item.toString());

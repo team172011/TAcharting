@@ -315,7 +315,6 @@ public class TaChartViewer extends Region {
                 ExportUtils.writeAsPNG(this.canvas.getChart(), (int) getWidth(),
                         (int) getHeight(), file);
             } catch (IOException ex) {
-                // FIXME: show a dialog with the error
                 throw new RuntimeException(ex);
             }
         }

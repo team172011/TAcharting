@@ -19,6 +19,7 @@
 package org.sjwimmer.tacharting.chart.api.settings;
 
 import com.opencsv.CSVParser;
+import com.opencsv.CSVParserBuilder;
 import javafx.application.Platform;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -49,7 +50,7 @@ public class CsvSettingsManager {
     private static final Properties properties = new Properties();
 
     @FXML private ComboBox<String> seperatorBox;
-    @FXML private ComboBox<String> lineEndBox;
+    @FXML private ComboBox<String> stringQuoteBox;
     @FXML private Label lblLineEnd;
     @FXML private TableView<ExampleRow> tblExample;
     @FXML private TableColumn<ExampleRow, String> colTimeFormat;
@@ -67,8 +68,8 @@ public class CsvSettingsManager {
         try{
             fxmlLoader.load();
             CsvProperties csvProperties = new CsvProperties();
-            lineEndBox.setItems(FXCollections.observableArrayList("\\", "\\n"));
-            lineEndBox.valueProperty().bindBidirectional(csvProperties.lineBreakProperty());
+            stringQuoteBox.setItems(FXCollections.observableArrayList("\"", "\'"));
+            stringQuoteBox.valueProperty().bindBidirectional(csvProperties.quoteProperty());
             seperatorBox.valueProperty().bindBidirectional(csvProperties.separatorProperty());
             seperatorBox.setItems(FXCollections.observableArrayList(",", " ", ";"));
 
@@ -173,25 +174,25 @@ public class CsvSettingsManager {
     // TODO add position of info line and maybe possibility to set info line in properties
     class CsvProperties{
         private final StringProperty separator;
-        private final StringProperty lineBreak;
+        private final StringProperty quote;
 
         public CsvProperties(){
             separator = new SimpleStringProperty(getProperties()
-                    .getProperty(Parameter.PROPERTY_CSV_SEPERATOR, String.valueOf(CSVParser.DEFAULT_SEPARATOR)));
-            lineBreak = new SimpleStringProperty(getProperties()
-                    .getProperty(Parameter.PROPERTY_CSV_ENDLINE, String.valueOf(CSVParser.DEFAULT_ESCAPE_CHARACTER)));
+                    .getProperty(Parameter.PROPERTY_CSV_SEPARATOR, String.valueOf(CSVParser.DEFAULT_SEPARATOR)));
+            quote = new SimpleStringProperty(getProperties()
+                    .getProperty(Parameter.PROPERTY_CSV_QUOTE, String.valueOf(CSVParser.DEFAULT_ESCAPE_CHARACTER)));
         }
 
         public void save(){
-            getProperties().setProperty(Parameter.PROPERTY_CSV_ENDLINE, lineBreak.get());
-            getProperties().setProperty(Parameter.PROPERTY_CSV_SEPERATOR, separator.get());
+            getProperties().setProperty(Parameter.PROPERTY_CSV_QUOTE, quote.get());
+            getProperties().setProperty(Parameter.PROPERTY_CSV_SEPARATOR, separator.get());
             try(FileOutputStream outputStream = new FileOutputStream((Parameter.API_PROPERTIES_FILE))){
                 getProperties().store(outputStream, null);
             } catch (IOException ioe){
                 ioe.printStackTrace();
             }
 
-            logger.debug("Properties saved: {}, {}",lineBreak.get(),separator.get());
+            logger.debug("Properties saved: {}, {}", quote.get(),separator.get());
         }
 
         public String getSeparator() {
@@ -202,12 +203,12 @@ public class CsvSettingsManager {
             return separator;
         }
 
-        public String getLineBreak() {
-            return lineBreak.get();
+        public String getQuote() {
+            return quote.get();
         }
 
-        public StringProperty lineBreakProperty() {
-            return lineBreak;
+        public StringProperty quoteProperty() {
+            return quote;
         }
     }
 

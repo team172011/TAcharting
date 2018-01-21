@@ -22,8 +22,8 @@
             </Label>
               <ComboBox fx:id="seperatorBox" />
             <Separator orientation="VERTICAL" />
-              <Label text="Line End" />
-              <ComboBox fx:id="lineEndBox" />
+              <Label text="String quotes" />
+              <ComboBox fx:id="stringQuoteBox" />
             <Separator orientation="VERTICAL" />
          </children>
       </HBox>

@@ -68,8 +68,8 @@ public  class Parameter {
     public static final String PROPERTY_YAHOO_TO = "yahoo_to";
     public static final String PROPERTY_YAHOO_INTERVAL = "yahoo_interval";
 
-    public static final String PROPERTY_CSV_SEPERATOR = "csv_seperator";
-    public static final String PROPERTY_CSV_ENDLINE = "csv_endline";
+    public static final String PROPERTY_CSV_SEPARATOR = "csv_seperator";
+    public static final String PROPERTY_CSV_QUOTE = "csv_endline";
 
     /** Database ******************************************************************************************************/
     public static final String DATABASE_NAME = "financial_data.db";

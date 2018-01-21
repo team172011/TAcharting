@@ -1,6 +1,7 @@
 package org.sjwimmer.tacharting.chart.api;
 
 import com.opencsv.CSVParser;
+import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import org.sjwimmer.tacharting.chart.TaTimeSeries;
@@ -34,7 +35,10 @@ public class CSVConnector implements Connector<File> {
 
     @Override
     public TaTimeSeries getSeries(File resource) throws IOException{
-        CSVReader reader = new CSVReaderBuilder(new FileReader(resource)).withCSVParser(new CSVParser()).build();
+        String separator = properties.getProperty(Parameter.PROPERTY_CSV_SEPARATOR, ",");
+        String quote = properties.getProperty(Parameter.PROPERTY_CSV_QUOTE, "\\\\");
+        CSVParser parser = new CSVParserBuilder().withSeparator(separator.charAt(0)).withQuoteChar(quote.charAt(0)).build();
+        CSVReader reader = new CSVReaderBuilder(new FileReader(resource)).withCSVParser(parser).build();
         String line[];
         line = reader.readNext();
         String name = line[0];
