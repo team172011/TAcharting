@@ -38,6 +38,7 @@ public  class Parameter {
     public final static HashSet<String> HEADER_CLOSE = new HashSet<>(Arrays.asList("close", "last", "last price", "close price", "price"));
     public final static HashSet<String> HEADER_Volume = new HashSet<>(Arrays.asList("volume", "vol"));
     public final static HashSet<String> HEADER_DATE2 = new HashSet<>(Arrays.asList("time"));
+    public static final int DEFAULT_LOOK_BACK = 2;
 
     public enum Columns{
         DATE,

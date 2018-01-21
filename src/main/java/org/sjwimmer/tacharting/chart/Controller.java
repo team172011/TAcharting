@@ -30,10 +30,13 @@ import javafx.geometry.Orientation;
 import javafx.scene.control.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.Menu;
+import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import org.sjwimmer.tacharting.chart.api.*;
 import org.sjwimmer.tacharting.chart.api.settings.CsvSettingsManager;
@@ -65,7 +68,7 @@ public class Controller implements MapChangeListener<String, ChartIndicator>{
 
     private final SQLConnector sqlConnector;
 
-    @FXML private BorderPane borderPane;
+    @FXML private VBox vbxChart;
 
     @FXML private Menu indicatorsMenu;
     @FXML private Menu candles;
@@ -125,14 +128,16 @@ public class Controller implements MapChangeListener<String, ChartIndicator>{
 
 
     /**
-     * This function has to be called before showing the stage
+     * This function has to be called before showing the stage. It allows the user to add a customized <t>ChartIndicatorBox</t>
      * @param box the {@link ChartIndicatorBox ChartIndicatorBox} with ChartIndicators, TimeSeries
      *            and TradingRecords for the org.sjwimmer.tacharting.chart
      */
     public void setIndicatorBox(ChartIndicatorBox box){
         if (box != null) {
             chart = new TaChart(box);
-            borderPane.setCenter(chart);
+            VBox.setVgrow(chart, Priority.ALWAYS);
+            vbxChart.getChildren().add(chart);
+
             box.getChartIndicatorMap().addListener(this);
             buildMenuEntries(box);
             TaTimeSeries series = box.getTimeSeries();
@@ -310,7 +315,7 @@ public class Controller implements MapChangeListener<String, ChartIndicator>{
         fileChooser.setInitialDirectory(new File(System.getProperty("user.home")));
         fileChooser.getExtensionFilters().addAll(EXTENSION_FILTER_CSV, EXTENSION_FILTER_EXCEL);
 
-        List<File> files = fileChooser.showOpenMultipleDialog((borderPane).getScene().getWindow());
+        List<File> files = fileChooser.showOpenMultipleDialog((vbxChart).getScene().getWindow());
         if(files == null) {
             return;
         }

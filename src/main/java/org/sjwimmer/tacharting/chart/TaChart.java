@@ -67,8 +67,8 @@ public class TaChart extends StackPane implements MapChangeListener<String, Char
     private final Map<TradingRecord, List<Marker>> mapTradingRecordMarker;
     private final List<XYPlot> currentSubPlots;
 
-    private final ObservableList<String> currentOverlays = FXCollections.observableArrayList();
-    private final ObservableList<String> currentSubplots = FXCollections.observableArrayList();
+    private final ObservableList<String> currentOverlayKeys = FXCollections.observableArrayList();
+    private final ObservableList<String> currentSubplotKeys = FXCollections.observableArrayList();
 
 
 
@@ -86,7 +86,7 @@ public class TaChart extends StackPane implements MapChangeListener<String, Char
         this.combinedXYPlot = createCombinedDomainXYPlot(mainPlot);
         this.setCache(true);
         this.setCacheHint(CacheHint.SPEED);
-        final JFreeChart chart = new JFreeChart(chartIndicatorBox.getTimeSeries().getName(), combinedXYPlot);
+        final JFreeChart chart = new JFreeChart(combinedXYPlot);
         this.viewer = new TaChartViewer(chart);
         this.viewer.setCache(true);
         this.viewer.setCacheHint(CacheHint.SPEED);
@@ -178,8 +178,8 @@ public class TaChart extends StackPane implements MapChangeListener<String, Char
 
 
     /**
-     * Plots the corresponding indicators colorOf the list colorOf identifiers as overlays
-     * @param indicatorIdentifiers a list colorOf identifiers e.g. "EMAIndicator_1"
+     * Plots the corresponding indicators of the list of identifiers as overlays
+     * @param indicatorIdentifiers a list of identifiers e.g. "EMAIndicator_1"
      */
     public void plotOverlays(List<String> indicatorIdentifiers) {
         List<ChartIndicator> overlays = new ArrayList<>();
@@ -191,7 +191,7 @@ public class TaChart extends StackPane implements MapChangeListener<String, Char
                 seriesCounter++;
             }
         }
-        int anonymID = 1; // 0 = candlestick org.sjwimmer.tacharting.data
+        int anonymID = 1; // 0 = candlestick data
         for(String identifier: indicatorIdentifiers) {
             ChartIndicator chartIndicator = chartIndicatorBox.getChartIndicator(identifier);
             overlays.add(chartIndicator);
@@ -205,16 +205,20 @@ public class TaChart extends StackPane implements MapChangeListener<String, Char
     }
 
     /**
-     * Plots the corresponding indicators colorOf the list colorOf identifiers as subplots
-     * @param indicatorIdentifiers a list colorOf identifiers e.g. "MACDIndicator_1"
+     * Plots the corresponding indicators of the list of identifiers as subplots
+     * @param indicatorIdentifiers a list of identifiers e.g. "MACDIndicator_1"
      */
     public void plotSubPlots(List<String> indicatorIdentifiers){
         List<ChartIndicator> subPlots = new ArrayList<>();
 
-        for(int i = 1; i < combinedXYPlot.getSubplots().size(); i++){
-            XYPlot plot = (XYPlot) combinedXYPlot.getSubplots().get(i);
-            combinedXYPlot.remove(plot);
+        List<XYPlot> plots = new ArrayList<>();
+        plots.addAll(combinedXYPlot.getSubplots());
+        for(XYPlot plot: plots){
+            if(!plot.equals(mainPlot)){
+                combinedXYPlot.remove(plot);
+            }
         }
+
 
         for (String identifier: indicatorIdentifiers){
             ChartIndicator chartIndicator = chartIndicatorBox.getChartIndicator(identifier);
@@ -223,7 +227,7 @@ public class TaChart extends StackPane implements MapChangeListener<String, Char
             combinedXYPlot.add(subPlot);
             currentSubPlots.add(subPlot);
         }
-        // workaround, combinedXYPlot would loos the domain axis and org.sjwimmer.tacharting.chart would look empty
+        // workaround, combinedXYPlot would loos the domain axis and chart would look empty
         if(indicatorIdentifiers.size() < 1){
             combinedXYPlot.setDomainAxis(((XYPlot)combinedXYPlot.getSubplots().get(0)).getDomainAxis());
         }
@@ -350,22 +354,21 @@ public class TaChart extends StackPane implements MapChangeListener<String, Char
         if(change.wasRemoved()){
             indicator = change.getValueRemoved();
             if(indicator.isSubchart()){
-                currentSubplots.remove(key);
-                plotSubPlots(currentSubplots);
+                currentSubplotKeys.remove(key);
+                plotSubPlots(currentSubplotKeys);
             } else {
-                currentOverlays.remove(key);
-                plotOverlays(currentOverlays);
+                currentOverlayKeys.remove(key);
+                plotOverlays(currentOverlayKeys);
             }
         }
-        // wasAdded = wasRemoved = true is possible
         if(change.wasAdded()) {
             indicator = change.getValueAdded();
             if(indicator.isSubchart()){
-                currentSubplots.add(key);
-                plotSubPlots(currentSubplots);
+                currentSubplotKeys.add(key);
+                plotSubPlots(currentSubplotKeys);
             } else {
-                currentOverlays.add(key);
-                plotOverlays(currentOverlays);
+                currentOverlayKeys.add(key);
+                plotOverlays(currentOverlayKeys);
             }
         }
     }

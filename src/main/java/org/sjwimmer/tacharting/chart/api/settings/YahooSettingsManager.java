@@ -36,6 +36,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Properties;
 
@@ -113,9 +114,15 @@ public class YahooSettingsManager{
          */
         YahooProperties(){
             interval = new SimpleObjectProperty<>(YahooTimePeriod.of(getProperties().getProperty(Parameter.PROPERTY_YAHOO_INTERVAL, "1d")));
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern(TimeFormatType.YAHOO.pattern);
             LocalDate now = LocalDate.now();
-            to = new SimpleObjectProperty<>();
-            from = new SimpleObjectProperty<>();
+            String fromS = (getProperties().getProperty(Parameter.PROPERTY_YAHOO_FROM,
+                    LocalDate.now().minusYears(Parameter.DEFAULT_LOOK_BACK).format(formatter)));
+            String toS = (getProperties().getProperty(Parameter.PROPERTY_YAHOO_TO,
+                    ZonedDateTime.now().format(formatter)));
+
+            from = new SimpleObjectProperty<>(LocalDate.parse(fromS, formatter));
+            to = new SimpleObjectProperty<>(LocalDate.parse(toS, formatter));
         }
 
         public LocalDate getFrom() {

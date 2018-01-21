@@ -1,27 +1,43 @@
-# ta4j-charting
-## A charting application for plotting and analysing time series, indicators, strategies and trading records
+# TAcharting
+### An application for downloading, plotting and analysing financial data
 
-- [x] Supports all (Decimal based) Indicators from Ta4j.
-- [x] Stores settings and parameters of indicators permanently
-- [x] Possiblity to add your custom indicator implementation to the application
+## Features
+- [x] Supports all (Decimal based) indicators from [Ta4j](https://github.com/ta4j/ta4j).
 - [x] Yahoo api connection
-- [x] Import Excel and Csv Files
+- [x] Import excel and csv files
+- [x] Stores settings and parameters of indicators permanently
+- [x] Possibility to add your custom indicator implementation to the application
+
 - [x] Store and update financial data in SQLlite database
 
+### How to run
+_TAcharting_ is a JavaFx(java 1.8) application managed by maven. You have to install [git](https://git-scm.com/downloads), [maven](https://maven.apache.org/download.cgi) and the [jdk1.8+](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html)
+to build this application on 
+linux or windows (not testet on mac, but it should also work there)<br>
+**1. Clone repository:**
+```
+git clone https://github.com/team172011/TAcharting.git
+cd TAcharting
+``` 
+**2. run maven to create executable jar**
+````git
+mvn package
+````
+**3. run the generated jar**
+````git
+java -jar /target/jfx/app/tacharting-*.jar
 
+````
+
+### How to add custom indicators
 * Start at the [Wiki](https://github.com/team172011/ta4j-charting/wiki) or take a look at the [Example](https://github.com/team172011/ta4j-charting/blob/master/src/example/Example.java)
 
 ![Overview](https://github.com/team172011/ta4j-charting/blob/master/src/main/java/org/sjwimmer/tacharting/data/screenshots/overview.png)
 
 ![Charting Application based on ta4j](https://github.com/team172011/ta4j-charting/blob/master/src/main/java/org/sjwimmer/tacharting/data/screenshots/showOtherIndicators.png)
 
-### White and black theme
-![Show Chart](https://github.com/team172011/ta4j-charting/blob/master/src/main/java/data/org/sjwimmer/tacharting/data/screenshots/whiteTheme.PNG)
 
-### Fast and free zoom
-![Show Chart](https://github.com/team172011/ta4j-charting/blob/master/src/main/java/org/sjwimmer/tacharting/data/screenshots/zoom.png)
-
-### Plot a candle sticks org.sjwimmer.tacharting.chart (OHLC) of a time series
+### Plot OHLC data as candle sticks
 ![Show Chart](https://github.com/team172011/ta4j-charting/blob/master/src/main/java/org/sjwimmer/tacharting/data/screenshots/show_graph.png)
 
 ### Plot a strategy, basic and custom indicators

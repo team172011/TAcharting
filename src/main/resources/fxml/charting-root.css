@@ -13,10 +13,27 @@ ChartViewer{
 }
 
 ToolBar {
-    -fx-background-color: linear-gradient(from 25% 25% to 100% 100%, -fx-background, #f2f2f2);
+    -fx-background-color: linear-gradient(from 25% 25% to 100% 100%, white, #f2f2f2);
 
 }
 
-Button {
+#chartMenuBar {
+    -fx-background-color: #d9d9d9;
+}
 
+/*** Top-level menu itself ***/
+#chartMenuBar > .container > .menu-button {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #0000FF;
+    -fx-border-radius: 5;
+    -fx-background-radius: 20;
+    -fx-padding: 5;
+}
+
+.button{
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+    -fx-border-radius: 20;
+    -fx-background-radius: 20;
 }
