@@ -1174,6 +1174,14 @@ public class ChartIndicatorBox {
     }
 
     /**
+     * Get all custom indicators (added via runtime) that are stored in this box
+     * @return all ChartIndicators that are stored in this box
+     */
+    public ObservableMap<String, ChartIndicator> getTempChartIndicatorBackup() {
+        return tempChartIndicatorBackup;
+    }
+
+    /**
      * Returns the indicator that is stored for the identifier
      * @param identifier the identifier colorOf the indicator (display identifier/general identifier/properties identifier)
      * @return the indicator that is stored for the identifier
@@ -1181,6 +1189,8 @@ public class ChartIndicatorBox {
     public ChartIndicator getChartIndicator(String identifier){
         return this.chartIndicatorMap.get(identifier);
     }
+
+
 
     public IndicatorsPropertiesManager getPropertiesManager(){
         return this.parameter;

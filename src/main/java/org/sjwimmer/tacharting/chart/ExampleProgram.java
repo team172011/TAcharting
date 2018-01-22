@@ -27,12 +27,14 @@ import org.sjwimmer.tacharting.chart.types.ShapeType;
 import org.sjwimmer.tacharting.example.Loader;
 import org.ta4j.core.*;
 import org.ta4j.core.indicators.EMAIndicator;
+import org.ta4j.core.indicators.MACDIndicator;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 import org.ta4j.core.trading.rules.CrossedDownIndicatorRule;
 import org.ta4j.core.trading.rules.CrossedUpIndicatorRule;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Currency;
 import java.util.List;
 
@@ -50,52 +52,36 @@ public class ExampleProgram extends AbstractProgram {
         TimeSeries series = Loader.getDailyTimeSeries("fb_daily.csv");
 
         // define indicators
-        ClosePriceIndicator cp = new ClosePriceIndicator(series);
-        EMAIndicator ema20 = new EMAIndicator(cp,20);
-        EMAIndicator ema60 = new EMAIndicator(cp, 60);
+        ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
+        MACDIndicator macd = new MACDIndicator(closePrice, 12, 26);
+        EMAIndicator emaMacd = new EMAIndicator(macd, 9);
 
         // build a strategy
-        Rule entry = new CrossedUpIndicatorRule(ema20,ema60);
-        Rule exit = new CrossedDownIndicatorRule(ema20, ema60);
-        BaseStrategy strategyLong = new BaseStrategy(entry,exit);
-        BaseStrategy strategyShort = new BaseStrategy(exit, entry);
+        Rule entryRule = new CrossedUpIndicatorRule(macd, emaMacd);
+        Rule exitRule = new CrossedDownIndicatorRule(macd, emaMacd);
+        Strategy myStragety = new  BaseStrategy(entryRule, exitRule);
 
-        // initialize and add your individual indicators to the ChartIndicatorBox
+
+        // initialize and add your indicators to the ChartIndicatorBox
         TaTimeSeries taTimeSeries = new TaTimeSeries(series, Currency.getInstance("USD"), GeneralTimePeriod.DAY);
         ChartIndicatorBox chartIndicatorBox = new ChartIndicatorBox(taTimeSeries);
 
-        XYLineAndShapeRenderer emaShortRenderer = new XYLineAndShapeRenderer(); // specify how the lines should be rendered
-        emaShortRenderer.setSeriesShape(0, ShapeType.NONE.shape);
-        emaShortRenderer.setSeriesPaint(0,Color.RED);
+        // two indicators in one subplot:
+        XYLineAndShapeRenderer macRenderer = new XYLineAndShapeRenderer(); // specify how the lines should be rendered
+        macRenderer.setSeriesShape(0, ShapeType.NONE.shape);
+        macRenderer.setSeriesPaint(0,Color.RED);
+        macRenderer.setSeriesShape(1,ShapeType.NONE.shape);
+        macRenderer.setSeriesPaint(1,Color.GREEN);
 
-        XYLineAndShapeRenderer emaLongRenderer = new XYLineAndShapeRenderer();
-        emaLongRenderer.setSeriesShape(0,ShapeType.NONE.shape);
-        emaLongRenderer.setSeriesPaint(0,Color.GREEN);
+        List<Indicator> indicatorList = Arrays.asList(macd,emaMacd);
+        List<String> nameList = Arrays.asList("macd","emaMacd");
+        chartIndicatorBox.addIndicator("Straregy_1",indicatorList,nameList,"My macd/emaMacd Strategy",macRenderer,true,IndicatorCategory.CUSTOM);
 
-        chartIndicatorBox.addIndicator("ema1",ema20, "myEMA Short (20)",emaShortRenderer, false, IndicatorCategory.CUSTOM);
-        chartIndicatorBox.addIndicator("ema2",ema60, "myEMA Long (60)",emaLongRenderer, false, IndicatorCategory.CUSTOM);
-
-        // or add your whole strategy as
-        List<Indicator> strategyIndicators = new ArrayList<>();
-        List<String> names = new ArrayList<>();
-        strategyIndicators.add(ema20);
-        strategyIndicators.add(ema60);
-        names.add("myEma (20)");
-        names.add("myEma (60)");
-        XYLineAndShapeRenderer strategieRenderer = new XYLineAndShapeRenderer();
-        strategieRenderer.setSeriesShape(0,ShapeType.NONE.shape); // specify how the both lines should be rendered
-        strategieRenderer.setSeriesPaint(0,Color.RED);
-        strategieRenderer.setSeriesShape(1,ShapeType.NONE.shape);
-        strategieRenderer.setSeriesPaint(1,Color.GREEN);
-        chartIndicatorBox.addIndicator("Strategy1",strategyIndicators, names,"my Strategy Ema Short/Long",
-                strategieRenderer,false, IndicatorCategory.STRATEGY);
 
         // run the strategies and add strategies
         TimeSeriesManager manager = new TimeSeriesManager(series);
-        TradingRecord record = manager.run(strategyLong);
-        TradingRecord record2 = manager.run(strategyShort, Order.OrderType.SELL);
-        chartIndicatorBox.addTradingRecord("My Record Long", record);
-        chartIndicatorBox.addTradingRecord("My Record Short", record2);
+        TradingRecord record = manager.run(myStragety);
+        chartIndicatorBox.addTradingRecord("My ema/emaMacd Strategy", record);
         return chartIndicatorBox;
     }
 }

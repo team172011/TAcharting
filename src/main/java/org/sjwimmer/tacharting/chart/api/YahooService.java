@@ -18,6 +18,10 @@
 */
 package org.sjwimmer.tacharting.chart.api;
 
+import javafx.concurrent.Service;
+import javafx.concurrent.Task;
+import javafx.event.Event;
+import javafx.event.EventType;
 import org.sjwimmer.tacharting.chart.TaTimeSeries;
 import org.sjwimmer.tacharting.chart.api.settings.YahooSettingsManager;
 import org.sjwimmer.tacharting.chart.parameters.Parameter;
@@ -36,116 +40,144 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
 /**
  * Connector class to request financial data from yahoo
  * following https://github.com/sstrickx/yahoofinance-api>
  */
-public class YahooConnector implements Connector<String>{
+public class YahooService extends Service<List<TaTimeSeries>> {
 
-    private final Logger log = LoggerFactory.getLogger(YahooConnector.class);
+    private final Logger log = LoggerFactory.getLogger(YahooService.class);
 
     private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(TimeFormatType.YAHOO.pattern);
     private static final String REQ_BASE_URL = "https://query1.finance.yahoo.com/v7/finance/download/";
     private final Properties properties;
+    private final String[] resources;
 
 
-    public YahooConnector(){
-        properties = YahooSettingsManager.getProperties();
+    public YahooService(String... resources){
+        this.properties = YahooSettingsManager.getProperties();
+        this.resources = resources;
     }
 
-    public TaTimeSeries getSeries(String resource) throws IOException{
-
-        String from = properties.getProperty(Parameter.PROPERTY_YAHOO_FROM, ZonedDateTime.now().format(DateTimeFormatter.ofPattern(TimeFormatType.YAHOO.pattern)));
-        LocalDate localDateFrom = LocalDate.parse(from, dateTimeFormatter);
-        LocalDateTime dateTimeFrom = localDateFrom.atStartOfDay();
-
-        String to = properties.getProperty(Parameter.PROPERTY_YAHOO_TO, ZonedDateTime.now().format(DateTimeFormatter.ofPattern(TimeFormatType.YAHOO.pattern)));
-        LocalDate localDateTo= LocalDate.parse(to, dateTimeFormatter);
-        LocalDateTime dateTimeTo = localDateTo.atStartOfDay();
-
-        String interval = YahooTimePeriod.of(properties.getProperty(Parameter.PROPERTY_YAHOO_INTERVAL, "1d")).toYahooString();
-        Map<String, String> params = new LinkedHashMap<String, String>();
-        params.put("period1", String.valueOf(dateTimeFrom.toEpochSecond(ZoneOffset.UTC)));
-        params.put("period2", String.valueOf(dateTimeTo.toEpochSecond(ZoneOffset.UTC)));
-
-        params.put("interval", interval);
-
-        params.put("crumb", CrumbManager.getCrumb());
-        String url = REQ_BASE_URL + URLEncoder.encode(resource, "UTF-8") + "?" + createURLParameters(params);
-
-        Map<String, String> requestProperties = new HashMap<String, String>();
-        requestProperties.put("Cookie", CrumbManager.getCookie());
-
-        URL request = new URL(url);
-        HttpURLConnection connection = null;
-        int redirects = 0;
-        boolean hasResponse = false;
-        URL currentRequest = request;
-        while(!hasResponse && redirects < 5){
-            connection = (HttpURLConnection) currentRequest.openConnection();
-            connection.setConnectTimeout(10000);
-            connection.setReadTimeout(10000);
-            for(String property: requestProperties.keySet()){
-                connection.addRequestProperty(property, requestProperties.get(property));
-            }
-            connection.setInstanceFollowRedirects(true);
-
-            switch (connection.getResponseCode()){
-                case HttpURLConnection.HTTP_MOVED_PERM:
-                case HttpURLConnection.HTTP_MOVED_TEMP:
-                    redirects++;
-                    String location = connection.getHeaderField("Location");
-                    currentRequest = new URL(request, location);
-                    break;
-                default:
-                    hasResponse = true;
-            }
-        }
-
-        if(redirects > 5) {
-            throw new IOException("Protocol redirect count exceeded for url: " + request.toExternalForm());
-        } else if(connection == null) {
-            throw new IOException("Unexpected error while opening connection");
-        } else {
-            InputStreamReader is = new InputStreamReader(connection.getInputStream());
-            BufferedReader br = new BufferedReader(is);
-            File file = new File(Parameter.PROGRAM_FOLDER+Parameter.S+ "example3.csv");
-            FileOutputStream fos = new FileOutputStream(file);
-            BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(fos));
-            String header = br.readLine();
-            bufferedWriter.write(header);
-            for(String line=br.readLine(); line != null;line = br.readLine()){
-                bufferedWriter.newLine();
-                bufferedWriter.write(line);
-            }
-            bufferedWriter.close();
-            return new CSVConnector().getSeriesFromYahooFile(resource,file);
-        }
+    @Override
+    protected Task<List<TaTimeSeries>> createTask() {
+        return new RequestTimeSeries();
     }
 
-    public String createURLParameters(Map<String, String> params) {
-        StringBuilder sb = new StringBuilder();
 
-        for (Map.Entry<String, String> entry : params.entrySet()) {
-            if (sb.length() > 0) {
-                sb.append("&");
+
+    class RequestTimeSeries extends Task<List<TaTimeSeries>>{
+
+        @Override
+        protected List<TaTimeSeries> call() throws Exception {
+            String from = properties
+                    .getProperty(Parameter.PROPERTY_YAHOO_FROM,
+                            ZonedDateTime.now().minusYears(Parameter.DEFAULT_LOOK_BACK)
+                                    .format(DateTimeFormatter.ofPattern(TimeFormatType.YAHOO.pattern)));
+            LocalDate localDateFrom = LocalDate.parse(from, dateTimeFormatter);
+            LocalDateTime dateTimeFrom = localDateFrom.atStartOfDay();
+
+            String to = properties
+                    .getProperty(Parameter.PROPERTY_YAHOO_TO, ZonedDateTime.now()
+                            .format(DateTimeFormatter.ofPattern(TimeFormatType.YAHOO.pattern)));
+
+            LocalDate localDateTo= LocalDate.parse(to, dateTimeFormatter);
+            LocalDateTime dateTimeTo = localDateTo.atStartOfDay();
+
+
+            List<TaTimeSeries> seriesList = new ArrayList<>();
+            CSVConnector csvConnector = new CSVConnector();
+            for(int i = 0; i < resources.length; i++) {
+                try {
+                    String interval = YahooTimePeriod.of(properties.getProperty(Parameter.PROPERTY_YAHOO_INTERVAL, "1d")).toYahooString();
+                    Map<String, String> params = new LinkedHashMap<String, String>();
+                    params.put("period1", String.valueOf(dateTimeFrom.toEpochSecond(ZoneOffset.UTC)));
+                    params.put("period2", String.valueOf(dateTimeTo.toEpochSecond(ZoneOffset.UTC)));
+
+                    params.put("interval", interval);
+
+                    params.put("crumb", CrumbManager.getCrumb());
+                    Map<String, String> requestProperties = new HashMap<String, String>();
+                    requestProperties.put("Cookie", CrumbManager.getCookie());
+
+                    String symbol = resources[i];
+                    updateProgress(i, resources.length - 1);
+                    updateMessage("Request data for " + symbol);
+                    String url = REQ_BASE_URL + URLEncoder.encode(symbol, "UTF-8") + "?" + createURLParameters(params);
+                    URL request = new URL(url);
+                    HttpURLConnection connection = null;
+                    int redirects = 0;
+                    boolean hasResponse = false;
+                    URL currentRequest = request;
+                    while (!hasResponse && redirects < 5) {
+                        connection = (HttpURLConnection) currentRequest.openConnection();
+                        connection.setConnectTimeout(10000);
+                        connection.setReadTimeout(10000);
+                        for (String property : requestProperties.keySet()) {
+                            connection.addRequestProperty(property, requestProperties.get(property));
+                        }
+                        connection.setInstanceFollowRedirects(true);
+
+                        switch (connection.getResponseCode()) {
+                            case HttpURLConnection.HTTP_MOVED_PERM:
+                            case HttpURLConnection.HTTP_MOVED_TEMP:
+                                redirects++;
+                                String location = connection.getHeaderField("Location");
+                                currentRequest = new URL(request, location);
+                                break;
+                            default:
+                                hasResponse = true;
+                        }
+                    }
+
+                    if (redirects > 5) {
+                        throw new IOException("Protocol redirect count exceeded for url: " + request.toExternalForm());
+                    } else if (connection == null) {
+                        throw new IOException("Unexpected error while opening connection");
+                    } else {
+                        InputStreamReader is = new InputStreamReader(connection.getInputStream());
+                        BufferedReader br = new BufferedReader(is);
+                        File file = new File(Parameter.PROGRAM_FOLDER + Parameter.S + symbol+"temp.csv");
+                        FileOutputStream fos = new FileOutputStream(file);
+                        BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(fos));
+                        String header = br.readLine();
+                        bufferedWriter.write(header);
+                        for (String line = br.readLine(); line != null; line = br.readLine()) {
+                            bufferedWriter.newLine();
+                            bufferedWriter.write(line);
+                        }
+                        bufferedWriter.close();
+                        seriesList.add(csvConnector.getSeriesFromYahooFile(symbol, file));
+                        file.delete();
+                    }
+                } catch (Exception e){
+                    e.printStackTrace();
+                }
             }
-            String key = entry.getKey();
-            String value = entry.getValue();
-            try {
-                key = URLEncoder.encode(key, "UTF-8");
-                value = URLEncoder.encode(value, "UTF-8");
-            } catch (UnsupportedEncodingException ex) {
-                log.debug(ex.getMessage());
-            }
-            sb.append(String.format("%s=%s", key, value));
+            return seriesList;
         }
-        return sb.toString();
+
+        public String createURLParameters(Map<String, String> params) {
+            StringBuilder sb = new StringBuilder();
+
+            for (Map.Entry<String, String> entry : params.entrySet()) {
+                if (sb.length() > 0) {
+                    sb.append("&");
+                }
+                String key = entry.getKey();
+                String value = entry.getValue();
+                try {
+                    key = URLEncoder.encode(key, "UTF-8");
+                    value = URLEncoder.encode(value, "UTF-8");
+                } catch (UnsupportedEncodingException ex) {
+                    log.debug(ex.getMessage());
+                }
+                sb.append(String.format("%s=%s", key, value));
+            }
+            return sb.toString();
+        }
     }
 
     static class CrumbManager{

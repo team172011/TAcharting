@@ -3,6 +3,7 @@
 <?import java.lang.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?scenebuilder-stylesheet charting-root.css?>
 
 <AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="org.sjwimmer.tacharting.chart.ChartController">
   <children>
@@ -65,8 +66,13 @@
           <top>
             <ToolBar fx:id="toolBarSearch">
               <items>
-                <TextField fx:id="fieldSearch" />
-                <Button mnemonicParsing="false" onAction="#loadDataFromSelectedApi" text="Add" />
+                <ProgressIndicator fx:id="priProgress" prefHeight="31.0" progress="0.0" />
+                <TextField fx:id="fieldSearch" >
+                  <tooltip>
+                    <Tooltip text="Enter symbols separated by ; or ;"/>
+                  </tooltip>
+                </TextField>
+                <Button fx:id="btnSearch" mnemonicParsing="false" text="Add" />
                 <ComboBox fx:id="choiceBoxAPI" />
                 <Separator orientation="VERTICAL" />
                 <Button fx:id="loadCSV" onAction="#openCsvExcelDialog" text="Import excel/csv" />
@@ -77,7 +83,7 @@
         </BorderPane>
         <ToolBar fx:id="toolBarIndicators" prefHeight="39.0" prefWidth="600.0">
           <items>
-            <Button fx:id="clearAll" mnemonicParsing="false" onAction="#clearToogelBar" text="Clear All" />
+            <Button fx:id="clearAll" mnemonicParsing="false" onAction="#clearToggleBar" text="Clear All" />
             <Separator orientation="VERTICAL" />
           </items>
         </ToolBar>

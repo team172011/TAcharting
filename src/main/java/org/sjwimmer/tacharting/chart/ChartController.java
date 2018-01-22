@@ -51,9 +51,8 @@ import javax.xml.xpath.XPathExpressionException;
 import java.awt.*;
 import java.io.File;
 import java.sql.SQLException;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 import static org.sjwimmer.tacharting.chart.parameters.Parameter.EXTENSION_FILTER_CSV;
 import static org.sjwimmer.tacharting.chart.parameters.Parameter.EXTENSION_FILTER_EXCEL;
@@ -88,6 +87,8 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
     @FXML private TableView<TimeSeriesTableCell> tblSymbol;
     @FXML private TableColumn<TimeSeriesTableCell, String> colSymbol;
     @FXML private TextField fieldSearch;
+    @FXML private Button btnSearch;
+    @FXML private ProgressIndicator priProgress;
     @FXML private ToggleButton tbnStoreData;
 
     public ChartController(){
@@ -99,9 +100,14 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
         fieldSearch.textProperty().addListener((ov, oldValue, newValue) -> fieldSearch.setText(newValue.toUpperCase()));
         fieldSearch.setOnKeyPressed(event->{
             if(event.getCode() == KeyCode.ENTER){
-                addYahoo();
-            }
-        });
+                loadDataFromSelectedApi(fieldSearch.getText().split("[;,]"));
+                fieldSearch.clear();
+            } });
+        btnSearch.setOnAction(event ->{
+            loadDataFromSelectedApi(fieldSearch.getText().split("[;,]"));
+            fieldSearch.clear(); });
+        btnSearch.disableProperty().bind(fieldSearch.textProperty().isEmpty());
+        priProgress.setVisible(false);
         colSymbol.setCellValueFactory(new PropertyValueFactory<>("Name"));
         //colSymbol.setCellFactory(column -> new SymbolTableCell());
         colSymbol.getTableView().setItems(tableData);
@@ -109,8 +115,7 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
             if (e.getClickCount() == 2) {
                 TaTimeSeries series = colSymbol.getTableView().getSelectionModel().getSelectedItem().getTimeSeries();
                 this.chart.getChartIndicatorBox().setTimeSeries(series);
-            }
-        });
+            } });
 
         colSymbol.getTableView().setContextMenu(buildContextMenu());
         choiceBoxAPI.setItems(FXCollections.observableArrayList(Parameter.ApiProvider.values()));
@@ -123,8 +128,25 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
         MenuItem itemRemove = new MenuItem("remove");
         itemRemove.setOnAction(e -> {
             TimeSeriesTableCell selectedCell = colSymbol.getTableView().getSelectionModel().getSelectedItem();
-            colSymbol.getTableView().getItems().remove(selectedCell);
+            colSymbol.getTableView().getItems().remove(selectedCell); });
+
+        MenuItem itemRemoveDB = new MenuItem("remove from database");
+        itemRemoveDB.setOnAction( e ->{
+            TimeSeriesTableCell selectedCell = colSymbol.getTableView().getSelectionModel().getSelectedItem();
+            try {
+                sqlConnector.removeData(selectedCell.getTimeSeries());
+                colSymbol.getTableView().getItems().remove(selectedCell);
+            } catch (SQLException sqle){
+                sqle.printStackTrace();
+            }
         });
+
+        MenuItem itemUpdate = new MenuItem("update");
+        itemUpdate.setOnAction(e->{
+            updateDataFromSelectedApi();
+        });
+
+
         ContextMenu menu = new ContextMenu();
         menu.getItems().add(itemRemove);
         return menu;
@@ -166,14 +188,14 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
 
 
     /**
-     * Build the menu with entries colorOf all indicators from xml AND added indicators from the indicatorBox
-     * @param box
+     * Build the menu with entriesof all indicators from xml AND add indicators from the indicatorBox
+     * @param box the ChartIndicatorBox
      */
     private void buildMenuEntries(ChartIndicatorBox box){
 
         final IndicatorsPropertiesManager propsManager = box.getPropertiesManager();
 
-        for (Map.Entry<String, ChartIndicator> entry : chart.getChartIndicatorBox().getChartIndicatorMap().entrySet()) {
+        for (Map.Entry<String, ChartIndicator> entry : chart.getChartIndicatorBox().getTempChartIndicatorBackup().entrySet()) {
             addToCategory(entry.getKey(), entry.getValue().getCategory());
         }
 
@@ -217,7 +239,6 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
                 //TODO: handle exception..
                 xpe.printStackTrace();
             } });
-
         switch(category){
             case DEFAULT:{
                 def.getItems().add(item);
@@ -307,7 +328,7 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
     /**
      * removes all ChartIndicators from the org.sjwimmer.tacharting.chart and toggle bar that are in the toggle bar
      */
-    public void clearToogelBar(){
+    public void clearToggleBar(){
 
         for (Map.Entry<String, Button> stringButtonEntry : keyButton.entrySet()) {
             chart.getChartIndicatorBox().removeIndicator(stringButtonEntry.getKey());
@@ -378,40 +399,38 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
         }
     }
 
-    public void loadDataFromSelectedApi(){
+
+    public void loadDataFromSelectedApi(String... symbol){
         switch (choiceBoxAPI.valueProperty().get()){
             case Yahoo:{
-                addYahoo();
+                loadYahooData(symbol);
                 break;}
             case AlphaVantage: {
-
                 break;
             }
-            default: addYahoo();
+            default: loadYahooData();
         }
     }
 
-    //TODO: store as csv to get possibility to reload the file
-    private void addYahoo(){
-        logger.debug("Start Yahoo request...");
-        String symbol = fieldSearch.getText();
+    public void updateDataFromSelectedApi(){
+        new Alert(Alert.AlertType.INFORMATION, "Currently not supported");
+    }
 
-        if(!symbol.equals("")) {
-            YahooConnector yahooConnector = new YahooConnector();
-            try {
-                TaTimeSeries series = yahooConnector.getSeries(symbol);
+    private void loadYahooData(String... symbol){
+
+        logger.debug("Start Yahoo request...");
+        String[] cleanSymbols = Arrays.stream(symbol).map(e->e.replaceAll("\\s+","")).toArray(String[]::new);
+
+        YahooService yahooConnector = new YahooService(cleanSymbols);
+        priProgress.setVisible(true);
+        priProgress.progressProperty().bind(yahooConnector.progressProperty());
+        yahooConnector.start();
+        yahooConnector.setOnSucceeded(value->{
+            for(TaTimeSeries series: yahooConnector.getValue()){
                 addToWatchlist(series);
-            } catch (Exception io) {
-                io.printStackTrace();
-                Alert alert = new Alert(Alert.AlertType.ERROR, "Could not found Symbol: " + symbol);
-                alert.setTitle("Symbol not found");
-                alert.show();
             }
-        } else{
-            Alert alert = new Alert(Alert.AlertType.INFORMATION,"Empty input");
-            alert.setTitle("Symbol not found");
-            alert.show();
-        }
+            priProgress.setVisible(false);
+        });
     }
 
     public void addAlphaVantage(){
@@ -419,7 +438,7 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
        //TODO: https://www.alphavantage.co/
     }
 
-    /***** Table Cells and logic **************************************************************************************/
+    /** Table Cells and logic **************************************************************************************/
 
     /**
      * Symbol table cell (not needed at the moment)
@@ -439,7 +458,7 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
             if(item.equals("")){
                 setText("unnamed");
             }
-            setText(item.toString());
+            setText(item);
         }
     }
 
@@ -447,7 +466,7 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
 
         @Override
         protected Task<Void> createTask() {
-            Task<Void> task = new Task<Void>() {
+            return new Task<Void>() {
                 @Override
                 protected Void call() throws Exception {
 
@@ -470,7 +489,6 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
                     return null;
                 }
             };
-            return task;
         }
     }
 }

@@ -52,7 +52,7 @@
         <url>http://github.com/ta4j/ta4j</url>
         <tag>0.1-SNAPSHOT</tag>
     </scm>
-    <!-- mvn assembly:assembly -DdescriptorId=jar-with-dependencies-->
+
     <build>
         <plugins>
             <plugin>
