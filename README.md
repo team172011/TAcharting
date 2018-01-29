@@ -3,12 +3,12 @@
 
 ## Features
 - [x] Supports all (Decimal based) indicators from [Ta4j](https://github.com/ta4j/ta4j).
+- [x] Add Strategies and run them on several securities
 - [x] Yahoo api connection
 - [x] Import excel and csv files
 - [x] Stores settings and parameters of indicators permanently
 - [x] Possibility to add your custom indicator implementation to the application
-
-- [x] Store and update financial data in SQLlite database
+- [x] Load, store and update financial data in SQLlite or custom database
 
 ### How to run
 _TAcharting_ is a JavaFx(java 1.8) application managed by maven. You have to install [git](https://git-scm.com/downloads), [maven](https://maven.apache.org/download.cgi) and the [jdk1.8+](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html)

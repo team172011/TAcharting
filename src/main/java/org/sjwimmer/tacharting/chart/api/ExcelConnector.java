@@ -5,13 +5,13 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.sjwimmer.tacharting.chart.TaTimeSeries;
+import org.sjwimmer.tacharting.chart.model.TaTimeSeries;
+import org.sjwimmer.tacharting.chart.model.types.GeneralTimePeriod;
+import org.sjwimmer.tacharting.chart.model.types.TimeFormatType;
 import org.sjwimmer.tacharting.chart.parameters.Parameter;
-import org.sjwimmer.tacharting.chart.types.GeneralTimePeriod;
-import org.sjwimmer.tacharting.chart.types.TimeFormatType;
 import org.sjwimmer.tacharting.chart.utils.FormatUtils;
+import org.ta4j.core.Bar;
 import org.ta4j.core.BaseTimeSeries;
-import org.ta4j.core.Tick;
 import org.ta4j.core.TimeSeries;
 
 import java.io.File;
@@ -55,7 +55,7 @@ public class ExcelConnector implements Connector<File> {
         }
 
         Map<Parameter.Columns, Integer> headerMap = FormatUtils.getHeaderMap(headerLine);
-        List<Tick> ticks = new ArrayList<>();
+        List<Bar> ticks = new ArrayList<>();
         while (rowIterator.hasNext()){
             Row row = rowIterator.next();
             cellIterator = row.cellIterator();
@@ -63,7 +63,7 @@ public class ExcelConnector implements Connector<File> {
             while(cellIterator.hasNext()){
                 list.add(cellIterator.next().getStringCellValue());
             }
-            Tick tick = FormatUtils.extractOHLCData(headerMap,dateFormatter,list.toArray(new String[list.size()]),isTwoColumnDate);
+            Bar tick = FormatUtils.extractOHLCData(headerMap,dateFormatter,list.toArray(new String[list.size()]),isTwoColumnDate);
             ticks.add(tick);
         }
         if(ticks.get(ticks.size()-1).getEndTime().isBefore(ticks.get(0).getEndTime())){

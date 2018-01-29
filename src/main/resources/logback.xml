@@ -20,7 +20,7 @@
     </appender>
 
 
-    <root level="INFO">
+    <root level="DEBUG">
         <appender-ref ref="STDOUT" />
       <!--  //TODO: uncomment this to log into a file
       <appender-ref ref="FILE" />

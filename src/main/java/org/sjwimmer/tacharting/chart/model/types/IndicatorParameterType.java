@@ -12,30 +12,32 @@
  Software.
 
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
- WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
  COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+package org.sjwimmer.tacharting.chart.model.types;
 
-package org.sjwimmer.tacharting.example;
-
-import com.sun.javafx.application.LauncherImpl;
-import org.sjwimmer.tacharting.chart.AbstractProgram;
-import org.sjwimmer.tacharting.chart.Preloader;
-import org.sjwimmer.tacharting.chart.ProgramStart;
+import org.sjwimmer.tacharting.chart.model.ChartIndicator;
 
 /**
- * Example class with main entry point that launch the charting application
- * with an Example class that extends the AbstractProgram
+ * Enum for the types of parameters that could be needed to create an chart indicator instance
+ * see {@link ChartIndicator ChartIndicator}
  */
-public class Example {
 
-    /**
-     * launch the Application {@link ProgramStart} that extends the
-     * {@link AbstractProgram AbstractProgram}
-     * @param args command line arguments
-     */
-    public static void main(String[] args){
-        LauncherImpl.launchApplication(ProgramStart.class, Preloader.class, args);
+public enum IndicatorParameterType{
+    BOOLEAN("Boolean"),
+    INTEGER("Integer"),
+    DOUBLE("Double"),
+    STRING("String"),
+    SHAPE("Shape"),
+    STROKE("Stroke"),
+    COLOR("Color"),
+    CHARTTYPE("ChartType");
+
+    public final String name;
+
+    IndicatorParameterType(String name){
+        this.name = name;
     }
 }

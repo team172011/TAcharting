@@ -20,11 +20,11 @@ package org.sjwimmer.tacharting.chart.utils;
 
 import javafx.scene.paint.Color;
 import javafx.util.StringConverter;
+import org.sjwimmer.tacharting.chart.model.types.ChartType;
+import org.sjwimmer.tacharting.chart.model.types.ShapeType;
+import org.sjwimmer.tacharting.chart.model.types.StrokeType;
+import org.sjwimmer.tacharting.chart.model.types.TimeFormatType;
 import org.sjwimmer.tacharting.chart.parameters.Parameter;
-import org.sjwimmer.tacharting.chart.types.ChartType;
-import org.sjwimmer.tacharting.chart.types.ShapeType;
-import org.sjwimmer.tacharting.chart.types.StrokeType;
-import org.sjwimmer.tacharting.chart.types.TimeFormatType;
 
 /**
  * Class for several transformations.<p/>
@@ -97,7 +97,7 @@ public class ConverterUtils {
         @Override
         public String toString(StrokeType object) {
             if(object==null){
-                return null; // Don't know why object is null at start /TODO
+                return null; //TODO: Don't know why object is null at start
             }
             return object.toString();
         }

@@ -20,13 +20,11 @@ package org.sjwimmer.tacharting.chart.api;
 
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
-import javafx.event.Event;
-import javafx.event.EventType;
-import org.sjwimmer.tacharting.chart.TaTimeSeries;
 import org.sjwimmer.tacharting.chart.api.settings.YahooSettingsManager;
+import org.sjwimmer.tacharting.chart.model.TaTimeSeries;
+import org.sjwimmer.tacharting.chart.model.types.TimeFormatType;
+import org.sjwimmer.tacharting.chart.model.types.YahooTimePeriod;
 import org.sjwimmer.tacharting.chart.parameters.Parameter;
-import org.sjwimmer.tacharting.chart.types.TimeFormatType;
-import org.sjwimmer.tacharting.chart.types.YahooTimePeriod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -90,76 +88,73 @@ public class YahooService extends Service<List<TaTimeSeries>> {
             List<TaTimeSeries> seriesList = new ArrayList<>();
             CSVConnector csvConnector = new CSVConnector();
             for(int i = 0; i < resources.length; i++) {
-                try {
-                    String interval = YahooTimePeriod.of(properties.getProperty(Parameter.PROPERTY_YAHOO_INTERVAL, "1d")).toYahooString();
-                    Map<String, String> params = new LinkedHashMap<String, String>();
-                    params.put("period1", String.valueOf(dateTimeFrom.toEpochSecond(ZoneOffset.UTC)));
-                    params.put("period2", String.valueOf(dateTimeTo.toEpochSecond(ZoneOffset.UTC)));
+                String interval = YahooTimePeriod.of(properties.getProperty(Parameter.PROPERTY_YAHOO_INTERVAL, "1d")).toYahooString();
+                Map<String, String> params = new LinkedHashMap<String, String>();
+                params.put("period1", String.valueOf(dateTimeFrom.toEpochSecond(ZoneOffset.UTC)));
+                params.put("period2", String.valueOf(dateTimeTo.toEpochSecond(ZoneOffset.UTC)));
 
-                    params.put("interval", interval);
+                params.put("interval", interval);
 
-                    params.put("crumb", CrumbManager.getCrumb());
-                    Map<String, String> requestProperties = new HashMap<String, String>();
-                    requestProperties.put("Cookie", CrumbManager.getCookie());
+                params.put("crumb", CrumbManager.getCrumb());
+                Map<String, String> requestProperties = new HashMap<String, String>();
+                requestProperties.put("Cookie", CrumbManager.getCookie());
 
-                    String symbol = resources[i];
-                    updateProgress(i, resources.length - 1);
-                    updateMessage("Request data for " + symbol);
-                    String url = REQ_BASE_URL + URLEncoder.encode(symbol, "UTF-8") + "?" + createURLParameters(params);
-                    URL request = new URL(url);
-                    HttpURLConnection connection = null;
-                    int redirects = 0;
-                    boolean hasResponse = false;
-                    URL currentRequest = request;
-                    while (!hasResponse && redirects < 5) {
-                        connection = (HttpURLConnection) currentRequest.openConnection();
-                        connection.setConnectTimeout(10000);
-                        connection.setReadTimeout(10000);
-                        for (String property : requestProperties.keySet()) {
-                            connection.addRequestProperty(property, requestProperties.get(property));
-                        }
-                        connection.setInstanceFollowRedirects(true);
-
-                        switch (connection.getResponseCode()) {
-                            case HttpURLConnection.HTTP_MOVED_PERM:
-                            case HttpURLConnection.HTTP_MOVED_TEMP:
-                                redirects++;
-                                String location = connection.getHeaderField("Location");
-                                currentRequest = new URL(request, location);
-                                break;
-                            default:
-                                hasResponse = true;
-                        }
+                String symbol = resources[i];
+                updateProgress(i, resources.length - 1);
+                updateMessage("Request data for " + symbol);
+                String url = REQ_BASE_URL + URLEncoder.encode(symbol, "UTF-8") + "?" + createURLParameters(params);
+                URL request = new URL(url);
+                HttpURLConnection connection = null;
+                int redirects = 0;
+                boolean hasResponse = false;
+                URL currentRequest = request;
+                while (!hasResponse && redirects < 5) {
+                    connection = (HttpURLConnection) currentRequest.openConnection();
+                    connection.setConnectTimeout(10000);
+                    connection.setReadTimeout(10000);
+                    for (String property : requestProperties.keySet()) {
+                        connection.addRequestProperty(property, requestProperties.get(property));
                     }
+                    connection.setInstanceFollowRedirects(true);
 
-                    if (redirects > 5) {
-                        throw new IOException("Protocol redirect count exceeded for url: " + request.toExternalForm());
-                    } else if (connection == null) {
-                        throw new IOException("Unexpected error while opening connection");
-                    } else {
-                        InputStreamReader is = new InputStreamReader(connection.getInputStream());
-                        BufferedReader br = new BufferedReader(is);
-                        File file = new File(Parameter.PROGRAM_FOLDER + Parameter.S + symbol+"temp.csv");
-                        FileOutputStream fos = new FileOutputStream(file);
-                        BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(fos));
-                        String header = br.readLine();
-                        bufferedWriter.write(header);
-                        for (String line = br.readLine(); line != null; line = br.readLine()) {
-                            bufferedWriter.newLine();
-                            bufferedWriter.write(line);
-                        }
-                        bufferedWriter.close();
-                        seriesList.add(csvConnector.getSeriesFromYahooFile(symbol, file));
-                        file.delete();
+                    switch (connection.getResponseCode()) {
+                        case HttpURLConnection.HTTP_MOVED_PERM:
+                        case HttpURLConnection.HTTP_MOVED_TEMP:
+                            redirects++;
+                            String location = connection.getHeaderField("Location");
+                            currentRequest = new URL(request, location);
+                            break;
+                        default:
+                            hasResponse = true;
                     }
-                } catch (Exception e){
-                    e.printStackTrace();
+                }
+
+                if (redirects > 5) {
+                    throw new IOException("Protocol redirect count exceeded for url: " + request.toExternalForm());
+                } else if (connection == null) {
+                    throw new IOException("Unexpected error while opening connection");
+                } else {
+                    InputStreamReader is = new InputStreamReader(connection.getInputStream());
+                    BufferedReader br = new BufferedReader(is);
+                    File file = new File(Parameter.PROGRAM_FOLDER + Parameter.S + symbol+"temp.csv");
+                    FileOutputStream fos = new FileOutputStream(file);
+                    BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(fos));
+                    String header = br.readLine();
+                    bufferedWriter.write(header);
+                    for (String line = br.readLine(); line != null; line = br.readLine()) {
+                        bufferedWriter.newLine();
+                        bufferedWriter.write(line);
+                    }
+                    bufferedWriter.close();
+
+                    seriesList.add(csvConnector.getSeriesFromYahooFile(symbol, file));
+                    log.debug("{}",file.delete());
                 }
             }
             return seriesList;
         }
 
-        public String createURLParameters(Map<String, String> params) {
+        private String createURLParameters(Map<String, String> params) {
             StringBuilder sb = new StringBuilder();
 
             for (Map.Entry<String, String> entry : params.entrySet()) {

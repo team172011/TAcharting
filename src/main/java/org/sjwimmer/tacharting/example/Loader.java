@@ -21,9 +21,9 @@ package org.sjwimmer.tacharting.example;
 
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
-import org.ta4j.core.BaseTick;
+import org.ta4j.core.Bar;
+import org.ta4j.core.BaseBar;
 import org.ta4j.core.BaseTimeSeries;
-import org.ta4j.core.Tick;
 import org.ta4j.core.TimeSeries;
 
 import java.io.*;
@@ -47,7 +47,7 @@ public class Loader {
 
     public static TimeSeries getHourlyTimeSeries(URL file, String name){
 
-        List<Tick> ticks = new ArrayList<>();
+        List<Bar> ticks = new ArrayList<>();
         CSVReader reader;
         String nameInCSV="";
         try {
@@ -65,7 +65,7 @@ public class Loader {
                 double close = Double.parseDouble(line[5]);
                 double volume = Double.parseDouble(line[6]);
 
-                ticks.add(new BaseTick(date, open, high, low, close, volume));
+                ticks.add(new BaseBar(date, open, high, low, close, volume));
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -86,7 +86,7 @@ public class Loader {
         InputStream inputStream = Loader.class.getClassLoader().getResourceAsStream(fileName);
         BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
 
-        List<Tick> ticks = new ArrayList<>();
+        List<Bar> ticks = new ArrayList<>();
         CSVReader reader;
         String nameInCSV="";
         try {
@@ -104,7 +104,7 @@ public class Loader {
                 double high = Double.parseDouble(line[4]);
                 double low = Double.parseDouble(line[5]);
 
-                ticks.add(new BaseTick(date, open, high, low, close, volume));
+                ticks.add(new BaseBar(date, open, high, low, close, volume));
             }
             bufferedReader.close();
         } catch (IOException e) {
