@@ -1,20 +1,19 @@
 package org.sjwimmer.tacharting.chart.api;
 
-import org.sjwimmer.tacharting.chart.TaTimeSeries;
-
-import java.io.IOException;
+import org.sjwimmer.tacharting.chart.model.SQLKey;
+import org.sjwimmer.tacharting.chart.model.TaTimeSeries;
 
 /**
  * Interface for a connection class that manages resources of financial data
- * @param <T> the kind of resource (e.g {@link java.io.File, a File} or {@link String a path}
+ * @param <T> the kind of resource (e.g {@link java.io.File, a File}, {@link String a path},
+ *           or a {@link SQLKey key of a sql table}
  */
 public interface Connector<T> {
 
     /**
-     *
-     * @param resource the resource of the financial data
+     * @param resource the resource <code>T</code> of the financial data
      * @return a {@link TaTimeSeries series} of the financial data
-     * @throws IOException IOException
+     * @throws Exception Exception
      */
     TaTimeSeries getSeries(T resource) throws Exception;
 }

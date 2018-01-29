@@ -1,7 +1,9 @@
 package org.sjwimmer.tacharting.chart.api;
 
-import org.sjwimmer.tacharting.chart.TaTimeSeries;
-import org.sjwimmer.tacharting.chart.types.GeneralTimePeriod;
+import org.sjwimmer.tacharting.chart.model.SQLKey;
+import org.sjwimmer.tacharting.chart.model.TaTimeSeries;
+import org.sjwimmer.tacharting.chart.model.types.GeneralTimePeriod;
+import org.ta4j.core.Bar;
 
 import java.sql.SQLException;
 import java.time.ZonedDateTime;
@@ -27,7 +29,9 @@ public interface SQLConnector extends Connector<SQLKey> {
      * @param series the series with the key (could be empty)
      * @throws SQLException SQLException
      */
-    void removeData(TaTimeSeries series) throws SQLException;
+    boolean removeData(TaTimeSeries series) throws SQLException;
+
+    boolean removeData(SQLKey key) throws SQLException;
 
     /**
      * Inserts the data of the <tt>series</tt> into the corresponding table (see {@link GeneralTimePeriod})
@@ -39,13 +43,25 @@ public interface SQLConnector extends Connector<SQLKey> {
 
     /**
      * Returns a time series object that stores the available data of the symbol,currency,period combination
-     * @param symbol the symbol
-     * @param currency the currency
-     * @param table the {@link GeneralTimePeriod table/period}, there should be one table for each period
+     * @param key the key for the series to load from database
      * @param from date from
      * @param to date to
      * @return11
      * @throws SQLException
      */
-    TaTimeSeries getSeries(String symbol, Currency currency, GeneralTimePeriod table, ZonedDateTime from, ZonedDateTime to) throws SQLException;
+    TaTimeSeries getSeries(SQLKey key, ZonedDateTime from, ZonedDateTime to) throws SQLException;
+
+    /**
+     * Returns the last recent available bar of the time series with the <code>key</code>
+     * @param key the {@link SQLKey key} that identifies the time series
+     * @return the last recent bar
+     */
+    Bar getLastBar(SQLKey key);
+
+    /**
+     * Returns the earliest available bar of the time series with the <code>key</code>
+     * @param key the {@link SQLKey key} that identifies the time series
+     * @return the earliest available bar
+     */
+    Bar getFirstBar(SQLKey key);
 }

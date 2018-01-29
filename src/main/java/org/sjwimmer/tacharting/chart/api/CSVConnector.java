@@ -4,18 +4,18 @@ import com.opencsv.CSVParser;
 import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
-import org.sjwimmer.tacharting.chart.TaTimeSeries;
 import org.sjwimmer.tacharting.chart.api.settings.CsvSettingsManager;
 import org.sjwimmer.tacharting.chart.api.settings.YahooSettingsManager;
+import org.sjwimmer.tacharting.chart.model.TaTimeSeries;
+import org.sjwimmer.tacharting.chart.model.types.GeneralTimePeriod;
+import org.sjwimmer.tacharting.chart.model.types.TimeFormatType;
+import org.sjwimmer.tacharting.chart.model.types.YahooTimePeriod;
 import org.sjwimmer.tacharting.chart.parameters.Parameter;
-import org.sjwimmer.tacharting.chart.types.GeneralTimePeriod;
-import org.sjwimmer.tacharting.chart.types.TimeFormatType;
-import org.sjwimmer.tacharting.chart.types.YahooTimePeriod;
 import org.sjwimmer.tacharting.chart.utils.FormatUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.ta4j.core.Bar;
 import org.ta4j.core.BaseTimeSeries;
-import org.ta4j.core.Tick;
 import org.ta4j.core.TimeSeries;
 
 import java.io.File;
@@ -24,6 +24,11 @@ import java.io.IOException;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
+/**
+ * Connector class to read financial data from CSV file
+ * @apiNote the csv file must have a special structure that can be
+ * customized in the {@link CsvSettingsManager}
+ */
 public class CSVConnector implements Connector<File> {
 
     private final Properties properties;
@@ -58,15 +63,15 @@ public class CSVConnector implements Connector<File> {
         line = reader.readNext();
         Map<Parameter.Columns, Integer> headers = FormatUtils.getHeaderMap(Arrays.asList(line));
 
-        List<Tick> ticks = new ArrayList<>();
+        List<Bar> Bars = new ArrayList<>();
         while((line = reader.readNext()) != null) {
-            ticks.add(FormatUtils.extractOHLCData(headers,dateTimeFormatter,line,isDateTwoColumn));
+            Bars.add(FormatUtils.extractOHLCData(headers,dateTimeFormatter,line,isDateTwoColumn));
         }
-        if(ticks.get(ticks.size()-1).getEndTime().isBefore(ticks.get(0).getEndTime())){
-            Collections.reverse(ticks);
+        if(Bars.get(Bars.size()-1).getEndTime().isBefore(Bars.get(0).getEndTime())){
+            Collections.reverse(Bars);
         }
-        //TODO: remove daily
-        TimeSeries series = new BaseTimeSeries(name==null?"unnamed":name.toUpperCase(),ticks);
+
+        TimeSeries series = new BaseTimeSeries(name==null?"unnamed":name.toUpperCase(),Bars);
         GeneralTimePeriod period =  FormatUtils.extractPeriod(series);
         log.info("Extracted period: "+period);
        return new TaTimeSeries(series,currency,period);
@@ -85,17 +90,17 @@ public class CSVConnector implements Connector<File> {
         String line[];
         line = reader.readNext();
         Map<Parameter.Columns, Integer> headers = FormatUtils.getHeaderMap(Arrays.asList(line));
-        List<Tick> ticks = new ArrayList<>();
+        List<Bar> Bars = new ArrayList<>();
         while((line = reader.readNext()) != null) {
-            ticks.add(FormatUtils.extractOHLCData(
+            Bars.add(FormatUtils.extractOHLCData(
                     headers, DateTimeFormatter.ofPattern(TimeFormatType.YAHOO.pattern),line,false));
         }
-        if(ticks.get(ticks.size()-1).getEndTime().isBefore(ticks.get(0).getEndTime())){
-            Collections.reverse(ticks);
+        if(Bars.get(Bars.size()-1).getEndTime().isBefore(Bars.get(0).getEndTime())){
+            Collections.reverse(Bars);
         }
         String yahooIntervall = YahooSettingsManager.getProperties().getProperty(Parameter.PROPERTY_YAHOO_INTERVAL);
         GeneralTimePeriod timePeriod = YahooTimePeriod.of(yahooIntervall).generalTimePeriod;
-        return new TaTimeSeries(name==null?"unnamed":name.toUpperCase(),ticks,Currency.getInstance("USD"),timePeriod);
+        return new TaTimeSeries(name==null?"unnamed":name.toUpperCase(),Bars,Currency.getInstance("USD"),timePeriod);
     }
 
 }

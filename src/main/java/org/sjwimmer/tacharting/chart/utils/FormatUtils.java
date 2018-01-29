@@ -18,12 +18,12 @@
  */
 package org.sjwimmer.tacharting.chart.utils;
 
+import org.sjwimmer.tacharting.chart.model.types.GeneralTimePeriod;
+import org.sjwimmer.tacharting.chart.model.types.IndicatorParameterType;
+import org.sjwimmer.tacharting.chart.model.types.TimeFormatType;
 import org.sjwimmer.tacharting.chart.parameters.Parameter;
-import org.sjwimmer.tacharting.chart.types.GeneralTimePeriod;
-import org.sjwimmer.tacharting.chart.types.IndicatorParameterType;
-import org.sjwimmer.tacharting.chart.types.TimeFormatType;
-import org.ta4j.core.BaseTick;
-import org.ta4j.core.Tick;
+import org.ta4j.core.Bar;
+import org.ta4j.core.BaseBar;
 import org.ta4j.core.TimeSeries;
 
 import java.awt.*;
@@ -35,7 +35,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.sjwimmer.tacharting.chart.types.IndicatorParameterType.*;
+import static org.sjwimmer.tacharting.chart.model.types.IndicatorParameterType.*;
 
 
 public class FormatUtils {
@@ -78,13 +78,13 @@ public class FormatUtils {
     }
 
     /**
-     * Extracts the OHLC org.sjwimmer.tacharting.data from a string array into a tick object
+     * Extracts the OHLC org.sjwimmer.tacharting.data from a string array into a Bar object
      * @param headerMap the header maps that maps indices colorOf the <tt>line</tt> to the {@link Parameter.Columns columns}
      * @param formatPattern the {@link DateTimeFormatter dateTimeFormatter}
-     * @param line the string array with corresponding entries for the tick
-     * @return a {@link Tick tick} object with the ohlc org.sjwimmer.tacharting.data
+     * @param line the string array with corresponding entries for the Bar
+     * @return a {@link Bar Bar} object with the ohlc org.sjwimmer.tacharting.data
      */
-    public static Tick extractOHLCData(Map<Parameter.Columns, Integer> headerMap, DateTimeFormatter formatPattern, String[] line,boolean twoDateColumns){
+    public static Bar extractOHLCData(Map<Parameter.Columns, Integer> headerMap, DateTimeFormatter formatPattern, String[] line,boolean twoDateColumns){
         ZonedDateTime date;
         if(twoDateColumns){
             date = ZonedDateTime.parse(line[headerMap.get(Parameter.Columns.DATE)]
@@ -103,7 +103,7 @@ public class FormatUtils {
         if(headerMap.get(Parameter.Columns.VOLUME) != null){
             volume = Double.parseDouble(line[headerMap.get(Parameter.Columns.VOLUME)]);
         }
-        return new BaseTick(date, open, high, low, close, volume);
+        return new BaseBar(date, open, high, low, close, volume);
     }
 
     public static DateTimeFormatter getDateTimeFormatter(int id){
@@ -126,21 +126,21 @@ public class FormatUtils {
     }
 
     /**
-     * Run over the ticks of a time series and return their {@link GeneralTimePeriod}
+     * Run over the Bars of a time series and return their {@link GeneralTimePeriod}
      * @param series the time series
-     * @return the underlying {@link GeneralTimePeriod} (minimum gap between end time of two consecutive ticks of the
-     * complete time series or the minimum gap of at least 20 percent of consecutive ticks of the <tt>series</tt>
+     * @return the underlying {@link GeneralTimePeriod} (minimum gap between end time of two consecutive Bars of the
+     * complete time series or the minimum gap of at least 20 percent of consecutive Bars of the <tt>series</tt>
      */
     public static GeneralTimePeriod extractPeriod(TimeSeries series){
         long minDiff = Long.MAX_VALUE;
         int counter=0;
-        double threshold = series.getTickCount()*0.2;
-        // get the index i and i+1 of the ticks with min diff
+        double threshold = series.getBarCount()*0.2;
+        // get the index i and i+1 of the Bars with min diff
         // stop if 20% of the series have the same minDiff
-        for(int i=0;i<series.getTickCount()-1;i++){
-            Tick tick = series.getTick(i);
-            Tick next = series.getTick(i+1);
-            long diff =  Duration.between(tick.getEndTime(),next.getEndTime()).toMinutes();
+        for(int i=0;i<series.getBarCount()-1;i++){
+            Bar Bar = series.getBar(i);
+            Bar next = series.getBar(i+1);
+            long diff =  Duration.between(Bar.getEndTime(),next.getEndTime()).toMinutes();
             if(diff < minDiff){
                 minDiff = diff;
             } else if(minDiff == diff){

@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
 <?scenebuilder-stylesheet charting-root.css?>
 
-<AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="org.sjwimmer.tacharting.chart.ChartController">
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<AnchorPane prefHeight="643.0" prefWidth="973.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="org.sjwimmer.tacharting.chart.controller.ChartController">
   <children>
     <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
       <children>
@@ -52,7 +51,17 @@
           <left>
             <VBox>
               <children>
-                <TableView fx:id="table" maxWidth="120.0" opacity="0.69" prefWidth="120.0" tableMenuButtonVisible="true">
+                <ToolBar>
+                  <items>
+                    <SplitMenuButton mnemonicParsing="false" text="Watchlist">
+                      <items>
+                        <MenuItem mnemonicParsing="false" text="Daily" />
+                        <MenuItem mnemonicParsing="false" text="Weekly" />
+                      </items>
+                    </SplitMenuButton>
+                  </items>
+                </ToolBar>
+                <TableView fx:id="tblSymbol" maxWidth="120.0" opacity="0.69" prefWidth="120.0" tableMenuButtonVisible="true">
                   <columnResizePolicy>
                     <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
                   </columnResizePolicy>
@@ -67,9 +76,9 @@
             <ToolBar fx:id="toolBarSearch">
               <items>
                 <ProgressIndicator fx:id="priProgress" prefHeight="31.0" progress="0.0" />
-                <TextField fx:id="fieldSearch" >
+                <TextField fx:id="fieldSearch">
                   <tooltip>
-                    <Tooltip text="Enter symbols separated by ; or ;"/>
+                    <Tooltip text="Enter symbols separated by ; or ;" />
                   </tooltip>
                 </TextField>
                 <Button fx:id="btnSearch" mnemonicParsing="false" text="Add" />
@@ -77,6 +86,7 @@
                 <Separator orientation="VERTICAL" />
                 <Button fx:id="loadCSV" onAction="#openCsvExcelDialog" text="Import excel/csv" />
                 <ToggleButton fx:id="tbnStoreData" mnemonicParsing="false" selected="true" text="Store Data in DB" />
+                <ToggleButton mnemonicParsing="false" text="Auto Update" />
               </items>
             </ToolBar>
           </top>

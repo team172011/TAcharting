@@ -19,7 +19,7 @@
 package org.sjwimmer.tacharting.chart.parameters;
 
 import javafx.stage.FileChooser;
-import org.sjwimmer.tacharting.chart.types.TimeFormatType;
+import org.sjwimmer.tacharting.chart.model.types.TimeFormatType;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -73,33 +73,6 @@ public  class Parameter {
 
     /** Database ******************************************************************************************************/
     public static final String DATABASE_NAME = "financial_data.db";
-
-
-
-    /** Menu entries **************************************************************************************************/
-    public enum IndicatorCategory {
-        CUSTOM(8),
-        STRATEGY(9),
-        DEFAULT(0),
-        BOLLINGER(1),
-        CANDLES(2),
-        HELPERS(3),
-        ICHIMOKU(4),
-        KELTNER(5),
-        STATISTICS(6),
-        VOLUME(7);
-
-        private int id;
-
-        IndicatorCategory(int id) {
-
-            this.id = id;
-        }
-
-        public int getId() {
-            return id;
-        }
-    }
 
 
     /***********************************************************************************************/

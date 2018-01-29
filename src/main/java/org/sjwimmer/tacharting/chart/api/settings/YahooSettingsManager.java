@@ -25,9 +25,9 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
+import org.sjwimmer.tacharting.chart.model.types.TimeFormatType;
+import org.sjwimmer.tacharting.chart.model.types.YahooTimePeriod;
 import org.sjwimmer.tacharting.chart.parameters.Parameter;
-import org.sjwimmer.tacharting.chart.types.TimeFormatType;
-import org.sjwimmer.tacharting.chart.types.YahooTimePeriod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

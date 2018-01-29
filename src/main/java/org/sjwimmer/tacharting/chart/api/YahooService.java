@@ -20,13 +20,11 @@ package org.sjwimmer.tacharting.chart.api;
 
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
-import javafx.event.Event;
-import javafx.event.EventType;
-import org.sjwimmer.tacharting.chart.TaTimeSeries;
 import org.sjwimmer.tacharting.chart.api.settings.YahooSettingsManager;
+import org.sjwimmer.tacharting.chart.model.TaTimeSeries;
+import org.sjwimmer.tacharting.chart.model.types.TimeFormatType;
+import org.sjwimmer.tacharting.chart.model.types.YahooTimePeriod;
 import org.sjwimmer.tacharting.chart.parameters.Parameter;
-import org.sjwimmer.tacharting.chart.types.TimeFormatType;
-import org.sjwimmer.tacharting.chart.types.YahooTimePeriod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -159,7 +157,7 @@ public class YahooService extends Service<List<TaTimeSeries>> {
             return seriesList;
         }
 
-        public String createURLParameters(Map<String, String> params) {
+        private String createURLParameters(Map<String, String> params) {
             StringBuilder sb = new StringBuilder();
 
             for (Map.Entry<String, String> entry : params.entrySet()) {

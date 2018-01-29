@@ -19,7 +19,6 @@
 package org.sjwimmer.tacharting.chart.api.settings;
 
 import com.opencsv.CSVParser;
-import com.opencsv.CSVParserBuilder;
 import javafx.application.Platform;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -32,8 +31,8 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.VBox;
 import javafx.util.Callback;
+import org.sjwimmer.tacharting.chart.model.types.TimeFormatType;
 import org.sjwimmer.tacharting.chart.parameters.Parameter;
-import org.sjwimmer.tacharting.chart.types.TimeFormatType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -171,7 +170,6 @@ public class CsvSettingsManager {
         }
     }
 
-    // TODO add position of info line and maybe possibility to set info line in properties
     class CsvProperties{
         private final StringProperty separator;
         private final StringProperty quote;
