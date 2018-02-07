@@ -294,21 +294,6 @@ public class BaseIndicatorBox implements IndicatorBox {
                 category);
     }
 
-    // RSI Indicator
-    public void loadRSIIndicator(String key) throws XPathExpressionException {
-        int timeFrame = Integer.parseInt(parameter.getParameter(key, "Time Frame"));
-        IndicatorCategory category = parameter.getCategory(key);
-        ChartType chartType = parameter.getChartType(key);
-        XYLineAndShapeRenderer renderer = createRenderer(key, "Color", "Shape", "Stroke");
-
-        addChartIndicator(key,
-                new RSIIndicator(closePriceIndicator.get(), timeFrame),
-                String.format("%s [%s] (%s)",getIdentifier(key), getID(key),timeFrame),
-                renderer,
-                chartType.toBoolean(),
-                category);
-    }
-
     // SmoothedRSIIndicator
     public void loadSmoothedRSIIndicator(String key) throws XPathExpressionException {
         int timeFrame = Integer.parseInt(parameter.getParameter(key, "Time Frame"));
@@ -503,12 +488,12 @@ public class BaseIndicatorBox implements IndicatorBox {
 
         List<Indicator> ilKelt = new ArrayList<>();
         List<String> nlKelt = new ArrayList<>();
-        ilKelt.add(kcL);
         ilKelt.add(kcM);
         ilKelt.add(kcU);
-        nlKelt.add("Keltner Lower");
+        ilKelt.add(kcL);
         nlKelt.add("Keltner Middle");
         nlKelt.add("Keltner Upper");
+        nlKelt.add("Keltner Lower");
         addChartIndicator(key,
                 ilKelt,
                 nlKelt,
@@ -1260,11 +1245,6 @@ public class BaseIndicatorBox implements IndicatorBox {
             }
             case "AmountIndicator":{
                 loadAmountIndicator(key);
-                break;
-            }
-
-            case "RSIIndicator":{
-                loadRSIIndicator(key);
                 break;
             }
             case "SmoothedRSIIndicator":{

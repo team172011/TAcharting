@@ -22,7 +22,7 @@ package org.sjwimmer.tacharting.chart.controller;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.MapChangeListener;
-import javafx.collections.ObservableList;
+import javafx.collections.ObservableMap;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
@@ -32,7 +32,8 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextField;
-import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -66,10 +67,9 @@ import static org.sjwimmer.tacharting.chart.parameters.Parameter.EXTENSION_FILTE
 public class ChartController implements MapChangeListener<String, ChartIndicator>{
 
     private final Logger logger = LoggerFactory.getLogger(ChartController.class);
-    public SplitMenuButton spbWatchlist;
     private TaChart chart;
     private final Map<String, CheckMenuItem> itemMap = new HashMap<>();
-    private final ObservableList<TaTimeSeries> tableData = FXCollections.observableArrayList();
+    private final ObservableMap<GeneralTimePeriod, List<SQLKey>> tableKey = FXCollections.observableHashMap();
 
     private SQLConnector sqlConnector;
 
@@ -86,23 +86,32 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
     @FXML private Menu helpers;
     @FXML private Menu keltner;
     @FXML private Menu strategy;
-    @FXML private Menu tradingRecords;
+    @FXML private Menu strategyMenu;
 
     @FXML private ToolBar toolBarIndicators;
     @FXML private ComboBox<Parameter.ApiProvider> choiceBoxAPI;
 
-    @FXML private TableView<TaTimeSeries> tblSymbol;
-    @FXML private TableColumn<TaTimeSeries, String> colSymbol;
     @FXML private TextField fieldSearch;
     @FXML private Button btnSearch;
     @FXML private ProgressIndicator priProgress;
     @FXML private ToggleButton tbnStoreData;
+
+    @FXML private TreeView<Key> tvWatchlist;
 
     public ChartController(){
     }
 
     @FXML
     public void initialize(){
+        try{
+            ImageView indicatorImage = new ImageView(new Image(getClass().getClassLoader().getResourceAsStream("icons/indicator.png")));
+            indicatorsMenu.setGraphic(indicatorImage);
+            ImageView strategyImage = new ImageView(new Image(getClass().getClassLoader().getResourceAsStream("icons/strategy.png")));
+            strategyMenu.setGraphic(strategyImage);
+        } catch (Exception e){
+            logger.error(e.getMessage());
+        }
+
         fieldSearch.textProperty().addListener((ov, oldValue, newValue) -> fieldSearch.setText(newValue.toUpperCase()));
         fieldSearch.setOnKeyPressed(event->{
             if(event.getCode() == KeyCode.ENTER){
@@ -114,19 +123,10 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
             fieldSearch.clear(); });
         btnSearch.disableProperty().bind(fieldSearch.textProperty().isEmpty());
         priProgress.setVisible(false);
-        colSymbol.setCellValueFactory(new PropertyValueFactory<>("Name"));
         //colSymbol.setCellFactory(column -> new SymbolTableCell());
 
-        buildWatchlistMenuItems();
+        buildWatchlist();
 
-        tblSymbol.setItems(tableData);
-        tblSymbol.setOnMouseClicked(e -> {
-            if (e.getClickCount() == 2) {
-                TaTimeSeries series = colSymbol.getTableView().getSelectionModel().getSelectedItem();
-                this.chart.getChartIndicatorBox().setTimeSeries(series);
-            } });
-
-        colSymbol.getTableView().setContextMenu(buildContextMenu());
         choiceBoxAPI.setItems(FXCollections.observableArrayList(Parameter.ApiProvider.values()));
         choiceBoxAPI.setValue(Parameter.ApiProvider.Yahoo);
 
@@ -135,20 +135,82 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
             logger.debug("No SQLConnector set. Create default SqlLiteConnector.");
             sqlConnector = new SqlLiteConnector();
         }
-        DataRequestService requestService = new DataRequestService(GeneralTimePeriod.DAY);
+        DataRequestService requestService = new DataRequestService();
         requestService.start();
     }
 
-    private void buildWatchlistMenuItems() {
+    /**
+     * Build the treeView for the watchlist and add listener to {@link #tableKey}
+     */
+    private void buildWatchlist() {
+        //TODO should not fail if ressource not available
+        javafx.scene.image.Image image = new javafx.scene.image.Image(getClass().getClassLoader().getResourceAsStream("icons/watchlistEntry.png"));
+        javafx.scene.image.Image imageNode = new javafx.scene.image.Image(getClass().getClassLoader().getResourceAsStream("icons/watchlistList.png"));
+
+
+        final TreeItem<Key> root = new TreeItem<>(new Key("Default Watchlists"));
+        root.setExpanded(true);
+
+        tvWatchlist.setRoot(root);
+        tvWatchlist.setContextMenu(buildContextMenu());
+        tvWatchlist.getSelectionModel().selectedItemProperty().addListener((observable, o, n)->{
+            if(n.getValue() instanceof SQLKey){ // is symbol entry was selected
+                try {
+                    TaTimeSeries series = sqlConnector.getSeries(((SQLKey) n.getValue()));
+                    chart.getChartIndicatorBox().setTimeSeries(series);
+                    TableColumn header = new TableColumn("Strategies");
+                } catch (Exception sql){
+                    sql.printStackTrace();
+                }
+            }
+        });
+
         for (GeneralTimePeriod table: GeneralTimePeriod.values()){
-            MenuItem item = new MenuItem(table.toString());
-            item.setOnAction(value ->{
-                tableData.clear();
-                DataRequestService service = new DataRequestService(GeneralTimePeriod.valueOf(item.getText()));
-                service.start();
-            });
-            spbWatchlist.getItems().add(item);
+            TreeItem<Key> it = new TreeItem<Key>(new Key(table.toString()),new ImageView(imageNode));
+            root.getChildren().add(it);
+            //tableKey.put(table,new ArrayList<>()); // init map with empty lists
         }
+
+        tableKey.addListener((MapChangeListener<GeneralTimePeriod,List<SQLKey>>) listener -> {
+            if(listener.wasRemoved() || listener.wasAdded()){
+                for(TreeItem<Key> item: root.getChildren()){
+                    if(GeneralTimePeriod.valueOf(item.getValue().toString()).equals(listener.getKey())){
+                        item.getChildren().clear();
+                        for (SQLKey key: tableKey.get(GeneralTimePeriod.valueOf(item.getValue().toString()))){
+                            item.getChildren().add(new TreeItem<>(key,new ImageView(image)));
+
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    private ContextMenu buildContextMenu(){
+
+        final MenuItem itemRemove = new MenuItem("remove");
+        itemRemove.setOnAction(value->{
+            TreeItem item = tvWatchlist.getSelectionModel().getSelectedItem();
+                if(item.getValue() instanceof SQLKey){
+                    SQLKey key = (SQLKey) item.getValue();
+                    logger.debug("Remove {} from database", key);
+                    try{
+                        sqlConnector.removeData(key);
+                    }catch (Exception e){
+                        logger.error(e.getMessage());
+                    }
+
+                }
+        });
+
+        final MenuItem itemUpdate = new MenuItem("update");
+        itemUpdate.setOnAction(e->{
+            updateDataFromSelectedApi();
+        });
+
+        final ContextMenu menu = new ContextMenu();
+        menu.getItems().addAll(itemUpdate, itemRemove);
+        return menu;
     }
 
     /**
@@ -161,12 +223,11 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
         chart = new TaChart(box);
         VBox.setVgrow(chart, Priority.ALWAYS);
         vbxChart.getChildren().add(chart);
-
         box.getIndicartors().addListener(this);
         buildMenuEntries(box);
         TaTimeSeries series = box.getTimeSeries();
-        storeData(series);
-        addToWatchlist(series);
+        storeSeries(series);
+
     }
 
     /**
@@ -178,25 +239,12 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
         this.sqlConnector = sqlConnector;
     }
 
-    /**
-     * Adds a {@link TaTimeSeries} to the watchlist that can be analysed
-     * If the <tt>series</tt> is already stored, it will be replaced by the new one
-     * @param series a TaTimeSeries
-     */
-    public void addToWatchlist(TaTimeSeries series) {
-        if(tableData.contains(series)){
-            int idx = tableData.indexOf(series);
-            Platform.runLater(()->tableData.set(idx, series));
-        } else {
-            Platform.runLater(()->tableData.add(series));
-        }
-    }
 
     /**
      *
      * @param series the TaTimeSeries that should be stored in DB
      */
-    public synchronized void storeData(final TaTimeSeries series){
+    public synchronized void storeSeries(final TaTimeSeries series){
             new Thread(()-> {
                 try{
                     sqlConnector.insertData(series, false);
@@ -204,35 +252,6 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
                         sqle.printStackTrace();
                 }}).start();
 
-    }
-
-    private ContextMenu buildContextMenu(){
-        final MenuItem itemRemove = new MenuItem("remove");
-        itemRemove.setOnAction(e -> {
-            TaTimeSeries selectedCell = colSymbol.getTableView().getSelectionModel().getSelectedItem();
-            colSymbol.getTableView().getItems().remove(selectedCell); });
-
-        final MenuItem itemRemoveDB = new MenuItem("remove from database");
-        itemRemoveDB.setOnAction( e ->{
-            List<TaTimeSeries> selectedCell = colSymbol.getTableView().getSelectionModel().getSelectedItems();
-            try {
-                for(TaTimeSeries series: selectedCell) {
-                    sqlConnector.removeData(series);
-                    colSymbol.getTableView().getItems().remove(series);
-                }
-            } catch (SQLException sqle){
-                sqle.printStackTrace();
-            }
-        });
-
-        final MenuItem itemUpdate = new MenuItem("update");
-        itemUpdate.setOnAction(e->{
-            updateDataFromSelectedApi();
-        });
-
-        final ContextMenu menu = new ContextMenu();
-        menu.getItems().addAll(itemUpdate, itemRemove, itemRemoveDB);
-        return menu;
     }
 
     /**
@@ -270,7 +289,7 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
             TimeSeriesManager seriesManager = new TimeSeriesManager(chart.getChartIndicatorBox().getTimeSeries());
             TradingRecord value = seriesManager.run(strategy);
             chart.plotTradingRecord(value, item.isSelected()); });
-        tradingRecords.getItems().add(item);
+        strategyMenu.getItems().add(item);
     }
 
     private void addToCategory(String key, IndicatorCategory category){
@@ -367,7 +386,7 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
             Button btnSetup = new Button(indicator.getGeneralName());
             btnSetup.setOnAction((event)->{
                 IndicatorPopUpWindow in = IndicatorPopUpWindow.getPopUpWindow(key, chart.getChartIndicatorBox());
-                in.show(btnSetup,MouseInfo.getPointerInfo().getLocation().x, MouseInfo.getPointerInfo().getLocation().y);
+                in.show(btnSetup, MouseInfo.getPointerInfo().getLocation().x, MouseInfo.getPointerInfo().getLocation().y);
             });
 
             keyButton.put(key,btnSetup);
@@ -421,7 +440,8 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
         try{
             CSVConnector csvConnector = new CSVConnector();
             TaTimeSeries series = csvConnector.getSeries(file);
-            addToWatchlist(series);
+            storeSeries(series);
+            this.tableKey.get(series.getTimeFormatType()).add(series.getKey());
         } catch (Exception ioe){
             ioe.printStackTrace();
             //TODO: handle..
@@ -444,7 +464,7 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
         try{
             ExcelConnector excelConnector = new ExcelConnector();
             TaTimeSeries series = excelConnector.getSeries(file);
-            addToWatchlist(series);
+            this.tableKey.get(series.getTimeFormatType()).add(series.getKey());
         } catch (Exception e){
             e.printStackTrace(); //TODO
         }
@@ -478,9 +498,9 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
         yahooConnector.start();
         yahooConnector.setOnSucceeded(value->{
             for(TaTimeSeries series: yahooConnector.getValue()){
-                addToWatchlist(series);
+                this.tableKey.get(series.getTimeFormatType()).add(series.getKey());
                 if(tbnStoreData.isSelected()){
-                    storeData(series);
+                    storeSeries(series);
                 }
             }
             priProgress.setVisible(false);
@@ -521,39 +541,21 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
     }
 
     /**
-     * Service to load the data from database with help of a {@link SQLConnector}
+     * Service to load all SQLKeys from database with help of a {@link SQLConnector}
      */
     class DataRequestService extends Service<Void>{
 
-        private GeneralTimePeriod table;
-
-        public DataRequestService(GeneralTimePeriod table){
-            this.table = table;
-        }
 
         @Override
         protected Task<Void> createTask() {
             return new Task<Void>() {
+
                 @Override
                 protected Void call() throws Exception {
-                    List<TaTimeSeries> seriesList = new ArrayList<>();
                     try {
-                        List<SQLKey> symbols = sqlConnector.getKeyList(table);
-                        int i = 0;
-                        updateProgress(i, symbols.size()-1);
-                        logger.debug("Request symbol list");
-                        for(SQLKey key: symbols){
-                            try {
-                                tableData.add(sqlConnector.getSeries(key));
-                            } catch (SQLException sqle){
-                                logger.error(String.format(
-                                        "Error while requesting data for symbol %s (%s) list from database"
-                                        ,key.symbol,key.period));
-                                sqle.printStackTrace();
-                            }
-                            logger.debug("Added '{}' to watchlist",key);
-                            updateMessage(String.format("Added '%s' to watchlist",key));
-                            updateProgress(++i, symbols.size()-1);
+                        for(GeneralTimePeriod table: GeneralTimePeriod.values()){
+                            List<SQLKey> keys = sqlConnector.getKeyList(table);
+                            tableKey.put(table, keys);
                         }
                     } catch (SQLException e){
                         logger.error("Error while requesting key list from database: {}"+e.getMessage());

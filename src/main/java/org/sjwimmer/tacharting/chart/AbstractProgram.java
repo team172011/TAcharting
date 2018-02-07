@@ -22,6 +22,7 @@ import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import org.sjwimmer.tacharting.chart.controller.ChartController;
 import org.sjwimmer.tacharting.chart.model.BaseIndicatorBox;
@@ -40,7 +41,7 @@ public abstract class AbstractProgram extends Application {
      */
     @Override
     public void start(Stage primaryStage) throws Exception {
-
+        primaryStage.getIcons().add(new Image(getClass().getClassLoader().getResourceAsStream("icons/logo.png")));
 
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getClassLoader().getResource("fxml/charting-root.fxml"));
 

@@ -119,9 +119,10 @@ public class BaseIndicatorParameterManager implements IndicatorParameterManager 
         String raw[] = key.split("_");
         String indicator = raw[0];
         String id = raw[1];
-        String command = String.format("//indicator[@identifier='%s']/instance[@id='%s']/param[@name='%s']",indicator,id,paramName);
+        String command = String.format("//indicator[@identifier='%s']/instance[@id='%s']/param[@name='%s']/text()",indicator,id,paramName);
         XPathExpression expr = xPath.compile(command);
         Node resultNode = (Node) expr.evaluate(doc, XPathConstants.NODE);
+        String content = resultNode.getTextContent();
         return resultNode.getTextContent();
     }
 
@@ -269,7 +270,7 @@ public class BaseIndicatorParameterManager implements IndicatorParameterManager 
     /**
      * Get all parameters for a
      * @param key identifier colorOf the indicator
-     * @return a Map colorOf name and value colorOf the parameter
+     * @return a Map of name and value colorOf the parameter
      */
     @Override
     public List<IndicatorParameter> getParametersFor(String key) throws XPathExpressionException {

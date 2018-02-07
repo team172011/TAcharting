@@ -10,6 +10,25 @@
 - [x] Possibility to add your custom indicator implementation to the application
 - [x] Load, store and update financial data in SQLlite or custom database
 
+## What is TAcharting? 
+_(features may be still under development)_<br/>
+##### On the one hand the aim of TAcharting is to provide a self contained application for technical analysis that is easy to start and use:
+ - plot financial data from CSV/Excel files 
+ - connect with yahoo financial api and request financial data
+ - automatically store data in database
+ - add indicators and save indicator properties
+ - customize indicators
+ - save graph as png
+ - save indicators and financial data as excel/csv
+ 
+##### On the other hand TAcharting should stay developer friendly and give you a plurality of possibility to customize, embed or automate:
+ - write your own `Indicator`s and plot them on the chart
+ - write a trading [strategy](https://github.com/ta4j/ta4j/blob/master/ta4j-core/src/main/java/org/ta4j/core/Strategy.java) and let it run and plot by TAcharting
+ - write additional `Connector` to connect the application other data sources
+ - write your own `SQLConnector` to connect with custom database
+ - write your own `SQLPropertiesManager` to store indicator parameters in a customized way
+ - embed `ChartController` or `TAChart` to support your own application
+
 ### How to run
 _TAcharting_ is a JavaFx(java 1.8) application managed by maven. You have to install [git](https://git-scm.com/downloads), [maven](https://maven.apache.org/download.cgi) and the [jdk1.8+](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html)
 to build this application on 
@@ -29,25 +48,14 @@ java -jar /target/jfx/app/tacharting-*.jar
 
 ````
 
+
 ### How to add custom indicators
-* Start at the [Wiki](https://github.com/team172011/ta4j-charting/wiki) or take a look at the [Example](https://github.com/team172011/ta4j-charting/blob/master/src/example/Example.java)
+* Start at the [Wiki](https://github.com/team172011/ta4j-charting/wiki) or take a look at program starting [Example](https://github.com/team172011/ta4j-charting/blob/master/src/example/Example.java)
 
 ![Overview](https://github.com/team172011/ta4j-charting/blob/master/src/main/java/org/sjwimmer/tacharting/data/screenshots/overview.png)
 
 ![Charting Application based on ta4j](https://github.com/team172011/ta4j-charting/blob/master/src/main/java/org/sjwimmer/tacharting/data/screenshots/showOtherIndicators.png)
 
-
-### Plot OHLC data as candle sticks
-![Show Chart](https://github.com/team172011/ta4j-charting/blob/master/src/main/java/org/sjwimmer/tacharting/data/screenshots/show_graph.png)
-
-### Plot a strategy, basic and custom indicators
-![Show Strategy](https://github.com/team172011/ta4j-charting/blob/master/src/main/java/org/sjwimmer/tacharting/data/screenshots/show_strategy.png)
-
-### Set up the parameters of the indicators via gui
-![Show Chart](https://github.com/team172011/ta4j-charting/blob/master/src/main/java/org/sjwimmer/tacharting/data/screenshots/IndicatorSettings.PNG)
-
-### Plot several trading records from backtestings and analyse entry, exit and hold intervals
-![Show Strategy](https://github.com/team172011/ta4j-charting/blob/master/src/main/java/org/sjwimmer/tacharting/data/screenshots/plotRecord.png)
 
 ### Ta4j and jFreeChart
 * https://github.com/ta4j/ta4j/

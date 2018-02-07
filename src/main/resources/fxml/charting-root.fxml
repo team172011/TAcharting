@@ -30,7 +30,6 @@
                   <menus>
                     <Menu mnemonicParsing="false" text="Add Indicator" fx:id="indicatorsMenu">
                       <items>
-                        <Menu id="chartMenuItem" mnemonicParsing="false" text="Strategy" fx:id="strategy" />
                         <Menu id="chartMenuItem" mnemonicParsing="false" text="Custom" fx:id="custom" />
                         <Menu id="chartMenuItem" mnemonicParsing="false" text="Default" fx:id="def" />
                         <Menu id="chartMenuItem" mnemonicParsing="false" text="Bollinger" fx:id="bollinger" />
@@ -42,7 +41,7 @@
                         <Menu id="chartMenuItem" mnemonicParsing="false" text="Keltner" fx:id="keltner" />
                       </items>
                     </Menu>
-                    <Menu mnemonicParsing="false" text="Trading Records" fx:id="tradingRecords" />
+                    <Menu mnemonicParsing="false" text="Strategies" fx:id="strategyMenu" />
                   </menus>
                 </MenuBar>
               </children>
@@ -51,19 +50,10 @@
           <left>
             <VBox>
               <children>
-                <ToolBar>
-                  <items>
-                    <SplitMenuButton fx:id="spbWatchlist" mnemonicParsing="false" text="Watchlist"/>
-                  </items>
-                </ToolBar>
-                <TableView fx:id="tblSymbol" maxWidth="120.0" opacity="0.69" prefWidth="120.0" tableMenuButtonVisible="true">
-                  <columnResizePolicy>
-                    <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
-                  </columnResizePolicy>
-                  <columns>
-                    <TableColumn text="Watchlist" fx:id="colSymbol" />
-                  </columns>
-                </TableView>
+                <TreeView fx:id="tvWatchlist" editable="false" prefHeight="437.0" prefWidth="200.0" />
+                <ToolBar prefHeight="24.0" prefWidth="200.0" />
+                <TableView fx:id="tblStrategy" prefHeight="200.0" prefWidth="200.0" />
+                <TableView prefHeight="200.0" prefWidth="200.0" />
               </children>
             </VBox>
           </left>

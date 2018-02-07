@@ -10,6 +10,8 @@ import org.sjwimmer.tacharting.chart.model.types.ShapeType;
 import org.sjwimmer.tacharting.chart.model.types.StrokeType;
 import org.sjwimmer.tacharting.chart.utils.ConverterUtils;
 
+import java.util.Objects;
+
 /**
  * Class represents an indicator parameter. A pair of {@link IndicatorParameterType} and a {@code value}. The value (
  * saved as String) can be transformed to the type described by the IndicatorParameterType through the
@@ -23,11 +25,9 @@ public class IndicatorParameter{
     private final StringProperty value;
 
     public IndicatorParameter(String description, IndicatorParameterType type, String value){
-        if(value==null || type==null || description==null){
-            throw new IllegalArgumentException(String.format(
-                    "Parameters of IndicatorParameter must not be null {} {} {}",
-                    description.toString(),type.toString(),value.toString()));
-        }
+        Objects.requireNonNull(description,"Must be not null");
+        Objects.requireNonNull(type,"Must be not null");
+        Objects.requireNonNull(value,"Must be not null");
         this.description = new SimpleStringProperty(description);
         this.type = new SimpleObjectProperty<IndicatorParameterType>(type);
         this.value = new SimpleStringProperty(value);
@@ -77,7 +77,7 @@ public class IndicatorParameter{
                return Double.parseDouble(value.get());
             }
             case STRING:{
-                return value;
+                return value.get();
             }
             case STROKE:{
                 return StrokeType.valueOf(value.get());
