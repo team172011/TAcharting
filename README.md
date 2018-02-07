@@ -44,7 +44,7 @@ mvn package
 ````
 **3. run the generated jar**
 ````git
-java -jar /target/jfx/app/tacharting-*.jar
+java -jar target/jfx/app/tacharting-*.jar
 
 ````
 
