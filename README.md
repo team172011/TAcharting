@@ -52,7 +52,7 @@ java -jar target/jfx/app/tacharting-*.jar
 ### How to add custom indicators
 * Start at the [Wiki](https://github.com/team172011/ta4j-charting/wiki) or take a look at program starting [Example](https://github.com/team172011/ta4j-charting/blob/master/src/example/Example.java)
 
-![Overview](https://github.com/team172011/ta4j-charting/blob/master/src/main/java/org/sjwimmer/tacharting/data/screenshots/overview.png)
+![Overview](https://github.com/team172011/ta4j-charting/blob/master/src/main/java/org/sjwimmer/tacharting/data/screenshots/overview2.png)
 
 
 ### Ta4j and jFreeChart
