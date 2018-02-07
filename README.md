@@ -54,8 +54,6 @@ java -jar target/jfx/app/tacharting-*.jar
 
 ![Overview](https://github.com/team172011/ta4j-charting/blob/master/src/main/java/org/sjwimmer/tacharting/data/screenshots/overview.png)
 
-![Charting Application based on ta4j](https://github.com/team172011/ta4j-charting/blob/master/src/main/java/org/sjwimmer/tacharting/data/screenshots/showOtherIndicators.png)
-
 
 ### Ta4j and jFreeChart
 * https://github.com/ta4j/ta4j/
