@@ -40,10 +40,10 @@ import org.jfree.data.time.Minute;
 import org.jfree.data.xy.DefaultHighLowDataset;
 import org.jfree.data.xy.OHLCDataset;
 import org.jfree.data.xy.XYDataset;
-import org.sjwimmer.tacharting.chart.model.BaseIndicatorBox;
-import org.sjwimmer.tacharting.chart.model.ChartIndicator;
-import org.sjwimmer.tacharting.chart.model.IndicatorBox;
+import org.sjwimmer.tacharting.chart.model.*;
 import org.sjwimmer.tacharting.chart.view.jfreechart.TaChartViewer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.ta4j.core.*;
 
 import java.awt.*;
@@ -55,9 +55,9 @@ import java.util.List;
  * Creates a Chart, a ChartViewer and shows it.
  * Adds and removes ChartIndicators, TradingRecords
  */
-public class TaChart extends StackPane implements MapChangeListener<String, ChartIndicator> {
+public class TaChart extends StackPane implements MapChangeListener<IndicatorKey, ChartIndicator> {
 
-
+    private final Logger log = LoggerFactory.getLogger(TaChart.class);
     private final IndicatorBox chartIndicatorBox;
     private final CombinedDomainXYPlot combinedXYPlot;
     private final XYPlot mainPlot;
@@ -66,8 +66,8 @@ public class TaChart extends StackPane implements MapChangeListener<String, Char
     private final Map<TradingRecord, List<Marker>> mapTradingRecordMarker;
     //private final List<XYPlot> currentSubPlots;
 
-    private final ObservableList<String> currentOverlayKeys = FXCollections.observableArrayList();
-    private final ObservableList<String> currentSubplotKeys = FXCollections.observableArrayList();
+    public final ObservableList<IndicatorKey> currentOverlayKeys = FXCollections.observableArrayList();
+    public final ObservableList<IndicatorKey> currentSubplotKeys = FXCollections.observableArrayList();
 
 
 
@@ -78,7 +78,7 @@ public class TaChart extends StackPane implements MapChangeListener<String, Char
     public TaChart(IndicatorBox box){
         mapTradingRecordMarker = new HashMap<>();
         this.chartIndicatorBox = box;
-        this.chartIndicatorBox.getIndicartors().addListener(this);
+//        this.chartIndicatorBox.getIndicartors().addListener(this);
         XYDataset candlesBarData = createOHLCDataset(chartIndicatorBox.getTimeSeries());
         this.mainPlot = createMainPlot(candlesBarData);
         this.combinedXYPlot = createCombinedDomainXYPlot(mainPlot);
@@ -179,7 +179,7 @@ public class TaChart extends StackPane implements MapChangeListener<String, Char
      * Plots the corresponding indicators of the list of identifiers as overlays
      * @param indicatorIdentifiers a list of identifiers e.g. "EMAIndicator_1"
      */
-    private void plotOverlays(List<String> indicatorIdentifiers) {
+    private void plotOverlays(List<IndicatorKey> indicatorIdentifiers) {
         for(int i = 1; i < mainPlot.getRendererCount(); i++){ // 0 = candlesBar renderer
             XYItemRenderer renderer = mainPlot.getRenderer(i);
             int seriesCounter = 0;
@@ -189,7 +189,7 @@ public class TaChart extends StackPane implements MapChangeListener<String, Char
             }
         }
         int anonymID = 1; // 0 = candlesBar data
-        for(String identifier: indicatorIdentifiers) {
+        for(IndicatorKey identifier: indicatorIdentifiers) {
             ChartIndicator chartIndicator = chartIndicatorBox.getChartIndicator(identifier);
             mainPlot.setRenderer(anonymID, chartIndicator.getRenderer()); // set renderer first!
             mainPlot.setDataset(anonymID, chartIndicator.getDataSet());
@@ -205,7 +205,7 @@ public class TaChart extends StackPane implements MapChangeListener<String, Char
      * @param indicatorIdentifiers a list of identifiers e.g. "MACDIndicator_1"
      */
     @SuppressWarnings("unchecked ") // the CombinedXYPlot can only return Plots of XYPlot instance
-    private void plotSubPlots(List<String> indicatorIdentifiers){
+    private void plotSubPlots(List<IndicatorKey> indicatorIdentifiers){
         List<XYPlot> plots = new ArrayList<>();
         plots.addAll(combinedXYPlot.getSubplots());
         for(XYPlot plot: plots){
@@ -214,7 +214,7 @@ public class TaChart extends StackPane implements MapChangeListener<String, Char
             }
         }
 
-        for (String identifier: indicatorIdentifiers){
+        for (IndicatorKey identifier: indicatorIdentifiers){
             ChartIndicator chartIndicator = chartIndicatorBox.getChartIndicator(identifier);
             XYPlot subPlot = createSubplotFor(chartIndicator);
             combinedXYPlot.add(subPlot);
@@ -332,10 +332,10 @@ public class TaChart extends StackPane implements MapChangeListener<String, Char
      * {@link BaseIndicatorBox indicatorBox} change (change, new or remove)
      */
     @Override
-    public void onChanged(Change<? extends String, ? extends ChartIndicator> change) {
+    public void onChanged(Change<? extends IndicatorKey, ? extends ChartIndicator> change) {
 
         ChartIndicator indicator;
-        final String key = change.getKey();
+        final IndicatorKey key = change.getKey();
         if(change.wasRemoved()){
             indicator = change.getValueRemoved();
             if(indicator.isSubchart()){
@@ -356,6 +356,31 @@ public class TaChart extends StackPane implements MapChangeListener<String, Char
                 plotOverlays(currentOverlayKeys);
             }
         }
+    }
+
+    public void plotIndicator(IndicatorBase base, IndicatorKey key) {
+        ChartIndicator indicator = chartIndicatorBox.loadIndicator(base, key);
+        if(indicator==null){
+            log.error("Could not load Indicator for key {}",key.toString());
+            return;
+        }
+        if(indicator.isSubchart()){
+            currentSubplotKeys.add(key);
+            plotSubPlots(currentSubplotKeys);
+        } else {
+            currentOverlayKeys.add(key);
+            plotOverlays(currentOverlayKeys);
+
+        }
+    }
+
+    public void removeIndicator(IndicatorKey key) {
+        if(!currentOverlayKeys.remove(key)){
+            currentSubplotKeys.remove(key);
+        }
+
+        plotOverlays(currentOverlayKeys);
+        plotSubPlots(currentSubplotKeys);
     }
 
     /**

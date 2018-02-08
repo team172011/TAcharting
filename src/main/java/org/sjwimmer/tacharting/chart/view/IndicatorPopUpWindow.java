@@ -31,6 +31,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import org.sjwimmer.tacharting.chart.api.IndicatorParameterManager;
 import org.sjwimmer.tacharting.chart.model.IndicatorBox;
+import org.sjwimmer.tacharting.chart.model.IndicatorKey;
 import org.sjwimmer.tacharting.chart.model.IndicatorParameter;
 import org.sjwimmer.tacharting.chart.model.types.ChartType;
 import org.sjwimmer.tacharting.chart.model.types.ShapeType;
@@ -42,15 +43,15 @@ import javax.xml.transform.TransformerException;
 import javax.xml.xpath.XPathException;
 import javax.xml.xpath.XPathExpressionException;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 public class IndicatorPopUpWindow extends PopupControl {
 
     private static IndicatorPopUpWindow open;
 
     private final IndicatorParameterManager propertiesManager;
-    private final String key;
+    private final IndicatorKey key;
     private final IndicatorBox indicatorBox;
 
 
@@ -61,9 +62,9 @@ public class IndicatorPopUpWindow extends PopupControl {
     @FXML private Button btnDuplicate;
     @FXML private Button btnRemove;
 
-    private final List<IndicatorParameter> parameters = new ArrayList<>(); //TODO: simplify with observable list
+    private final Map<String, IndicatorParameter> parameters = new HashMap<>(); //TODO: simplify with observable list
 
-    private IndicatorPopUpWindow(String key, IndicatorBox indicatorBox){
+    private IndicatorPopUpWindow(IndicatorKey key, IndicatorBox indicatorBox){
         this.propertiesManager = indicatorBox.getPropertiesManager();
         this.key = key;
         this.indicatorBox = indicatorBox;
@@ -76,11 +77,10 @@ public class IndicatorPopUpWindow extends PopupControl {
 
         try {
             fxmlLoader.load();
-            String[] el = key.split("_");
-            title.setText(el[0]);
+            title.setText(key.getType().getDisplayName());
             title.getStyleClass().add("title");
-            if(el.length > 1){ // only start building gui if the indicator is from xml, e.g if it has an id
-                parameters.addAll(propertiesManager.getParametersFor(key));
+            if(true){ // FIXME: only start building gui if the indicator is from xml, e.g if it has an valid key, id
+                parameters.putAll(propertiesManager.getParametersFor(key));
                 VBox first = new VBox(3);
                 // iterate over all parameters and add label and a value setter
                 for(int i = 0; i<parameters.size(); i++){
@@ -122,18 +122,18 @@ public class IndicatorPopUpWindow extends PopupControl {
             btnSave.setOnAction(event -> {
 
                 try {
-                    for (IndicatorParameter parameter : parameters) {
+                    for (Map.Entry<String, IndicatorParameter> param: parameters.entrySet()) {
                         final String valueToStore ;
-                        switch (parameter.getType()){
+                        switch (param.getValue().getType()){
                             case COLOR:{
-                                valueToStore = ConverterUtils.ColorAWTConverter.toString((java.awt.Color)parameter.getValue());
+                                valueToStore = ConverterUtils.ColorAWTConverter.toString(param.getValue().getColor());
                                 break;
                             } default:{
-                                valueToStore = parameter.getValue().toString();
+                                valueToStore = param.getValue().getString();
                                 break;
                             }
                         }
-                        propertiesManager.setParameter(key, parameter.getDescription(), valueToStore);
+                        propertiesManager.setParameter(key, param.getValue().getDescription(), valueToStore);
                     }
                     indicatorBox.reloadIndicator(key);
                     hide();
@@ -165,11 +165,11 @@ public class IndicatorPopUpWindow extends PopupControl {
             btnDuplicate.setDisable(true);
         }
 
-        btnRemove.setOnAction(event -> { indicatorBox.removeIndicator(key);hide(); });
+        btnRemove.setOnAction(event -> { indicatorBox.removeTempIndicator(key);hide(); });
 
         }
 
-    public static IndicatorPopUpWindow getPopUpWindow(String key, IndicatorBox chartIndicatorBox){
+    public static IndicatorPopUpWindow getPopUpWindow(IndicatorKey key, IndicatorBox chartIndicatorBox){
         if (open != null) {
             open.hide();
         }

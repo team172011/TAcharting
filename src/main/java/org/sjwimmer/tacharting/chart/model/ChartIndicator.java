@@ -24,82 +24,69 @@ import org.jfree.data.time.Second;
 import org.jfree.data.time.TimeSeriesCollection;
 import org.sjwimmer.tacharting.chart.model.types.ChartType;
 import org.sjwimmer.tacharting.chart.model.types.IndicatorCategory;
+import org.sjwimmer.tacharting.chart.model.types.ShapeType;
+import org.sjwimmer.tacharting.chart.model.types.StrokeType;
 import org.ta4j.core.Bar;
 import org.ta4j.core.Decimal;
 import org.ta4j.core.Indicator;
 
-import java.util.ArrayList;
+import java.awt.*;
 import java.util.Date;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * A Wrapper for the indicators displaying on a jfreeCharts org.sjwimmer.tacharting.chart panel.
- * An ChartIndicator can consist colorOf several ta4j-indiactors (e.g. bollinger bands...)
+ * A ChartIndicator can consist of several ta4j-indiactors (e.g. bollinger bands, keltner channel, macd...)
  */
 public class ChartIndicator {
 
-    private final List<Indicator> indicators;
-    private final List<String> indicatorsNames;
-    private final XYLineAndShapeRenderer renderer;
-    private final String generalName;
-    private boolean isSubchart;
-    private final IndicatorCategory category;
+    private int internalId = -1;
+    private Map<Integer, String> internalMapping = new HashMap<>();
+    private Map<String, Indicator<Decimal>> indicators = new HashMap<>();
+    private XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer();
+    private IndicatorKey key;
+    private ChartType chartType;
+    private IndicatorCategory category;
+
+    private TimeSeriesCollection collection = new TimeSeriesCollection();
+
+    public ChartIndicator(IndicatorKey key){
+        this.key = key;
+    }
+
+    public void addIndicator(Indicator<Decimal> indicator){
+        addIndicator(indicator,indicator.toString(),Color.BLACK, ShapeType.LINE.shape, StrokeType.SMALL_LINE.stroke, ChartType.OVERLAY);
+    }
+
+    public void addIndicator(Indicator<Decimal> indicator, Color color, String name, ShapeType shapeType, StrokeType strokeType,ChartType type){
+        addIndicator(indicator, name, color, shapeType.shape,strokeType.stroke,type);
+    }
 
     /**
-     * Constuctor to create a ChartIndicator instance for just one {@link Indicator}
+     * Adds a new indicator to this ChartIndicator
      * @param indicator the {@link Indicator}
-     * @param name the displayed name of the indicator
-     * @param isSubchart false if the indicator should be plotted as overlay on candlesticks chart
+     * @param name the name of the indicator
+     * @param color color for renderer
+     * @param shape shape for renderer
+     * @param stroke stroke for renderer
+     * @param type the kind of chart (Overlay or Subplot)
      */
-    public ChartIndicator(Indicator indicator, String name, boolean isSubchart){
-        this(indicator,name, new XYLineAndShapeRenderer(), isSubchart,IndicatorCategory.CUSTOM);
-    }
-
-    /**
-     * Constuctor to create a ChartIndicator instance for just one {@link Indicator}
-     * @param indicator the {@link Indicator}
-     * @param name the displayed name of the indicator
-     * @param isSubchart false if the indicator should be plotted as overlay on candlesticks chart
-     * @param c the {@link IndicatorCategory category} for the indicator
-     */
-    public ChartIndicator(Indicator indicator, String name, boolean isSubchart, IndicatorCategory c){
-        this(indicator,name, new XYLineAndShapeRenderer(), isSubchart,c);
-    }
-
-    /**
-     * Constuctor to create a ChartIndicator instance for just one {@link Indicator}
-     * @param indicator the ta4j indicator
-     * @param name the name colorOf the indicator (with parameters)
-     * @param renderer the renderer for line, shape etc.
-     * @param isSubchart true if the ChartIndicator should be plotted as subchart
-     * @param c the category colorOf the indicator in the menu colorOf this application
-     */
-    public ChartIndicator(Indicator indicator, String name, XYLineAndShapeRenderer renderer, boolean isSubchart, IndicatorCategory c){
-        indicators = new ArrayList<>();
-        indicatorsNames = new ArrayList<>();
-        indicators.add(indicator);
-        indicatorsNames.add(name);
-        generalName = name;
-        this.renderer = renderer;
-        this.isSubchart = isSubchart;
-        category = c;
-    }
-
-    /**
-     * Constructor for creating a ChartIndicator instance for several ta4j indicator
-     * @param indicators the ta4j indicators
-     * @param names the names colorOf the indicator (with parameters)
-     * @param renderer the renderer for lines, shapes etc.
-     * @param isSubchart true if the TaChartIndicators should be plotted as sub org.sjwimmer.tacharting.chart
-     * @param c the category colorOf the ChartIndicator in the menu colorOf this application
-     */
-    public ChartIndicator(List<Indicator> indicators, List<String> names, String generalName, XYLineAndShapeRenderer renderer, boolean isSubchart, IndicatorCategory c){
-        this.indicators = indicators;
-        indicatorsNames = names;
-        this.generalName = generalName;
-        this.renderer = renderer;
-        this.isSubchart = isSubchart;
-        category = c;
+    public void addIndicator(Indicator<Decimal> indicator, String name, Color color, Shape shape, Stroke stroke, ChartType type){
+        internalId++;
+        indicators.put(name,indicator);
+        internalMapping.put(internalId,name);
+        renderer.setSeriesPaint(internalId,color);
+        renderer.setSeriesShape(internalId,shape);
+        renderer.setSeriesStroke(internalId,stroke);
+        this.chartType = type;
+        org.jfree.data.time.TimeSeries chartTimeSeries = new org.jfree.data.time.TimeSeries(name); //TODO maybe store name here?
+        org.ta4j.core.TimeSeries series = indicator.getTimeSeries();
+        for(int i = series.getBeginIndex(); i <= series.getEndIndex(); i++){
+            Bar t = series.getBar(i);
+            chartTimeSeries.add(new Second(new Date(t.getEndTime().toEpochSecond() * 1000)), indicator.getValue(i).doubleValue());
+        }
+        collection.addSeries(chartTimeSeries);
     }
 
     /**
@@ -107,47 +94,14 @@ public class ChartIndicator {
      * @return general name of the indicator(s)
      */
     public String getGeneralName(){
-        return generalName;
-    }
-
-    /**
-     * Returns the name of a indicator
-     * @param index index of the indicator
-     * @return the name of the indicator
-     */
-    public String getName(int index){
-        return indicatorsNames.get(index);
-    }
-
-    /**
-     * @return a List of all {@link Indicator indicators} that represent this ChartIndicator
-     */
-    public List<Indicator> getIndicatorList(){
-        return this.indicators;
-    }
-
-    /**
-     *
-     * @return the (first) indicator that represents this ChartIndicator
-     */
-    public Indicator getIndicator(){
-        return getIndicator(0);
-    }
-
-    /**
-     *
-     * @param index index of the indicator
-     * @return the indicator at index <code>index</code>
-     */
-    public Indicator getIndicator(int index){
-        return indicators.get(index);
+        return key.toString();
     }
 
     /**
      * @return false is this indicator is a {@link ChartType overlay}
      */
     public boolean isSubchart(){
-        return isSubchart;
+        return chartType.equals(ChartType.SUBCHART);
     }
 
     /**
@@ -155,6 +109,10 @@ public class ChartIndicator {
      */
     public int getIndicatorsCount(){
         return  indicators.size();
+    }
+
+    public XYLineAndShapeRenderer getRenderer(){
+        return renderer;
     }
 
     /**
@@ -170,29 +128,7 @@ public class ChartIndicator {
      * @return a TimeSeriesCollection
      */
     public TimeSeriesCollection getDataSet(){
-        TimeSeriesCollection dataset = new TimeSeriesCollection();
-        for(int index = 0; index< this.getIndicatorsCount(); index++){
-            Indicator<Decimal> indicator = this.getIndicator(index);
-            org.jfree.data.time.TimeSeries chartTimeSeries = new org.jfree.data.time.TimeSeries(this.getName(index));
-            for(int i = 0; i<indicator.getTimeSeries().getBarCount(); i++){
-                Bar t = indicator.getTimeSeries().getBar(i);
-                chartTimeSeries.add(new Second(new Date(t.getEndTime().toEpochSecond() * 1000)), indicator.getValue(i).toDouble());
-            }
-            dataset.addSeries(chartTimeSeries);
-        }
-        return dataset;
-    }
-
-    /**
-     * @return the {@link XYLineAndShapeRenderer renderer} to plot this indicator
-     */
-    public XYLineAndShapeRenderer getRenderer(){
-        return this.renderer;
-    }
-
-    // returns a new ChartIndicator instance of this indicator
-    public ChartIndicator clone(){
-        return new ChartIndicator(indicators,indicatorsNames,generalName,renderer,isSubchart,category);
+        return collection;
     }
 
     /**

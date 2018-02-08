@@ -32,7 +32,7 @@ public class TaTimeSeries extends BaseTimeSeries{
     }
 
     public SQLKey getKey(){
-        return new SQLKey(this.getName(),periodType,currency);
+        return new SQLKey(this.getName(), periodType, currency);
     }
 
     /**

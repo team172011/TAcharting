@@ -26,6 +26,7 @@
     </indicator>
     <indicator identifier="CMOIndicator">
         <description>
+			CMO Indicator
         </description>
         <instance category="DEFAULT" id="1">
             <param name="Time Frame" type="Integer">14</param>
@@ -52,7 +53,7 @@
         </description>
         <instance category="BOLLINGER" id="1">
             <param name="Time Frame" type="Integer">20</param>
-            <param name="Standard Deviation">14</param>
+            <param name="Standard Deviation" type="Decimal">14</param>
             <param name="Color Middle Band" type="Color">1.0,1.0,0.501960813999176,255.0</param>
             <param name="Shape Middle Band" type="Shape">NONE</param>
             <param name="Stroke Middle Band" type="Stroke">SMALL_LINE</param>
@@ -72,17 +73,6 @@
             <param name="Time Frame" type="Integer">14</param>
             <param name="K Multiplier" type="Integer">14</param>
             <param name="Color" type="Color">YELLOW</param>
-            <param name="Shape" type="Shape">NONE</param>
-            <param name="Stroke" type="Stroke">SMALL_LINE</param>
-            <param name="Chart Type" type="ChartType">SUBCHART</param>
-        </instance>
-    </indicator>
-    <indicator identifier="RSIIndicator">
-        <description>
-        </description>
-        <instance category="DEFAULT" id="1">
-            <param name="Time Frame" type="Integer">14</param>
-            <param name="Color" type="Color">0.9019607901573181,0.9019607901573181,0.3019607961177826,0.00000149011612</param>
             <param name="Shape" type="Shape">NONE</param>
             <param name="Stroke" type="Stroke">SMALL_LINE</param>
             <param name="Chart Type" type="ChartType">SUBCHART</param>
@@ -210,9 +200,9 @@
             <param name="Time Frame" type="Integer">20</param>
             <param name="Time Frame ATR" type="Integer">10</param>
             <param name="Ratio" type="Decimal">3</param>
-            <param name="Color Middle" type="Color">GREEN</param>
-            <param name="Color Upper" type="Color">GREEN</param>
-            <param name="Color Lower" type="Color">GREEN</param>
+            <param name="Color Middle" type="Color">1.0,1.0,0.3019608,1.0</param>
+            <param name="Color Upper" type="Color">0.9019608,0.3019608,0.3019608,0.9019608</param>
+            <param name="Color Lower" type="Color">0.4,0.6,0.4,0.6</param>
             <param name="Shape Middle" type="Shape">NONE</param>
             <param name="Shape Upper" type="Shape">NONE</param>
             <param name="Shape Lower" type="Shape">NONE</param>
@@ -285,18 +275,6 @@
             <param name="Shape MVWAP" type="Shape">NONE</param>
             <param name="Stroke MVWAP" type="Stroke">SMALL_LINE</param>
             <param name="Chart Type" type="ChartType">SUBCHART</param>
-        </instance>
-    </indicator>
-    <indicator identifier="TrailingStopLossIndicator">
-        <description>
-            Trailing Stop Loss Indicator
-        </description>
-        <instance category="DEFAULT" id="1">
-            <param name="Threshold" type="Integer">0.1</param>
-            <param name="Color" type="Color">RED</param>
-            <param name="Shape" type="Shape">NONE</param>
-            <param name="Stroke" type="Stroke">SMALL_LINE</param>
-            <param name="Chart Type" type="ChartType">OVERLAY</param>
         </instance>
     </indicator>
     <indicator identifier="TripleEMAIndicator">

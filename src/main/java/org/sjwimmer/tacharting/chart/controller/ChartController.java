@@ -21,6 +21,7 @@ package org.sjwimmer.tacharting.chart.controller;
 
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.MapChangeListener;
 import javafx.collections.ObservableMap;
 import javafx.concurrent.Service;
@@ -53,7 +54,6 @@ import org.ta4j.core.Strategy;
 import org.ta4j.core.TimeSeriesManager;
 import org.ta4j.core.TradingRecord;
 
-import javax.xml.xpath.XPathException;
 import javax.xml.xpath.XPathExpressionException;
 import java.awt.*;
 import java.io.File;
@@ -64,12 +64,14 @@ import java.util.List;
 import static org.sjwimmer.tacharting.chart.parameters.Parameter.EXTENSION_FILTER_CSV;
 import static org.sjwimmer.tacharting.chart.parameters.Parameter.EXTENSION_FILTER_EXCEL;
 
-public class ChartController implements MapChangeListener<String, ChartIndicator>{
+public class ChartController{
 
     private final Logger logger = LoggerFactory.getLogger(ChartController.class);
     private TaChart chart;
-    private final Map<String, CheckMenuItem> itemMap = new HashMap<>();
+    private final Map<IndicatorKey, CheckMenuItem> itemMap = new HashMap<>();
     private final ObservableMap<GeneralTimePeriod, List<SQLKey>> tableKey = FXCollections.observableHashMap();
+
+    private final ToolbarPlotsListener plotsListener = new ToolbarPlotsListener();
 
     private SQLConnector sqlConnector;
 
@@ -221,9 +223,11 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
     public void setIndicatorBox(IndicatorBox box){
         Objects.requireNonNull(box);
         chart = new TaChart(box);
+        chart.currentSubplotKeys.addListener(plotsListener);
+        chart.currentOverlayKeys.addListener(plotsListener);
         VBox.setVgrow(chart, Priority.ALWAYS);
         vbxChart.getChildren().add(chart);
-        box.getIndicartors().addListener(this);
+//        box.getIndicartors().addListener(this);
         buildMenuEntries(box);
         TaTimeSeries series = box.getTimeSeries();
         storeSeries(series);
@@ -261,11 +265,11 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
     private void buildMenuEntries(IndicatorBox box){
 
         final IndicatorParameterManager propsManager = box.getPropertiesManager();
-        for (Map.Entry<String, ChartIndicator> entry : chart.getChartIndicatorBox().getTempIndicators().entrySet()) {
-            addToCategory(entry.getKey(), entry.getValue().getCategory());
+        for (Map.Entry<IndicatorKey, ChartIndicator> entry : chart.getChartIndicatorBox().getTempIndicators().entrySet()) {
+            addToCategory(entry.getKey(), IndicatorCategory.CUSTOM);
         }
-        final List<String> keys = propsManager.getAllKeys();
-        for (String key: keys){
+        final List<IndicatorKey> keys = propsManager.getAllKeys();
+        for (IndicatorKey key: keys){
             try{
                 IndicatorCategory category = propsManager.getCategory(key);
                 addToCategory(key, category);
@@ -292,25 +296,18 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
         strategyMenu.getItems().add(item);
     }
 
-    private void addToCategory(String key, IndicatorCategory category){
-        final String[] el = key.split("_");
-        String name = el[0];
-        String id = "";
-        if(el.length > 1){ // custom indicators or indicators that added during runtime may not have an id separator
-            id = el[1];
-        }
-        CheckMenuItem item = new CheckMenuItem(String.format("%s [%s]", name, id));
-        item.setId(key);
-        itemMap.put(key,item);
+    private void addToCategory(IndicatorKey key, IndicatorCategory category){
+        CheckMenuItem item = new CheckMenuItem(key.toString());
+        item.setId(Integer.toString(key.getId()));
+        itemMap.put(key, item);
         item.setOnAction((a)-> {
-            try {
                 if(item.isSelected()){
-                    chart.getChartIndicatorBox().reloadIndicator(key);
+                    chart.plotIndicator(key);
+                }else{
+                    chart.removeIndicator(key);
                 }
-            } catch (XPathException xpe){
-                //TODO: handle exception..
-                xpe.printStackTrace();
-            } });
+        });
+
         switch(category){
             case DEFAULT:{
                 def.getItems().add(item);
@@ -355,56 +352,6 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
 
     }
 
-    //TODO write class to store this information
-    private Map<String, Button> keyButton = new HashMap<>();
-    private Map<String, Separator> keySeperator = new HashMap<>();
-
-    /**
-     * Update the ToolBar
-     * Called every time an ChartIndicator has been added or removed to the
-     * {@link BaseIndicatorBox chartIndicatorBox} colorOf the underlying {@link TaChart org.sjwimmer.tacharting.chart}
-     *
-     * @param change Change<? extends String, ? extends ChartIndicator>
-     */
-    @Override
-    public void onChanged(Change<? extends String, ? extends ChartIndicator> change) {
-        String key = change.getKey();
-
-        if(change.wasRemoved()){
-            toolBarIndicators.getItems().remove(keyButton.get(key));
-            toolBarIndicators.getItems().remove(keySeperator.get(key));
-            if(!change.wasAdded()) {
-                CheckMenuItem item = itemMap.get(key);
-                if(item!=null){
-                    item.setSelected(false);
-                }
-            }
-        }
-        // it is possible that wasRemoved = wasAdded = true, e.g ObservableMap.put(existingKey, indicator)
-        if(change.wasAdded()) {
-            ChartIndicator indicator = change.getValueAdded();
-            Button btnSetup = new Button(indicator.getGeneralName());
-            btnSetup.setOnAction((event)->{
-                IndicatorPopUpWindow in = IndicatorPopUpWindow.getPopUpWindow(key, chart.getChartIndicatorBox());
-                in.show(btnSetup, MouseInfo.getPointerInfo().getLocation().x, MouseInfo.getPointerInfo().getLocation().y);
-            });
-
-            keyButton.put(key,btnSetup);
-            Separator sep1 = new Separator(Orientation.VERTICAL);
-            keySeperator.put(key, sep1);
-            toolBarIndicators.getItems().add(btnSetup);
-            toolBarIndicators.getItems().add(sep1);
-        }
-    }
-
-    /**
-     * removes all ChartIndicators from the org.sjwimmer.tacharting.chart and toggle bar that are in the toggle bar
-     */
-    public void clearToggleBar(){
-        for (Map.Entry<String, Button> stringButtonEntry : keyButton.entrySet()) {
-            chart.getChartIndicatorBox().removeIndicator(stringButtonEntry.getKey());
-        }
-    }
 
     /**
      * Opens a FileChooser dialog and adds excel or csv ohlc org.sjwimmer.tacharting.data as TimeSeries to the current watchlist
@@ -516,6 +463,10 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
        //TODO: https://www.alphavantage.co/
     }
 
+    public void clearToggleBar(){
+        plotsListener.clearToggleBar();
+    }
+
     /** Table Cells and logic **************************************************************************************/
 
     /**
@@ -564,6 +515,60 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
                     return null;
                 }
             };
+        }
+    }
+
+
+    class ToolbarPlotsListener implements ListChangeListener<IndicatorKey>{
+
+        private Map<IndicatorKey, Button> keyButton = new HashMap<>();
+        private Map<IndicatorKey, Separator> keySeperator = new HashMap<>();
+
+        /**
+         * Update the ToolBar
+         * Called every time an ChartIndicator has been added or removed to the
+         * {@link BaseIndicatorBox chartIndicatorBox} colorOf the underlying {@link TaChart org.sjwimmer.tacharting.chart}
+         *
+         * @param change Change<? extends IndicatorKey, ? extends ChartIndicator>
+         */
+        @Override
+        public void onChanged(Change<? extends IndicatorKey> change) {
+            for (IndicatorKey key : change.getRemoved()) {
+                toolBarIndicators.getItems().remove(keyButton.get(key));
+                toolBarIndicators.getItems().remove(keySeperator.get(key));
+                if (!change.wasAdded()) {
+                    CheckMenuItem item = itemMap.get(key);
+                    if (item != null) {
+                        item.setSelected(false);
+                    }
+                }
+            }
+
+            for (IndicatorKey key : change.getAddedSubList()) {
+                if (change.wasAdded()) {
+
+                    Button btnSetup = new Button(key.toString());
+                    btnSetup.setOnAction((event) -> {
+                        IndicatorPopUpWindow in = IndicatorPopUpWindow.getPopUpWindow(key, chart.getChartIndicatorBox());
+                        in.show(btnSetup, MouseInfo.getPointerInfo().getLocation().x, MouseInfo.getPointerInfo().getLocation().y);
+                    });
+
+                    keyButton.put(key, btnSetup);
+                    Separator sep1 = new Separator(Orientation.VERTICAL);
+                    keySeperator.put(key, sep1);
+                    toolBarIndicators.getItems().add(btnSetup);
+                    toolBarIndicators.getItems().add(sep1);
+                }
+            }
+        }
+
+        /**
+         * removes all ChartIndicators from the org.sjwimmer.tacharting.chart and toggle bar that are in the toggle bar
+         */
+        public void clearToggleBar(){
+            for (Map.Entry<IndicatorKey, Button> stringButtonEntry : keyButton.entrySet()) {
+                chart.getChartIndicatorBox().removeTempIndicator(stringButtonEntry.getKey());
+            }
         }
     }
 }

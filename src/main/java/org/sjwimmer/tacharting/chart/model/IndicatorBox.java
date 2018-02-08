@@ -26,7 +26,6 @@ import org.sjwimmer.tacharting.chart.model.types.IndicatorCategory;
 import org.ta4j.core.Indicator;
 import org.ta4j.core.Strategy;
 
-import javax.xml.xpath.XPathException;
 import java.util.List;
 
 public interface IndicatorBox {
@@ -67,36 +66,25 @@ public interface IndicatorBox {
     ObservableMap<String, Strategy> getAllStrategies();
 
 
-    void addIndicator(String identifier, List<Indicator> indicators, List<String> names, String generalName, XYLineAndShapeRenderer renderer, boolean isSubchart, IndicatorCategory c);
+    void addIndicator(IndicatorKey identifier, List<Indicator> indicators, List<String> names, String generalName, XYLineAndShapeRenderer renderer, boolean isSubchart, IndicatorCategory c);
 
     void addIndicator(Indicator indicator, boolean isSubchart);
 
-    void addIndicator(String identifier, Indicator indicator, boolean isSubchart, IndicatorCategory c);
+    void addIndicator(IndicatorKey identifier, Indicator indicator, boolean isSubchart, IndicatorCategory c);
 
-    void addIndicator(String identifier, Indicator indicator, String name, XYLineAndShapeRenderer renderer, boolean isSubchart, IndicatorCategory c);
+    void addIndicator(IndicatorKey identifier, Indicator indicator, String name, XYLineAndShapeRenderer renderer, boolean isSubchart, IndicatorCategory c);
 
-    void addIndicator(String identifier, ChartIndicator chartIndicator);
+    void addIndicator(IndicatorKey identifier, ChartIndicator chartIndicator);
 
-    void removeIndicator(String key);
+    void removeTempIndicator(IndicatorKey key);
 
-    ObservableMap<String, ChartIndicator> getIndicartors();
+    ObservableMap<IndicatorKey, ChartIndicator> getIndicartors();
 
-    ObservableMap<String, ChartIndicator> getTempIndicators();
+    ObservableMap<IndicatorKey, ChartIndicator> getTempIndicators();
 
-    ChartIndicator getChartIndicator(String identifier);
+    ChartIndicator getChartIndicator(IndicatorKey identifier);
 
     IndicatorParameterManager getPropertiesManager();
 
-    /**
-     * Reloads/Updates all indicators stored in this indicator box
-     */
-    void reloadAll();
-
-    /**
-     * Reloads a specific indicator that is identified by <code>key</code>
-     * @param key identifier of the indicator (for instance: EMAIndicator_1)
-     * @throws IllegalArgumentException IllegalArgumentException if the key does not exist
-     * @throws XPathException if there are problems with xml file
-     */
-    void reloadIndicator(String key) throws IllegalArgumentException, XPathException;
+    ChartIndicator loadIndicator(IndicatorBase base, IndicatorKey key);
 }

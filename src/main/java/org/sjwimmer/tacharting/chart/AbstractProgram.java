@@ -26,6 +26,7 @@ import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import org.sjwimmer.tacharting.chart.controller.ChartController;
 import org.sjwimmer.tacharting.chart.model.BaseIndicatorBox;
+import org.sjwimmer.tacharting.chart.model.IndicatorBox;
 import org.ta4j.core.Indicator;
 import org.ta4j.core.Strategy;
 import org.ta4j.core.TradingRecord;
@@ -47,7 +48,7 @@ public abstract class AbstractProgram extends Application {
 
         Parent root = fxmlLoader.load();
         ChartController controller = fxmlLoader.<ChartController>getController();
-        final BaseIndicatorBox indicatorBox = createIndicatorBox();
+        final IndicatorBox indicatorBox = createIndicatorBox();
         controller.setIndicatorBox(indicatorBox);
         Scene rootScene = new Scene(root);
         URL stylesheetPath = getClass().getClassLoader().getResource(("fxml/charting-root.css"));
@@ -65,7 +66,7 @@ public abstract class AbstractProgram extends Application {
      * @return a {@link BaseIndicatorBox} for the Chart that is used in the {@link #start(Stage) start(Stage) function}
      * colorOf this class
      */
-    abstract public BaseIndicatorBox createIndicatorBox();
+    abstract public IndicatorBox createIndicatorBox();
 
 
 }

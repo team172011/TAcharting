@@ -4,12 +4,10 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import org.sjwimmer.tacharting.chart.model.types.ChartType;
-import org.sjwimmer.tacharting.chart.model.types.IndicatorParameterType;
-import org.sjwimmer.tacharting.chart.model.types.ShapeType;
-import org.sjwimmer.tacharting.chart.model.types.StrokeType;
+import org.sjwimmer.tacharting.chart.model.types.*;
 import org.sjwimmer.tacharting.chart.utils.ConverterUtils;
 
+import java.awt.*;
 import java.util.Objects;
 
 /**
@@ -22,14 +20,14 @@ public class IndicatorParameter{
 
     private final StringProperty description;
     private final ObjectProperty<IndicatorParameterType> type;
-    private final StringProperty value;
+    private final StringProperty value; //TODO not needed anymore?
 
     public IndicatorParameter(String description, IndicatorParameterType type, String value){
         Objects.requireNonNull(description,"Must be not null");
         Objects.requireNonNull(type,"Must be not null");
         Objects.requireNonNull(value,"Must be not null");
         this.description = new SimpleStringProperty(description);
-        this.type = new SimpleObjectProperty<IndicatorParameterType>(type);
+        this.type = new SimpleObjectProperty<>(type);
         this.value = new SimpleStringProperty(value);
     }
 
@@ -41,10 +39,6 @@ public class IndicatorParameter{
         return description;
     }
 
-    public void setDescription(String description) {
-        this.description.set(description);
-    }
-
     public IndicatorParameterType getType() {
         return type.get();
     }
@@ -53,18 +47,50 @@ public class IndicatorParameter{
         return type;
     }
 
-    public void setType(IndicatorParameterType type) {
-        this.type.set(type);
-    }
-
     public StringProperty valueProperty() {
         return value;
     }
 
-    public void setValue(String value) {
-        this.value.set(value);
+    public Color getColor(){
+       return ConverterUtils.ColorAWTConverter.fromString(value.get());
     }
 
+    public Shape getShape(){
+        return ShapeType.valueOf(value.get()).shape;
+    }
+
+    public Stroke getStroke(){
+        return StrokeType.valueOf(value.get()).stroke;
+    }
+
+    public ChartType getChartType(){
+        return ChartType.valueOf(value.get());
+    }
+
+    public int getInteger(){
+        return Integer.parseInt(value.get());
+    }
+
+    public Double getDouble(){
+        return Double.parseDouble(value.get());
+    }
+
+    public String getString(){
+        return value.get();
+    }
+
+    public boolean getBoolean(){
+        return Boolean.valueOf(value.get());
+    }
+
+    public IndicatorType getIndicator(){
+        return IndicatorType.valueOf(value.get());
+    }
+
+    /**
+     * Returns the converted or casted value as object
+     * @return
+     */
     public Object getValue(){
         switch (type.get()){
             case COLOR:{
@@ -90,6 +116,9 @@ public class IndicatorParameter{
             }
             case CHARTTYPE:{
                 return ChartType.valueOf(value.get());
+            }
+            case INDICATOR:{
+                return IndicatorType.valueOf(value.get());
             }
         }
         return value.get();

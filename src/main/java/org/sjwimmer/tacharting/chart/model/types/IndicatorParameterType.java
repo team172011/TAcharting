@@ -33,6 +33,7 @@ public enum IndicatorParameterType{
     SHAPE("Shape"),
     STROKE("Stroke"),
     COLOR("Color"),
+    INDICATOR("Indicator"),
     CHARTTYPE("ChartType");
 
     public final String name;

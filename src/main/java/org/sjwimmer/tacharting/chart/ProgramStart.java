@@ -20,11 +20,12 @@ package org.sjwimmer.tacharting.chart;
 
 import javafx.stage.Stage;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
+import org.sjwimmer.tacharting.chart.api.BaseIndicatorParameterManager;
 import org.sjwimmer.tacharting.chart.api.IndicatorParameterManager;
 import org.sjwimmer.tacharting.chart.model.BaseIndicatorBox;
+import org.sjwimmer.tacharting.chart.model.IndicatorBox;
 import org.sjwimmer.tacharting.chart.model.TaTimeSeries;
 import org.sjwimmer.tacharting.chart.model.types.GeneralTimePeriod;
-import org.sjwimmer.tacharting.chart.model.types.IndicatorCategory;
 import org.sjwimmer.tacharting.chart.model.types.ShapeType;
 import org.sjwimmer.tacharting.example.Loader;
 import org.ta4j.core.*;
@@ -49,7 +50,7 @@ public class ProgramStart extends AbstractProgram {
      * @return a {@link BaseIndicatorBox} for the Chart that is used in the {@link #start(Stage) start(Stage) function}
      */
     @Override
-    public BaseIndicatorBox createIndicatorBox() {
+    public IndicatorBox createIndicatorBox() {
 
         TimeSeries series = Loader.getDailyTimeSeries("fb_daily.csv");
 
@@ -66,7 +67,7 @@ public class ProgramStart extends AbstractProgram {
 
         // initialize and add your indicators to the ChartIndicatorBox
         TaTimeSeries taTimeSeries = new TaTimeSeries(series, Currency.getInstance("USD"), GeneralTimePeriod.DAY);
-        BaseIndicatorBox chartIndicatorBox = new BaseIndicatorBox(taTimeSeries);
+        IndicatorBox chartIndicatorBox = new BaseIndicatorBox(taTimeSeries, new BaseIndicatorParameterManager());
 
         // two indicators in one subplot:
         XYLineAndShapeRenderer macRenderer = new XYLineAndShapeRenderer(); // specify how the lines should be rendered
@@ -77,7 +78,7 @@ public class ProgramStart extends AbstractProgram {
 
         List<Indicator> indicatorList = Arrays.asList(macd,emaMacd);
         List<String> nameList = Arrays.asList("macd","emaMacd");
-        chartIndicatorBox.addIndicator("Straregy_1",indicatorList,nameList,"My macd/emaMacd Strategy",macRenderer,true,IndicatorCategory.CUSTOM);
+        //chartIndicatorBox.addIndicator("Straregy_1",indicatorList,nameList,"My macd/emaMacd Strategy",macRenderer,true,IndicatorCategory.CUSTOM);
 
 
         // add strategies
