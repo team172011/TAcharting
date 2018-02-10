@@ -40,10 +40,10 @@ import java.util.List;
  */
 public class BaseIndicatorBox implements IndicatorBox {
 
-    final SimpleObjectProperty<TaTimeSeries> currentSeries;
-    final ObservableList<IndicatorKey> indicatorKeys;
-    final IndicatorParameterManager parameterManager;
-    final ObservableMap<String, Strategy> strategies = FXCollections.observableHashMap();
+    private final SimpleObjectProperty<TaTimeSeries> currentSeries;
+    private final ObservableList<IndicatorKey> indicatorKeys;
+    private final IndicatorParameterManager parameterManager;
+    private final ObservableMap<String, Strategy> strategies = FXCollections.observableHashMap();
 
 
     public BaseIndicatorBox(TaTimeSeries series, IndicatorParameterManager parameterManager){
@@ -136,7 +136,7 @@ public class BaseIndicatorBox implements IndicatorBox {
     }
 
     @Override
-    public ChartIndicator loadIndicator(IndicatorBase base, IndicatorKey key) throws IllegalArgumentException, XPathException {
-        return CreateFunctions.functions.get(key.getType()).apply(base,parameterManager.getParametersFor(key));
+    public ChartIndicator loadIndicator(AbstractBase base, IndicatorKey key) throws IllegalArgumentException, XPathException {
+        return CreateFunctions.functions.get(key.getType()).apply(base, parameterManager.getParametersFor(key));
     }
 }

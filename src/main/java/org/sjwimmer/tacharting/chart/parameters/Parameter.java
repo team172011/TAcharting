@@ -50,6 +50,10 @@ public  class Parameter {
         VOLUME
     }
 
+    /** Common parameter names*****************************************************************************************/
+    public final static String id = "id";
+    public final static String tf = "Time Frame";
+
     /** Files *********************************************************************************************************/
     public final static String USER_HOME = System.getProperty("user.home");
     public final static char S = System.getProperty("file.separator").charAt(0);

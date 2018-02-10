@@ -135,7 +135,7 @@ public class IndicatorPopUpWindow extends PopupControl {
                         }
                         propertiesManager.setParameter(key, param.getValue().getDescription(), valueToStore);
                     }
-                    indicatorBox.reloadIndicator(key);
+                    //indicatorBox.loadIndicator(key);
                     hide();
                 } catch (XPathExpressionException | IOException | TransformerException xpe) {
                     //TODO handle..

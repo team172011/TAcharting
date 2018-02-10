@@ -42,44 +42,44 @@ import java.util.Map;
 public class ChartIndicator {
 
     private int internalId = -1;
-    private Map<Integer, String> internalMapping = new HashMap<>();
-    private Map<String, Indicator<Decimal>> indicators = new HashMap<>();
-    private XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer();
+    private final Map<Integer, String> internalMapping = new HashMap<>();
+    private final Map<String, Indicator<Decimal>> indicators = new HashMap<>();
+    private final XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer();
     private IndicatorKey key;
     private ChartType chartType;
     private IndicatorCategory category;
 
     private TimeSeriesCollection collection = new TimeSeriesCollection();
 
-    public ChartIndicator(IndicatorKey key){
+    public ChartIndicator(IndicatorKey key, ChartType type){
         this.key = key;
+        this.chartType = type;
     }
 
     public void addIndicator(Indicator<Decimal> indicator){
-        addIndicator(indicator,indicator.toString(),Color.BLACK, ShapeType.LINE.shape, StrokeType.SMALL_LINE.stroke, ChartType.OVERLAY);
+        addIndicator(indicator,indicator.toString(),Color.BLACK, ShapeType.LINE.shape, StrokeType.SMALL_LINE.stroke);
     }
 
-    public void addIndicator(Indicator<Decimal> indicator, Color color, String name, ShapeType shapeType, StrokeType strokeType,ChartType type){
-        addIndicator(indicator, name, color, shapeType.shape,strokeType.stroke,type);
+    public void addIndicator(Indicator<Decimal> indicator, Color color, String name, ShapeType shapeType, StrokeType strokeType){
+        addIndicator(indicator, name, color, shapeType.shape,strokeType.stroke);
     }
 
     /**
-     * Adds a new indicator to this ChartIndicator
+     * Adds a new indicator to this ChartIndicato
+     *
      * @param indicator the {@link Indicator}
      * @param name the name of the indicator
      * @param color color for renderer
      * @param shape shape for renderer
      * @param stroke stroke for renderer
-     * @param type the kind of chart (Overlay or Subplot)
      */
-    public void addIndicator(Indicator<Decimal> indicator, String name, Color color, Shape shape, Stroke stroke, ChartType type){
+    public void addIndicator(Indicator<Decimal> indicator, String name, Color color, Shape shape, Stroke stroke){
         internalId++;
         indicators.put(name,indicator);
         internalMapping.put(internalId,name);
         renderer.setSeriesPaint(internalId,color);
         renderer.setSeriesShape(internalId,shape);
         renderer.setSeriesStroke(internalId,stroke);
-        this.chartType = type;
         org.jfree.data.time.TimeSeries chartTimeSeries = new org.jfree.data.time.TimeSeries(name); //TODO maybe store name here?
         org.ta4j.core.TimeSeries series = indicator.getTimeSeries();
         for(int i = series.getBeginIndex(); i <= series.getEndIndex(); i++){
@@ -87,6 +87,10 @@ public class ChartIndicator {
             chartTimeSeries.add(new Second(new Date(t.getEndTime().toEpochSecond() * 1000)), indicator.getValue(i).doubleValue());
         }
         collection.addSeries(chartTimeSeries);
+    }
+
+    public void setChartType(ChartType type){
+        this.chartType = type;
     }
 
     /**
@@ -139,5 +143,13 @@ public class ChartIndicator {
         for(int i = 0; i<indicators.size();i++){
             renderer.setSeriesVisible(i, visible);
         }
+    }
+
+    public Indicator<Decimal> getIndicator(String name){
+        return indicators.get(name);
+    }
+
+    public Indicator<Decimal> getIndicator(int i){
+        return indicators.get(internalMapping.get(i));
     }
 }

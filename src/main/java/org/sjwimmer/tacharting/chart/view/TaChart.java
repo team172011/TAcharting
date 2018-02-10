@@ -69,8 +69,6 @@ public class TaChart extends StackPane implements MapChangeListener<IndicatorKey
     public final ObservableList<IndicatorKey> currentOverlayKeys = FXCollections.observableArrayList();
     public final ObservableList<IndicatorKey> currentSubplotKeys = FXCollections.observableArrayList();
 
-
-
     /**
      * Constructor.
      * @param box a ChartIndicatorBox
@@ -80,6 +78,7 @@ public class TaChart extends StackPane implements MapChangeListener<IndicatorKey
         this.chartIndicatorBox = box;
 //        this.chartIndicatorBox.getIndicartors().addListener(this);
         XYDataset candlesBarData = createOHLCDataset(chartIndicatorBox.getTimeSeries());
+
         this.mainPlot = createMainPlot(candlesBarData);
         this.combinedXYPlot = createCombinedDomainXYPlot(mainPlot);
         this.setCache(true);
@@ -94,8 +93,9 @@ public class TaChart extends StackPane implements MapChangeListener<IndicatorKey
         legend.setItemFont(new Font("Arial", Font.BOLD, 12));
         Color legendBackground = new Color(0, 0, 0, 0);
         legend.setBackgroundPaint(legendBackground);
-
-        chartIndicatorBox.getObservableTimeSeries().addListener((ob, o, n) -> reloadTimeSeries(n));
+        chartIndicatorBox.getObservableTimeSeries().addListener((ob, o, n) -> {
+            reloadTimeSeries(n);
+        });
     }
 
     public IndicatorBox getChartIndicatorBox() {
@@ -304,7 +304,7 @@ public class TaChart extends StackPane implements MapChangeListener<IndicatorKey
      * @param series a time series
      * @return an Open-High-Low-Close dataset
      */
-    private static OHLCDataset createOHLCDataset(TimeSeries series) {
+    private static XYDataset createOHLCDataset(TimeSeries series) {
         final int nbBars = series.getBarCount();
 
         Date[] dates = new Date[nbBars];
@@ -323,7 +323,6 @@ public class TaChart extends StackPane implements MapChangeListener<IndicatorKey
             closes[i] = Bar.getClosePrice().doubleValue();
             volumes[i] = Bar.getVolume().doubleValue();
         }
-
         return new DefaultHighLowDataset(series.getName(), dates, highs, lows, opens, closes, volumes);
     }
 
@@ -358,7 +357,7 @@ public class TaChart extends StackPane implements MapChangeListener<IndicatorKey
         }
     }
 
-    public void plotIndicator(IndicatorBase base, IndicatorKey key) {
+    public void plotIndicator(AbstractBase base, IndicatorKey key) throws Exception{
         ChartIndicator indicator = chartIndicatorBox.loadIndicator(base, key);
         if(indicator==null){
             log.error("Could not load Indicator for key {}",key.toString());

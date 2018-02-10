@@ -119,7 +119,9 @@ public class BaseIndicatorParameterManager implements IndicatorParameterManager 
         String command = String.format("//indicator[@identifier='%s']/instance[@id='%s']/param[@name='%s']/text()",key.getType().toString(),key.getId(),paramName);
         XPathExpression expr = xPath.compile(command);
         Node resultNode = (Node) expr.evaluate(doc, XPathConstants.NODE);
-        //String content = resultNode.getTextContent();
+        if(resultNode == null){
+            return null;
+        }
         return resultNode.getTextContent();
     }
 
@@ -274,7 +276,7 @@ public class BaseIndicatorParameterManager implements IndicatorParameterManager 
         NodeList nodes = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
         Map<String,IndicatorParameter> parameters = new HashMap<>();
         // id is also needed:
-        parameters.put("id", new IndicatorParameter("id", IndicatorParameterType.INTEGER, Integer.toString(key.getId())));
+        parameters.put("id", new IndicatorParameter(Parameter.id, IndicatorParameterType.INTEGER, Integer.toString(key.getId())));
         for (int i = 0; i<nodes.getLength(); i++){
             Node node = nodes.item(i);
             if(node.getNodeType()==Node.ELEMENT_NODE){

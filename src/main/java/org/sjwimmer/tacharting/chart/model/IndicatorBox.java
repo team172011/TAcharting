@@ -86,5 +86,5 @@ public interface IndicatorBox {
 
     IndicatorParameterManager getPropertiesManager();
 
-    ChartIndicator loadIndicator(IndicatorBase base, IndicatorKey key);
+    ChartIndicator loadIndicator(AbstractBase base, IndicatorKey key) throws Exception;
 }

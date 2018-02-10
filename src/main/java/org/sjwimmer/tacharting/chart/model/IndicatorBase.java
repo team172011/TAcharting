@@ -1,33 +1,33 @@
 package org.sjwimmer.tacharting.chart.model;
 
+public class IndicatorBase extends AbstractBase{
 
-import org.ta4j.core.Decimal;
-import org.ta4j.core.Indicator;
-import org.ta4j.core.TimeSeries;
+    private final ChartIndicator indicator;
+    private final String name;
 
 
-public class IndicatorBase {
-
-    private final Indicator<Decimal> indicator;
-    private final TimeSeries series;
-
-    public IndicatorBase(Indicator<Decimal> indicator){
-        this.series = indicator.getTimeSeries();
+    public IndicatorBase(ChartIndicator indicator){
+        super(BaseType.INDICATOR);
         this.indicator = indicator;
+        this.name = "";
     }
 
-    public IndicatorBase(TimeSeries series){
-        this.series = series;
-        indicator = null;
+    /**
+     *
+     * @param indicator the {@link ChartIndicator} that is the base added indicator
+     * @param name the name of the ta4j indiator in indicator (default is the first that was added)
+     */
+    public IndicatorBase(ChartIndicator indicator, String name){
+        super(BaseType.INDICATOR);
+        this.indicator = indicator;
+        this.name = name;
     }
 
-    public Indicator<Decimal> getIndicator(){
-        return this.indicator;
+    public ChartIndicator getIndicator(){
+        return indicator;
     }
 
-    public TimeSeries getSeries(){
-        return this.series;
+    public String getName() {
+        return name;
     }
-
-
 }

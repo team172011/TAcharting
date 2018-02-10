@@ -20,10 +20,7 @@
 package org.sjwimmer.tacharting.chart.controller;
 
 import javafx.application.Platform;
-import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
-import javafx.collections.MapChangeListener;
-import javafx.collections.ObservableMap;
+import javafx.collections.*;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
@@ -46,6 +43,7 @@ import org.sjwimmer.tacharting.chart.model.*;
 import org.sjwimmer.tacharting.chart.model.types.GeneralTimePeriod;
 import org.sjwimmer.tacharting.chart.model.types.IndicatorCategory;
 import org.sjwimmer.tacharting.chart.parameters.Parameter;
+import org.sjwimmer.tacharting.chart.view.IndicatorManager;
 import org.sjwimmer.tacharting.chart.view.IndicatorPopUpWindow;
 import org.sjwimmer.tacharting.chart.view.TaChart;
 import org.slf4j.Logger;
@@ -302,7 +300,9 @@ public class ChartController{
         itemMap.put(key, item);
         item.setOnAction((a)-> {
                 if(item.isSelected()){
-                    chart.plotIndicator(key);
+                    ObservableList<IndicatorKey> currentPlots = chart.currentOverlayKeys;
+                    currentPlots.addAll(chart.currentSubplotKeys);
+                    IndicatorManager indicatorManager = new IndicatorManager(key,FXCollections.observableArrayList(currentPlots));
                 }else{
                     chart.removeIndicator(key);
                 }
