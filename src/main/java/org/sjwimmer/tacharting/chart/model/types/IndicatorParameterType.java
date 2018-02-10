@@ -33,6 +33,7 @@ public enum IndicatorParameterType{
     SHAPE("Shape"),
     STROKE("Stroke"),
     COLOR("Color"),
+    SERIES("Series"),
     INDICATOR("Indicator"),
     CHARTTYPE("ChartType");
 

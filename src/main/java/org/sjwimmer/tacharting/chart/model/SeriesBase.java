@@ -1,5 +1,7 @@
 package org.sjwimmer.tacharting.chart.model;
 
+import org.sjwimmer.tacharting.chart.model.types.BaseType;
+
 public class SeriesBase extends AbstractBase {
 
     private final TaTimeSeries series;
