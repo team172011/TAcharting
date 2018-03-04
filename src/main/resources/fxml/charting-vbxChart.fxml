@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.VBox?>
+<fx:root type="javafx.scene.layout.VBox" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:id="vbxChart">
+    <MenuBar id="chartMenuBar">
+        <menus>
+            <Menu mnemonicParsing="false" text="Add Indicator" fx:id="indicatorsMenu">
+                <items>
+                    <Menu id="chartMenuItem" mnemonicParsing="false" text="Custom" fx:id="custom" />
+                    <Menu id="chartMenuItem" mnemonicParsing="false" text="Default" fx:id="def" />
+                    <Menu id="chartMenuItem" mnemonicParsing="false" text="Bollinger" fx:id="bollinger" />
+                    <Menu id="chartMenuItem" mnemonicParsing="false" text="Helpers" fx:id="helpers" />
+                    <Menu id="chartMenuItem" mnemonicParsing="false" text="Ichimoku" fx:id="ichimoku" />
+                    <Menu id="chartMenuItem" mnemonicParsing="false" text="Statistics" fx:id="statistics" />
+                    <Menu id="chartMenuItem" mnemonicParsing="false" text="Candles" fx:id="candles" />
+                    <Menu id="chartMenuItem" mnemonicParsing="false" text="Volume" fx:id="volume" />
+                    <Menu id="chartMenuItem" mnemonicParsing="false" text="Keltner" fx:id="keltner" />
+                </items>
+            </Menu>
+            <Menu mnemonicParsing="false" text="Strategies" fx:id="strategyMenu" />
+        </menus>
+    </MenuBar>
+    <ToolBar fx:id="toolBarIndicators" prefHeight="39.0" prefWidth="600.0">
+        <items>
+            <Button fx:id="clearAll" mnemonicParsing="false" text="Clear All" />
+            <Separator orientation="VERTICAL" />
+        </items>
+    </ToolBar>
+</fx:root>

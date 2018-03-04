@@ -20,7 +20,7 @@ package org.sjwimmer.tacharting.chart.api;
 
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
-import org.sjwimmer.tacharting.chart.api.settings.YahooSettingsManager;
+import org.sjwimmer.tacharting.chart.controller.manager.YahooSettingsManager;
 import org.sjwimmer.tacharting.chart.model.TaTimeSeries;
 import org.sjwimmer.tacharting.chart.model.types.TimeFormatType;
 import org.sjwimmer.tacharting.chart.model.types.YahooTimePeriod;

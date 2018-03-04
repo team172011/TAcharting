@@ -88,45 +88,52 @@
 
 
     <dependencies>
-    <dependency>
-        <groupId>org.ta4j</groupId>
-        <artifactId>ta4j-core</artifactId>
-        <version>0.11</version>
-    </dependency>    
-    <dependency>
-    <groupId>org.jfree</groupId>
-    	<artifactId>jfreechart</artifactId>
-    	<version>1.5.0</version>
-	</dependency>
-    <!-- https://mvnrepository.com/artifact/org.jfree/jfreechart-fx -->
-    <dependency>
+        <dependency>
+            <groupId>org.ta4j</groupId>
+            <artifactId>ta4j-core</artifactId>
+            <version>0.11</version>
+        </dependency>
+        <dependency>
         <groupId>org.jfree</groupId>
-        <artifactId>jfreechart-fx</artifactId>
-        <version>1.0.0</version>
-    </dependency>
-        <!--OpenCSV -->
-	<dependency>
-	    <groupId>com.opencsv</groupId>
-	    <artifactId>opencsv</artifactId>
-	    <version>4.0</version>
-	</dependency>
-    <!-- Logging https://www.slf4j.org/ -->
-    <dependency>
-        <groupId>ch.qos.logback</groupId>
-        <artifactId>logback-classic</artifactId>
-        <version>1.0.13</version>
-    </dependency>
-    <!-- Apache POI https://poi.apache.org/download.html -->
-    <dependency>
-        <groupId>org.apache.poi</groupId>
-        <artifactId>poi-ooxml</artifactId>
-        <version>LATEST</version>
-    </dependency>
-    <!-- https://mvnrepository.com/artifact/org.xerial/sqlite-jdbc -->
-    <dependency>
-        <groupId>org.xerial</groupId>
-        <artifactId>sqlite-jdbc</artifactId>
-        <version>3.21.0.1</version>
-    </dependency>
-</dependencies>
+            <artifactId>jfreechart</artifactId>
+            <version>1.5.0</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.jfree/jfreechart-fx -->
+        <dependency>
+            <groupId>org.jfree</groupId>
+            <artifactId>jfreechart-fx</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+            <!--OpenCSV -->
+        <dependency>
+            <groupId>com.opencsv</groupId>
+            <artifactId>opencsv</artifactId>
+            <version>4.0</version>
+        </dependency>
+        <!-- Logging https://www.slf4j.org/ -->
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.0.13</version>
+        </dependency>
+        <!-- Apache POI https://poi.apache.org/download.html -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>LATEST</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.xerial/sqlite-jdbc -->
+        <dependency>
+            <groupId>org.xerial</groupId>
+            <artifactId>sqlite-jdbc</artifactId>
+            <version>3.21.0.1</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/javax.json/javax.json-api -->
+        <dependency>
+            <groupId>org.glassfish</groupId>
+            <artifactId>javax.json</artifactId>
+            <version>1.1</version>
+        </dependency>
+
+    </dependencies>
 </project>

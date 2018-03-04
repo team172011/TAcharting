@@ -20,10 +20,8 @@ package org.sjwimmer.tacharting.chart.utils;
 
 import javafx.scene.paint.Color;
 import javafx.util.StringConverter;
-import org.sjwimmer.tacharting.chart.model.types.ChartType;
-import org.sjwimmer.tacharting.chart.model.types.ShapeType;
-import org.sjwimmer.tacharting.chart.model.types.StrokeType;
-import org.sjwimmer.tacharting.chart.model.types.TimeFormatType;
+import org.sjwimmer.tacharting.chart.model.IndicatorKey;
+import org.sjwimmer.tacharting.chart.model.types.*;
 import org.sjwimmer.tacharting.chart.parameters.Parameter;
 
 /**
@@ -131,5 +129,22 @@ public class ConverterUtils {
         public ChartType fromString(String string) {
             return ChartType.valueOf(string);
         }
+    };
+
+    public static StringConverter<IndicatorKey> IndicatorKeyConverter = new StringConverter<IndicatorKey>() {
+        @Override
+        public String toString(IndicatorKey object) {
+            return object.getType()+"_"+object.getId();
+        }
+
+        @Override
+        public IndicatorKey fromString(String string) {
+            String[] elements = string.toUpperCase().split("_");
+            if (elements.length < 2) {
+                return new IndicatorKey(IndicatorType.valueOf(elements[0]), 0);
+            }
+            return new IndicatorKey(IndicatorType.valueOf(elements[0]), Integer.parseInt(elements[1]));
+        }
+
     };
 }

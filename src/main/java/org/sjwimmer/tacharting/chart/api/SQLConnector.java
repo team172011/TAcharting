@@ -24,9 +24,9 @@ public interface SQLConnector extends Connector<SQLKey> {
     List<SQLKey> getKeyList(GeneralTimePeriod table) throws SQLException;
 
     /**
-     * Removes all entries which had the key of the <tt>series</tt> key consists of {@link TaTimeSeries#getName()},
+     * Removes all entries which had the key of the <tt>currentSeries</tt> key consists of {@link TaTimeSeries#getName()},
      * {@link Currency#getCurrencyCode()}, {@link GeneralTimePeriod}
-     * @param series the series with the key (could be empty)
+     * @param series the currentSeries with the key (could be empty)
      * @throws SQLException SQLException
      */
     boolean removeData(TaTimeSeries series) throws SQLException;
@@ -34,16 +34,16 @@ public interface SQLConnector extends Connector<SQLKey> {
     boolean removeData(SQLKey key) throws SQLException;
 
     /**
-     * Inserts the data of the <tt>series</tt> into the corresponding table (see {@link GeneralTimePeriod})
-     * @param series the time series to store
+     * Inserts the data of the <tt>currentSeries</tt> into the corresponding table (see {@link GeneralTimePeriod})
+     * @param series the time currentSeries to store
      * @param replace if true existing entries will be overwritten
      * @throws SQLException SQLException
      */
     void insertData(TaTimeSeries series, boolean replace) throws SQLException;
 
     /**
-     * Returns a time series object that stores the available data of the symbol,currency,period combination
-     * @param key the key for the series to load from database
+     * Returns a time currentSeries object that stores the available data of the symbol,currency,period combination
+     * @param key the key for the currentSeries to load from database
      * @param from date from
      * @param to date to
      * @return11
@@ -52,16 +52,16 @@ public interface SQLConnector extends Connector<SQLKey> {
     TaTimeSeries getSeries(SQLKey key, ZonedDateTime from, ZonedDateTime to) throws SQLException;
 
     /**
-     * Returns the last recent available bar of the time series with the <code>key</code>
-     * @param key the {@link SQLKey key} that identifies the time series
-     * @return the last recent bar
+     * Returns the last recent available BAR of the time currentSeries with the <code>key</code>
+     * @param key the {@link SQLKey key} that identifies the time currentSeries
+     * @return the last recent BAR
      */
     Bar getLastBar(SQLKey key);
 
     /**
-     * Returns the earliest available bar of the time series with the <code>key</code>
-     * @param key the {@link SQLKey key} that identifies the time series
-     * @return the earliest available bar
+     * Returns the earliest available BAR of the time currentSeries with the <code>key</code>
+     * @param key the {@link SQLKey key} that identifies the time currentSeries
+     * @return the earliest available BAR
      */
     Bar getFirstBar(SQLKey key);
 }

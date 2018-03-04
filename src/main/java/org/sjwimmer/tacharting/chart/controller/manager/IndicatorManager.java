@@ -1,4 +1,4 @@
-package org.sjwimmer.tacharting.chart.view;
+package org.sjwimmer.tacharting.chart.controller.manager;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;

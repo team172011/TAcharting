@@ -42,7 +42,7 @@ public class FormatUtils {
 
     /**
      * Tries to find the needed columns from a header row
-     * @param firstLine line with the header descriptions (e.g.: time, open, high, low, close, volume...)
+     * @param firstLine LINE with the header descriptions (e.g.: time, open, high, low, close, volume...)
      * @return a Map with index and the corresponding column description
      */
     public static <T extends Iterable<String>> Map<Parameter.Columns, Integer> getHeaderMap(T firstLine) {
@@ -79,7 +79,7 @@ public class FormatUtils {
 
     /**
      * Extracts the OHLC org.sjwimmer.tacharting.data from a string array into a Bar object
-     * @param headerMap the header maps that maps indices colorOf the <tt>line</tt> to the {@link Parameter.Columns columns}
+     * @param headerMap the header maps that maps indices colorOf the <tt>LINE</tt> to the {@link Parameter.Columns columns}
      * @param formatPattern the {@link DateTimeFormatter dateTimeFormatter}
      * @param line the string array with corresponding entries for the Bar
      * @return a {@link Bar Bar} object with the ohlc org.sjwimmer.tacharting.data
@@ -126,17 +126,17 @@ public class FormatUtils {
     }
 
     /**
-     * Run over the Bars of a time series and return their {@link GeneralTimePeriod}
-     * @param series the time series
+     * Run over the Bars of a time currentSeries and return their {@link GeneralTimePeriod}
+     * @param series the time currentSeries
      * @return the underlying {@link GeneralTimePeriod} (minimum gap between end time of two consecutive Bars of the
-     * complete time series or the minimum gap of at least 20 percent of consecutive Bars of the <tt>series</tt>
+     * complete time currentSeries or the minimum gap of at least 20 percent of consecutive Bars of the <tt>currentSeries</tt>
      */
     public static GeneralTimePeriod extractPeriod(TimeSeries series){
         long minDiff = Long.MAX_VALUE;
         int counter=0;
         double threshold = series.getBarCount()*0.2;
         // get the index i and i+1 of the Bars with min diff
-        // stop if 20% of the series have the same minDiff
+        // stop if 20% of the currentSeries have the same minDiff
         for(int i=0;i<series.getBarCount()-1;i++){
             Bar Bar = series.getBar(i);
             Bar next = series.getBar(i+1);
@@ -170,7 +170,7 @@ public class FormatUtils {
             return GeneralTimePeriod.YEAR;
         }
         throw new IllegalArgumentException(
-                String.format("TimePeriod of series %s could not be extracted minDiff (seconds): %s",series.getName(),minDiff));
+                String.format("TimePeriod of currentSeries %s could not be extracted minDiff (seconds): %s",series.getName(),minDiff));
     }
 
 
@@ -211,6 +211,15 @@ public class FormatUtils {
             }
             case "BOOLEAN": {
                 return BOOLEAN;
+            }
+            case "INDICATOR":{
+                return INDICATOR;
+            }
+            case "SERIES":{
+                return SERIES;
+            }
+            case "CHARTINDICATOR":{
+                return CHARTINDICATOR;
             }
             default: {
                 return STRING;

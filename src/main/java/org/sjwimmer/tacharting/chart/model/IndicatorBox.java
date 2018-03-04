@@ -21,27 +21,28 @@ package org.sjwimmer.tacharting.chart.model;
 import javafx.beans.value.ObservableObjectValue;
 import javafx.collections.ObservableMap;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
-import org.sjwimmer.tacharting.chart.api.IndicatorParameterManager;
+import org.sjwimmer.tacharting.chart.controller.manager.IndicatorParameterManager;
 import org.sjwimmer.tacharting.chart.model.types.IndicatorCategory;
 import org.ta4j.core.Indicator;
 import org.ta4j.core.Strategy;
 
+import javax.xml.xpath.XPathException;
 import java.util.List;
 
 public interface IndicatorBox {
 
     /**
-     * Sets the current {@link TaTimeSeries series} of this indicator box
+     * Sets the current {@link TaTimeSeries currentSeries} of this indicator box
      * All dynamical added indicators (via runtime through {@link #addIndicator(Indicator, boolean) addIndicator(...)}
      * will be deleted or updated // TODO: check if it is possible to update a custom indicator
      * All static added indicators (loaded fom xml file) will be reloaded so that they contain correct data
-     * @param series the {@link TaTimeSeries time series}
+     * @param series the {@link TaTimeSeries time currentSeries}
      */
     void setTimeSeries(TaTimeSeries series);
 
     /**
-     * Returns the {@link TaTimeSeries time series} stored in this indicator box
-     * @return the time series
+     * Returns the {@link TaTimeSeries time currentSeries} stored in this indicator box
+     * @return the time currentSeries
      */
     TaTimeSeries getTimeSeries();
     ObservableObjectValue<TaTimeSeries> getObservableTimeSeries();
@@ -86,5 +87,5 @@ public interface IndicatorBox {
 
     IndicatorParameterManager getPropertiesManager();
 
-    ChartIndicator loadIndicator(AbstractBase base, IndicatorKey key) throws Exception;
+    ChartIndicator loadIndicator(IndicatorKey key) throws IllegalArgumentException, XPathException;
 }

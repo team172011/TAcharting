@@ -12,7 +12,7 @@ public interface Connector<T> {
 
     /**
      * @param resource the resource <code>T</code> of the financial data
-     * @return a {@link TaTimeSeries series} of the financial data
+     * @return a {@link TaTimeSeries currentSeries} of the financial data
      * @throws Exception Exception
      */
     TaTimeSeries getSeries(T resource) throws Exception;

@@ -16,9 +16,8 @@
  COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-package org.sjwimmer.tacharting.chart.api;
+package org.sjwimmer.tacharting.chart.controller.manager;
 
-import com.sun.org.apache.xml.internal.dtm.ref.DTMNodeList;
 import org.sjwimmer.tacharting.chart.controller.ChartController;
 import org.sjwimmer.tacharting.chart.model.BaseIndicatorBox;
 import org.sjwimmer.tacharting.chart.model.ChartIndicator;
@@ -30,10 +29,7 @@ import org.sjwimmer.tacharting.chart.utils.ConverterUtils;
 import org.sjwimmer.tacharting.chart.utils.FormatUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
+import org.w3c.dom.*;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -82,7 +78,9 @@ public class BaseIndicatorParameterManager implements IndicatorParameterManager 
             File propertiesFile = new File(Parameter.USER_INDICATOR_PROPERTIES_FILE);
             if(!propertiesFile.exists()){
                 throw new FileNotFoundException(
-                        String.format("Properties file could not be found. Should be in %s",Parameter.USER_INDICATOR_PROPERTIES_FILE));
+                        String.format("Properties file could not be found. Should be in %s. Restarting the" +
+                                "Application will create a new default one",
+                                Parameter.USER_INDICATOR_PROPERTIES_FILE));
             }
             DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
@@ -142,12 +140,6 @@ public class BaseIndicatorParameterManager implements IndicatorParameterManager 
         return IndicatorCategory.valueOf(categorie);
     }
 
-    //TODO overload those with extra int id for further color, shape and stroke params
-    @Override
-    public Shape getShapeOf(IndicatorKey key) throws XPathExpressionException {
-        return getShapeOf(key,"Shape");
-    }
-
     @Override
     public Shape getShapeOf(IndicatorKey key, String name) throws XPathExpressionException {
         Node node = getNodeForInstance(key);
@@ -161,11 +153,6 @@ public class BaseIndicatorParameterManager implements IndicatorParameterManager 
     }
 
     @Override
-    public Paint getColorOf(IndicatorKey key) throws XPathExpressionException {
-        return getColorOf(key,"Color");
-    }
-
-    @Override
     public Paint getColorOf(IndicatorKey key, String name) throws XPathExpressionException {
         Node node = getNodeForInstance(key);
         String command = String.format("./param[@name='%s']",name);
@@ -173,17 +160,6 @@ public class BaseIndicatorParameterManager implements IndicatorParameterManager 
         Node paramNode = (Node) expr.evaluate(node,XPathConstants.NODE);
         String color = paramNode.getTextContent();
         return ConverterUtils.ColorAWTConverter.fromString(color);
-    }
-
-    /**
-     * returns the main {@link Stroke} colorOf the indicator identified by key
-     * @param key the identifier colorOf the indicator
-     * @return Stroke object or null
-     * @throws XPathExpressionException xpath exception
-     */
-    @Override
-    public Stroke getStrokeOf(IndicatorKey key) throws XPathExpressionException {
-        return getStrokeOf(key, "Stroke");
     }
 
     @Override
@@ -199,28 +175,25 @@ public class BaseIndicatorParameterManager implements IndicatorParameterManager 
         return StrokeType.valueOf(stroke.toUpperCase()).stroke;
     }
 
-    @Override
-    public ChartType getChartType(IndicatorKey key) throws XPathExpressionException {
+    public void setParameters(IndicatorKey key, Map<String, IndicatorParameter> parameters)throws IOException, XPathExpressionException, TransformerException{
         Node node = getNodeForInstance(key);
-        String command = "./param[@name='Chart Type']";
-        XPathExpression expr = xPath.compile(command);
-        Node paramNode = (Node) expr.evaluate(node,XPathConstants.NODE);
-        String chartType = paramNode.getTextContent();
-        if(chartType.equals("")){
-            return null;
+        for(Map.Entry<String, IndicatorParameter> param: parameters.entrySet()){
+            XPathExpression expr = xPath.compile(String.format("./param[@name='%s']", param.getKey()));
+            Node paramNode = (Node) expr.evaluate(node, XPathConstants.NODE);
+            if(paramNode==null){ // create new param node if not exists
+                Text a = doc.createTextNode(param.getValue().toString());
+                Element e = doc.createElement("param");
+                e.setAttribute("name",param.getKey());
+                e.setAttribute("type",param.getValue().getType().toString());
+                node.appendChild(e);
+                log.debug("Created new param node for {} with type: {} and value: {}",e.getAttribute("name"),
+                        e.getAttribute("type"),a.getTextContent());
+            } else{
+                paramNode.setTextContent(param.getValue().getString());
+            }
+            DOMSource source = new DOMSource(doc);
+            transformer.transform(source, result);
         }
-        return ChartType.valueOf(chartType);
-    }
-
-    @Override
-    public void setParameter(IndicatorKey key, String paramName, String value) throws IOException, XPathExpressionException, TransformerException {
-        String command = String.format("//indicator[@identifier='%s']/instance[@id='%s']/param[@name='%s']",key.getType().toString(),key.getId(),paramName);
-        XPathExpression expr = xPath.compile(command);
-        Node resultNode = (Node) expr.evaluate(doc, XPathConstants.NODE);
-        //((Element) resultNode).getAttribute("type"); //TODO implement type check
-        resultNode.setTextContent(value);
-        DOMSource source = new DOMSource(doc);
-        transformer.transform(source, result);
     }
 
     /**
@@ -239,25 +212,6 @@ public class BaseIndicatorParameterManager implements IndicatorParameterManager 
                     String id = ((Element)instances.item(j)).getAttribute("id");
                     keyList.add(new IndicatorKey(IndicatorType.valueOf(indicator), Integer.parseInt(id)));
                 }
-            }
-        }
-        return keyList;
-    }
-
-    @Override
-    public List<IndicatorKey> getKeysForCategory(IndicatorCategory category) throws XPathExpressionException {
-        String command = String.format("//instance[@category='%s']",category.toString());
-        XPathExpression expr = xPath.compile(command);
-        DTMNodeList nodes = (DTMNodeList) expr.evaluate(doc, XPathConstants.NODESET);
-
-        List<IndicatorKey> keyList = new ArrayList<>();
-        for (int i = 0; i < nodes.getLength(); i++){
-            Node node = nodes.item(i);
-            if (node.getNodeType() == Node.ELEMENT_NODE){
-                String id = ((Element) node).getAttribute("id");
-                Element parent =(Element) node.getParentNode();
-                String name = parent.getAttribute("identifier");
-                keyList.add(new IndicatorKey(IndicatorType.valueOf(name),Integer.parseInt(id)));
             }
         }
         return keyList;
@@ -285,7 +239,7 @@ public class BaseIndicatorParameterManager implements IndicatorParameterManager 
                     String name = paraElement.getAttribute("name");
                     String type = paraElement.getAttribute("type");
                     String value = paraElement.getTextContent();
-                    parameters.put(name, new IndicatorParameter(name, FormatUtils.indicatorParameterTypeOf(type),value));
+                    parameters.put(name, new IndicatorParameter(name, FormatUtils.indicatorParameterTypeOf(type), value));
                 }
             }
         }
@@ -328,25 +282,8 @@ public class BaseIndicatorParameterManager implements IndicatorParameterManager 
     }
 
     private Node getNodeForInstance(IndicatorKey key) throws XPathExpressionException {
-        String command = String.format("//indicator[@identifier='%s']/instance[@id='%s']",key.getType().toString(),key.getId());
+        String command = String.format("indicatorProperties/indicator[@identifier='%s']/instance[@id='%s']",key.getType().toString(),key.getId());
         XPathExpression expr = xPath.compile(command);
         return (Node) expr.evaluate(doc, XPathConstants.NODE);
-    }
-
-
-    @Override
-    public String getDescription(IndicatorKey key) throws XPathExpressionException {
-        String indicator = key.getType().toString();
-        String command = String.format("//indicator[@identifier='%s']/description/text()",indicator);
-        XPathExpression expr = xPath.compile(command);
-        return (String) expr.evaluate(doc,XPathConstants.STRING);
-    }
-
-    @Override
-    public String getParameterType(IndicatorKey key, String param) throws XPathExpressionException {
-        Node instanceNode = getNodeForInstance(key);
-        String command = String.format("./param[@name='%s']/@type",param);
-        XPathExpression expr = xPath.compile(command);
-        return  (String) expr.evaluate(instanceNode,XPathConstants.STRING);
     }
 }

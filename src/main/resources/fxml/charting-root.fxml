@@ -4,7 +4,8 @@
 
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<AnchorPane prefHeight="643.0" prefWidth="973.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="org.sjwimmer.tacharting.chart.controller.ChartController">
+<AnchorPane prefHeight="643.0" prefWidth="973.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2"
+            fx:controller="org.sjwimmer.tacharting.chart.controller.RootController">
   <children>
     <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
       <children>
@@ -24,28 +25,7 @@
         </MenuBar>
         <BorderPane fx:id="borderPane" VBox.vgrow="ALWAYS">
           <center>
-            <VBox fx:id="vbxChart" prefHeight="200.0" prefWidth="100.0">
-              <children>
-                <MenuBar id="chartMenuBar">
-                  <menus>
-                    <Menu mnemonicParsing="false" text="Add Indicator" fx:id="indicatorsMenu">
-                      <items>
-                        <Menu id="chartMenuItem" mnemonicParsing="false" text="Custom" fx:id="custom" />
-                        <Menu id="chartMenuItem" mnemonicParsing="false" text="Default" fx:id="def" />
-                        <Menu id="chartMenuItem" mnemonicParsing="false" text="Bollinger" fx:id="bollinger" />
-                        <Menu id="chartMenuItem" mnemonicParsing="false" text="Helpers" fx:id="helpers" />
-                        <Menu id="chartMenuItem" mnemonicParsing="false" text="Ichimoku" fx:id="ichimoku" />
-                        <Menu id="chartMenuItem" mnemonicParsing="false" text="Statistics" fx:id="statistics" />
-                        <Menu id="chartMenuItem" mnemonicParsing="false" text="Candles" fx:id="candles" />
-                        <Menu id="chartMenuItem" mnemonicParsing="false" text="Volume" fx:id="volume" />
-                        <Menu id="chartMenuItem" mnemonicParsing="false" text="Keltner" fx:id="keltner" />
-                      </items>
-                    </Menu>
-                    <Menu mnemonicParsing="false" text="Strategies" fx:id="strategyMenu" />
-                  </menus>
-                </MenuBar>
-              </children>
-            </VBox>
+            <TabPane fx:id="tabCharts" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE" />
           </center>
           <left>
             <VBox>
@@ -76,12 +56,6 @@
             </ToolBar>
           </top>
         </BorderPane>
-        <ToolBar fx:id="toolBarIndicators" prefHeight="39.0" prefWidth="600.0">
-          <items>
-            <Button fx:id="clearAll" mnemonicParsing="false" onAction="#clearToggleBar" text="Clear All" />
-            <Separator orientation="VERTICAL" />
-          </items>
-        </ToolBar>
       </children>
     </VBox>
   </children>

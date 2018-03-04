@@ -13,9 +13,9 @@ public class IndicatorKey extends Key {
     private final IndicatorType type;
     private final int id;
 
-    public IndicatorKey(IndicatorType name,String adding, int id) {
-        super(String.format("%s %s [%s]",name.getDisplayName(),adding.equals("")?"":"("+adding+")", id));
-        this.type = name;
+    public IndicatorKey(IndicatorType type, String adding, int id) {
+        super(String.format("%s %s [%s]",type.getDisplayName(),adding.equals("")?"":"("+adding+")", id));
+        this.type = type;
         this.id = id;
     }
 
@@ -29,6 +29,10 @@ public class IndicatorKey extends Key {
 
     public int getId() {
         return id;
+    }
+
+    public boolean hasXmlEntry(){
+        return id != 0;
     }
 
 

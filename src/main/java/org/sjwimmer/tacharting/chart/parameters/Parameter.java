@@ -53,6 +53,13 @@ public  class Parameter {
     /** Common parameter names*****************************************************************************************/
     public final static String id = "id";
     public final static String tf = "Time Frame";
+    public final static String base = "Based On";
+    public final static String base2 = "Based On 2";
+    public final static String base3 = "Based On 3";
+    public final static String base4 = "Based On 4";
+    public final static String series = "Series";
+    public final static String baseImpl = "BaseImplementation";
+    public final static String iid = "Inner Indicator Index";
 
     /** Files *********************************************************************************************************/
     public final static String USER_HOME = System.getProperty("user.home");

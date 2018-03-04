@@ -1,0 +1,133 @@
+
+/*svg scaled in div conatiner*/
+.svg-container {
+    display: inline-block;
+    position: relative;
+    width: 100%;
+    padding-bottom: 200%;
+    vertical-align: top;
+    overflow: hidden;
+}
+
+.svg-content {
+    display: inline-block;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+/*
+div.bar{
+    display: inline-block;
+    width: 20px;
+    height: 100px;
+    background-color: teal;
+    margin-right: 3px
+}
+*/
+
+/*Color for the brush */
+.brush .selection{
+  fill: steelblue;
+  fill-opacity: .125;
+}
+.brush .handle{
+    fill: black;
+    fill-opacity: 0.3
+}
+
+.axis path,
+.axis line {
+    stroke: black;
+    shape-rendering: crispEdges;
+}
+
+.axis text{
+    font-family: Optima, Futura, sans-serif;
+    font-weight: bold;
+    font-size: 5px;
+    fill: black;
+}
+
+.axis.indicator text{
+    font-size: 3px;
+}
+
+.volumeBar{
+    -moz-transition: all 0.15s;
+    -o-transition: all 0.15s;
+    -webkit-transition: all 0.15s;
+    transition: all 0.15s;
+}
+
+.volumeBar:hover,
+.stem:hover,
+.candle:hover {
+    fill:orange
+}
+
+.zoom {
+  cursor: move;
+  fill: none;
+  pointer-events: all;
+}
+
+#tooltip {
+    position: absolute;
+    width: 200px;
+    height: auto;
+    padding: 10px;
+    background-color: white;
+    -webkit-border-radius: 10px;
+    -moz-border-radius: 10px;
+    border-radius: 10px;
+    -webkit-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+    -moz-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+    box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+    pointer-events: none;
+}
+
+#tooltip.hidden {
+    display: none;
+}
+
+#tooltip p {
+    margin: 0;
+    font-family: sans-serif;
+    font-size: 16px;
+    line-height: 20px;
+}
+
+path.candle {
+    stroke: #000000;
+}
+
+path.candle.body {
+    stroke-width: 1;
+}
+
+path.candle.up {
+    fill: #00AA00;
+    stroke: #00AA00;
+}
+
+path.candle.down {
+    fill: #FF0000;
+    stroke: #FF0000;
+}
+
+
+.tick line{
+    opacity: 0.1;
+  }
+
+.focusLine {
+    fill: none;
+    stroke: steelblue;
+    stroke-width: 1px;
+}
+
+.focusCircle {
+    fill: orange;
+    opacity: 0.5;
+}

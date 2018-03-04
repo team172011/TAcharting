@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Print test</title>
+    <link rel="stylesheet" href="print.css">
+    <script src="http://d3js.org/d3.v4.min.js"></script>
+    <script src="jQuery.js"></script>
+</head>
+<body>
+    <h3></h3>
+    <div id="indicatorLegend"></div>
+    <div id="container" class="svg-container">
+    </div>
+    <div id="tooltip" class="hidden">
+        <p><strong id="date"></strong></p>
+        <p><span id="close"></span></p>
+    </div>
+    <label id="logging">
+    </label>
+    <script>
+        var data;
+        var indicators = {};
+        var subChartCount;
+        var initHeight = 1000;
+        var initWidth = 700;
+        var paddingSubplots = 5;
+        var svg = d3.select("div#container")
+            .append("svg")
+            .attr("preserveAspectRatio", "xMinYMin meet")
+            .attr("viewBox", "0 0 700 1000")
+            .classed("svg-content", true),
+            
+            marginMain = {top: 50, right: 20, bottom: initHeight-200, left: 40},
+            marginContext= {top: 20, right: 20, bottom: initHeight-50, left: 40},
+            width = initWidth-marginMain.left - marginMain.right,
+            height = initHeight - marginMain.top - marginMain.bottom,
+            heightContext = initHeight - marginContext.top - marginContext.bottom,
+            heightSubPlot = initHeight - marginContext.top - marginContext.bottom,
+            firstSubChartPos = (height+heightContext+marginContext.top+paddingSubplots); //TODO why -40 to get so close?
+            
+        var x = d3.scaleTime().range([0, width]), // scale of main chart (changing)
+            x2 = d3.scaleTime().range([0, width]), // scale of context (fix)
+            y = d3.scaleLinear().range([height, 0]), // scale y of main chart
+            y2 = d3.scaleLinear().range([heightContext, 0]); // scale y of context
+        
+        
+        var parseTime = d3.timeParse("%Y-%m-%dT%H:%M:%S");
+        var timeFormatDate = d3.timeFormat("%Y-%m-%d");
+        var timeFormatTime = d3.timeFormat("%H:%M:%S");
+        var xAxis = d3.axisBottom(x),
+            xAxis2 = d3.axisTop(x2),
+            yAxis = d3.axisLeft(y);
+        
+        
+        var brush = d3.brushX()
+            .extent([[0, 0], [width, heightContext]])
+            .on("brush end", brushed);
+        
+        var zoom = d3.zoom()
+            .scaleExtent([1, Infinity])
+            .translateExtent([[0, 0], [width, height]])
+            .extent([[0, 0], [width, height]])
+            .on("zoom", zoomed);
+        
+        function min(a, b){ return a < b ? a : b ; }     
+        function max(a, b){ return a > b ? a : b; }   
+        
+        var focus = svg.append("g") 
+            .attr("class", "focus")
+            .attr("transform", "translate("+marginMain.left+","+marginMain.top+")");
+        
+        /* focus main chart */
+        focus.append("defs")
+            .append("clipPath")
+            .attr("id", "clip")
+          .append("rect")
+            .attr("width", width)
+            .attr("height", height);
+        
+        
+        /* context with brush */
+        var context = svg.append("g")
+            .attr("class", "context")
+            .attr("transform", "translate("+marginContext.left+","+marginContext.top+")");
+            
+        
+        var candleWidth = 1;
+        
+        
+        /*******************************************
+        * Entry function
+        * Has to be called first
+        * Plots the candlestick graph with volumen and context
+        *
+        ********************************************/
+        function printData(jsonString){
+            data = JSON.parse(jsonString, function(key, value){
+                if(key == "data"){ /*convert string values to float, int and date*/
+                    value = value.map((dict,index,values)=>{
+                        dict.close = parseFloat(dict.close);
+                        dict.open = parseFloat(dict.open);
+                        dict.high = parseFloat(dict.high);
+                        dict.low = parseFloat(dict.low);
+                        dict.volume = parseInt(dict.volume);
+                        dict.time = parseTime(dict.time);
+                        return dict;
+                    })
+                    return value;
+                }
+                else{
+                    return value;
+                }
+            });
+            
+            var startDate = d3.min(data.data, d => d.time);
+            var endDate = d3.max(data.data, d => d.time);
+            d3.select("h3").text("Watching: " + data.series+", "+data.period+ "("+timeFormatDate(startDate)+","+timeFormatDate(endDate)+")");
+            x.domain([d3.timeDay.offset(startDate,-1), d3.timeDay.offset(endDate,1) ]);
+            
+            candleWidth = 0.5 * width/data.data.length;
+            
+            var lowestLow = d3.min(data.data, d => d.low);
+            var highestHigh = d3.max(data.data, d => d.high)
+            y.domain([lowestLow-lowestLow*0.1, highestHigh+highestHigh*0.01]); /*10% space between lowest low and y=0 for the volume*/
+            x2.domain(x.domain());
+            y2.domain(y.domain())
+            
+            /*
+            focus.append("g")
+                .attr("class", "axis axis--x")
+                .attr("transform", "translate(0,"+height+")")
+                .call(xAxis);*/
+            
+            /*yAxis main chart*/
+            yAxis.tickSize(-width);
+            focus.append("g")
+                .attr("class", "axis axis--y")
+                .call(yAxis);
+            
+            
+            /*add zoom rect to svg*/
+            focus.select("g").append("rect")
+                .attr("class", "zoom")
+                .attr("width", width)
+                .attr("height", height)
+                .attr("transform", "translate("+0+","+0+")")
+                .call(zoom);
+            
+            /*add crosshair logic*/
+            focus.append('line')
+                .attr('id', 'focusLineX')
+                .attr('class', 'focusLine');
+            focus.append('line')
+                .attr('id', 'focusLineY')
+                .attr('class', 'focusLine');
+            focus.append('circle')
+                .attr('id', 'focusCircle')
+                .attr('r', 5)
+                .attr('class', 'circle focusCircle');
+            var bisectDate = d3.bisector(function(d) { return d.time; }).left;
+            focus.select(".zoom")
+                .on('mousemove', function() { 
+                    var mouse = d3.mouse(this);
+                    var mouseDate = x.invert(mouse[0]);     
+                    var i = bisectDate(data.data, mouseDate); // returns the index to the current data item
+                    var d0 = data.data[i - 1];
+                    var d1 = data.data[i];
+                
+                    // work out which date value is closest to the mouse
+                    if(d1 && d0){
+                        var d = mouseDate - d0.time > d1.time - mouseDate ? d1 : d0;
+
+                        var low_high = y(d.low)-y(d.high);
+
+                        var xV = x(d.time);
+                        var yV = y(d.high)+((low_high)/2);
+
+                        var xDomain = d3.extent(data.data, function(d) { return d.time; })
+                        var yDomain = d3.extent(data.data, function(d) { return d.close; });
+
+                        focus.select('#focusCircle')
+                                .attr('cx', xV)
+                                .attr('cy', yV)
+                                .attr("r", (low_high)/2);
+                
+                        focus.select('#focusLineX')
+                            .attr('x1', xV)
+                            .attr('y1', 0) // y(yDomain[0])
+                            .attr('x2', xV)
+                            .attr('y2', height + subChartCount*heightSubPlot); //
+                
+                        focus.select('#focusLineY')
+                            .attr('x1', x(xDomain[0]))
+                            .attr('y1', yV)
+                            .attr('x2', x(xDomain[1]))
+                            .attr('y2', yV);     
+                    }
+                });
+
+            
+            /*call function to plot volume and candlestick in current scale*/
+            plotVolume();
+            plotCandleSticks();
+            
+            /*plot the candlestick for the context bar*/
+            context.append("g")
+                .attr("class", "stem")
+              .selectAll("line.stem")
+                .data(data.data)
+                .enter()
+              .append("line")
+                .attr("x1", d => x2(d.time))
+                .attr("x2", d => x2(d.time))
+                .attr("y1", d => y2(d.high))
+                .attr("y2", d => y2(d.low))
+                .attr("stroke", d => d.open > d.close ? "red" : "green")
+            
+            context.append("g")
+                .attr("class", "candle")
+              .selectAll("rect.sticks")
+                .data(data.data)
+	            .enter().append("rect")
+	            .attr("x", function(d) { return x2(d.time)-candleWidth/2; })
+                .attr("y", d => y2(max(d.open, d.close)))		  
+	            .attr("height", function(d) { return y2(min(d.open, d.close))-y2(max(d.open, d.close));})
+	            .attr("width", function(d) { return candleWidth; })
+                .attr("fill", function(d) { return d.open > d.close ? "red" : "green" ;}); 
+            
+            context.append("g")
+                .attr("class", "axis axis--x")
+                .attr("transform", "translate(0,"+0+")")
+                .call(xAxis2);
+            
+            context.append("g")
+                .attr("class", "brush")
+                .call(brush)
+                .call(brush.move, x.range());
+            
+            /*x Axis at the bottom*/
+            focus.append("g")
+                .attr("id", "axis--bottom")
+                .attr("class", "axis axis--x")
+                .attr("transform","translate("+0+","+0+")")
+                .call(xAxis);
+        }
+        
+        /*Plot the candlesticks. Consisting of stems and recs*/
+        function plotCandleSticks(){
+            focus.selectAll(".stem").remove();
+            focus.selectAll(".candle").remove();
+            
+            focus.append("g")
+                .attr("class", "stem")
+              .selectAll("line.stem")
+                .data(data.data)
+                .enter()
+              .append("line")
+                .attr("clip-path", "url(#clip)")
+                .attr("x1", d => x(d.time))
+                .attr("x2", d => x(d.time))
+                .attr("y1", d => y(d.high))
+                .attr("y2", d => y(d.low))
+                .attr("stroke", d => d.open > d.close ? "red" : "green")
+            
+            focus.append("g")
+                .attr("class", "candle")
+              .selectAll("rect.sticks")
+                .data(data.data)
+	            .enter().append("rect")
+                .attr("clip-path", "url(#clip)")
+	            .attr("x", function(d) { return x(d.time)-candleWidth/2; })
+                .attr("y", d => y(max(d.open, d.close)))		  
+	            .attr("height", function(d) { return y(min(d.open, d.close))-y(max(d.open, d.close));})
+	            .attr("width", function(d) { return candleWidth; })
+                .attr("fill",function(d) { return d.open > d.close ? "red" : "green" ;}); 
+        }
+        
+        /* Plot the volume recs */
+        function plotVolume(){
+            focus.selectAll(".volumeBar").remove();
+            var yVol = d3.scaleLinear()
+                .domain([0, d3.max(data.data, d => d.volume)])
+                .range([height, y(d3.min(data.data, d => d.low))]); /* volumen highest value = lowest low price */
+            
+            var volumes = focus.append("g")
+                .attr("class", "volumeBar")
+              .selectAll("rect")
+                .data(data.data)
+                .enter()
+                .append("rect")
+                .attr("clip-path", "url(#clip)")
+                .attr("x", d => x(d.time)-candleWidth/2)
+                .attr("width", d => candleWidth)
+                .attr("y", height)
+                .attr("height", 0)
+                
+                .attr("fill", "rgba(255, 0, 0, 0.5)")
+                .on("mouseover", function(d){
+                    var xPos = parseFloat(d3.select(this).attr("x"));
+                    var yPos = parseFloat(d3.select(this).attr("y"));
+                    label(d,xPos,yPos);
+                })
+                .on("mouseout", () => hideLabel())
+                //.transition() // looks very cool, but slows down zoom/brush in webkit
+                //.duration(2000)
+                .attr("y", d => yVol(d.volume))
+                .attr("height", d => (height - yVol(d.volume)));
+        }
+        
+        function addIndicator(ind){
+            var json = JSON.parse(ind)
+            //json = json. // TODO convert here..
+            indicators[json.name]=json;
+            return plotIndicators();
+        }
+        
+        /*Removes all indicators from the chart and plots all indicators in field indicators*/
+        function plotIndicators(){
+            if(indicators.length <= 0){
+                return 0;
+            }
+            d3.select("#indicatorLegend").selectAll("p").remove();
+            d3.selectAll(".indicator").remove();
+            subChartCount = 0;
+            
+            for(key in indicators){
+                d3.select("svg") /*add a smal line between plots*/
+                  .append("line")
+                    .attr("class", "indicator")
+                    .attr("x1",marginMain.left)
+                    .attr("y1", firstSubChartPos+subChartCount*(heightSubPlot))
+                    .attr("x2",width+marginMain.left)
+                    .attr("y2", firstSubChartPos+subChartCount*(heightSubPlot))
+                    .style("stroke-width", 0.5)
+                    .style("stroke", "black")
+                var ind = indicators[key];
+                for(i = 0; i<ind.Indicators.length; i++){
+                    var id = ind.Indicators[i];
+                    var indData = ind[id].data;
+                    var stroke = ind[id].color;
+                    if(!stroke){
+                        stroke = "black";
+                    }
+                    
+                    d3.select("h3").text(stroke);
+                    d3.select(".indicators")
+                        .append("p")
+                        .text(id);
+                    
+                    var line = d3.line().x(d => x(parseTime(d.time)));
+                    
+                    if(ind.subchart != "true"){ // plot as overlay
+                        if(ind.chartMode != "bar"){
+                            line.y(d => y(parseFloat(d.value)))
+                            focus.append("g")
+                                .attr("class", "indicator")
+                              .append("path")
+                                .data([indData])
+                                .attr("clip-path", "url(#clip)")
+                                .attr("class", "line")
+                                .attr("d",line)
+                                .attr("fill", "none")
+                                .attr("stroke", stroke);
+                        } else{
+                            // plot as stacked bar chart
+                        }
+                    } else { // plot as subchart
+                        if(ind.chartMode != "bar"){
+                            var minSub = d3.min(indData, d => parseFloat(d.value));
+                            var maxSub = d3.max(indData, d => parseFloat(d.value));
+                            var ySub = d3.scaleLinear()
+                                .range([heightSubPlot, 0])
+                                .domain([minSub-minSub*0.1, maxSub+maxSub*0.1]);
+
+                            line.y(d => ySub(parseFloat(d.value)))
+
+                            var yAxisSub = d3.axisLeft(ySub);
+                            yAxisSub.tickValues([minSub, maxSub]);
+                            yAxisSub.tickSize(-width);
+                            var subchart = svg.append("g")
+                                .attr("class", "indicator")
+                                .attr("transform", "translate("+marginMain.left+","+(firstSubChartPos+subChartCount*(heightSubPlot))+")");
+
+                            subchart.append("g")
+                                .attr("class", "indicator")
+                                .append("path")
+                                .data([indData])
+                                .attr("clip-path", "url(#clip)")
+                                .attr("class", "line")
+                                .attr("d",line)
+                                .attr("fill", "none")
+                                .attr("stroke", stroke);
+                            subchart.append("g")
+                                .attr("class", "indicator axis axis--y")
+                                .attr("transform", "translate(0,0)")
+                                .call(yAxisSub);
+                        } else{
+                            // plot as stacked bar chart
+                        }
+
+                    }
+                }
+                if(ind.subchart=="true"){
+                    subChartCount++;
+                }
+            }
+            plotAxis(subChartCount);
+            return indicators;
+        }
+        
+        /* replots the xAxis and adapt tick size*/
+        function plotAxis(subChartCount){
+            if(subChartCount <= 0){
+                return;
+            }
+            
+            
+            d3.select("#axis--bottom")
+                .attr("transform", "translate("+0+", "+(height+subChartCount*heightSubPlot)+")")
+              .selectAll(".tick line")
+                .attr("y2",-(subChartCount*heightSubPlot+height+5) );
+        }
+        
+        function label(d, xPos, yPos){
+            //Update the tooltip position and value
+            d3.select("#tooltip")
+                .style("left", xPos + "px")
+                .style("top", yPos + "px")						
+                .select("#close")
+                .text(d.close);
+            d3.select("#tooltip").select("#date").text(d.time);
+            //Show the tooltip
+            d3.select("#tooltip").classed("hidden", false);
+        }
+        
+        function hideLabel(){
+            d3.select("#tooltip").classed("hidden", true);
+        }
+        
+        function brushed(){
+            if(d3.event.sourceEvent && d3.event.sourceEvent.type === "zoom") return;
+            var s = d3.event.selection || x2.range();
+            x.domain(s.map(x2.invert, x2));
+            plotVolume();
+            plotCandleSticks();
+            focus.select(".axis--x").call(xAxis);
+            svg.select(".zoom").call(zoom.transform, d3.zoomIdentity
+                .scale(width/(s[1]-s[0])).translate(-s[0],0));
+        }
+                
+        function zoomed(){
+            if(d3.event.sourceEvent && d3.event.sourceEvent.type === "brush") return;
+            var t = d3.event.transform;
+            x.domain(t.rescaleX(x2).domain());
+            focus.select(".axis--x").call(xAxis);
+            plotVolume();
+            plotCandleSticks();
+            plotIndicators();
+            context.select(".brush").call(brush.move, x.range().map(t.invertX, t))
+        }
+        
+        function make_x_gridlines() {		
+        return d3.axisBottom(x)
+            .ticks(5)
+        }
+ /*       
+        printData('{"series":"fb","period":"DAY","currency":"USD","data":[{"time":"2017-05-24T00:00:00","open":"148.51","high":"150.23","low":"148.42","close":"150.04","volume":1.791474E+7},{"time":"2017-05-25T00:00:00","open":"150.3","high":"152.59","low":"149.95","close":"151.96","volume":1.982721E+7},{"time":"2017-05-26T00:00:00","open":"152.23","high":"152.25","low":"151.15","close":"152.13","volume":1.498454E+7},{"time":"2017-05-30T00:00:00","open":"151.97","high":"152.9","low":"151.64","close":"152.38","volume":1.32137E+7},{"time":"2017-05-31T00:00:00","open":"152.7","high":"153.35","low":"151.09","close":"151.46","volume":1.800114E+7},{"time":"2017-06-01T00:00:00","open":"151.75","high":"152.29","low":"150.3","close":"151.53","volume":1.451153E+7},{"time":"2017-06-02T00:00:00","open":"151.85","high":"153.63","low":"151.3","close":"153.61","volume":1.683865E+7},{"time":"2017-06-05T00:00:00","open":"153.64","high":"154.7088","low":"153.41","close":"153.63","volume":1.250482E+7},{"time":"2017-06-06T00:00:00","open":"153.41","high":"154.52","low":"152.48","close":"152.81","volume":1.344361E+7},{"time":"2017-06-07T00:00:00","open":"153.27","high":"153.75","low":"152.34","close":"153.12","volume":1.204043E+7},{"time":"2017-06-08T00:00:00","open":"154.08","high":"154.73","low":"153.1","close":"154.71","volume":1.779586E+7},{"time":"2017-06-09T00:00:00","open":"154.77","high":"155.59","low":"146.61","close":"149.6","volume":3.554167E+7},{"time":"2017-06-12T00:00:00","open":"148.17","high":"149.195","low":"144.56","close":"148.44","volume":3.315061E+7},{"time":"2017-06-13T00:00:00","open":"150.15","high":"151.18","low":"148.9","close":"150.68","volume":2.047472E+7},{"time":"2017-06-14T00:00:00","open":"151.26","high":"152.4","low":"149.05","close":"150.25","volume":2.077491E+7},{"time":"2017-06-15T00:00:00","open":"147.67","high":"150.0366","low":"146.3747","close":"149.8","volume":1.895691E+7},{"time":"2017-06-16T00:00:00","open":"149.59","high":"150.83","low":"148.6","close":"150.64","volume":2.284301E+7},{"time":"2017-06-19T00:00:00","open":"151.71","high":"153.57","low":"151.71","close":"152.87","volume":1.894419E+7},{"time":"2017-06-20T00:00:00","open":"152.88","high":"153.84","low":"152.21","close":"152.25","volume":1.473359E+7},{"time":"2017-06-21T00:00:00","open":"152.36","high":"154.08","low":"151.88","close":"153.91","volume":1.494377E+7},{"time":"2017-06-22T00:00:00","open":"153.01","high":"154.55","low":"152.91","close":"153.4","volume":1.283538E+7},{"time":"2017-06-23T00:00:00","open":"152.72","high":"155.2","low":"152.65","close":"155.07","volume":1.789728E+7},{"time":"2017-06-26T00:00:00","open":"156.25","high":"156.5","low":"153.1954","close":"153.59","volume":1.80302E+7},{"time":"2017-06-27T00:00:00","open":"152.84","high":"153.31","low":"150.39","close":"150.58","volume":1.935156E+7},{"time":"2017-06-28T00:00:00","open":"150.92","high":"153.47","low":"149.86","close":"153.24","volume":1.669623E+7},{"time":"2017-06-29T00:00:00","open":"152.28","high":"152.5","low":"148.9175","close":"151.04","volume":2.394863E+7},{"time":"2017-06-30T00:00:00","open":"151.9","high":"151.92","low":"150.06","close":"150.98","volume":1.490967E+7},{"time":"2017-07-03T00:00:00","open":"151.72","high":"152.15","low":"147.8","close":"148.43","volume":1.386274E+7},{"time":"2017-07-05T00:00:00","open":"149.0","high":"150.85","low":"148.13","close":"150.34","volume":1.432133E+7},{"time":"2017-07-06T00:00:00","open":"149.03","high":"150.04","low":"148.0","close":"148.82","volume":1.493445E+7},{"time":"2017-07-07T00:00:00","open":"149.25","high":"151.99","low":"149.19","close":"151.44","volume":1.324975E+7},{"time":"2017-07-10T00:00:00","open":"151.69","high":"153.98","low":"151.51","close":"153.5","volume":1.332641E+7},{"time":"2017-07-11T00:00:00","open":"153.37","high":"155.4225","low":"152.91","close":"155.27","volume":1.365254E+7},{"time":"2017-07-12T00:00:00","open":"156.49","high":"159.16","low":"156.2","close":"158.9","volume":2.271009E+7},{"time":"2017-07-13T00:00:00","open":"158.74","high":"159.78","low":"158.4227","close":"159.26","volume":1.391215E+7},{"time":"2017-07-14T00:00:00","open":"160.13","high":"160.32","low":"159.3254","close":"159.97","volume":1.630557E+7},{"time":"2017-07-17T00:00:00","open":"160.25","high":"160.78","low":"158.81","close":"159.73","volume":1.275743E+7},{"time":"2017-07-18T00:00:00","open":"159.66","high":"163.73","low":"159.42","close":"162.86","volume":2.36868E+7},{"time":"2017-07-19T00:00:00","open":"163.59","high":"165.7","low":"163.17","close":"164.14","volume":2.614451E+7},{"time":"2017-07-20T00:00:00","open":"164.8","high":"165.0","low":"162.81","close":"164.53","volume":1.840973E+7},{"time":"2017-07-21T00:00:00","open":"164.16","high":"165.05","low":"163.75","close":"164.43","volume":1.471245E+7},{"time":"2017-07-24T00:00:00","open":"164.64","high":"166.17","low":"164.31","close":"166.0","volume":1.72085E+7},{"time":"2017-07-25T00:00:00","open":"165.01","high":"165.54","low":"163.8619","close":"165.28","volume":1.5309E+7},{"time":"2017-07-26T00:00:00","open":"166.01","high":"166.01","low":"164.1","close":"165.61","volume":3.29892E+7},{"time":"2017-07-27T00:00:00","open":"174.7","high":"175.49","low":"167.5","close":"170.44","volume":6.845483E+7},{"time":"2017-07-28T00:00:00","open":"169.07","high":"173.43","low":"169.05","close":"172.45","volume":2.454668E+7},{"time":"2017-07-31T00:00:00","open":"172.0","high":"172.72","low":"168.55","close":"169.25","volume":2.542931E+7},{"time":"2017-08-01T00:00:00","open":"169.82","high":"170.47","low":"169.05","close":"169.86","volume":1.428611E+7},{"time":"2017-08-02T00:00:00","open":"170.3","high":"170.55","low":"166.91","close":"169.3","volume":1.718111E+7},{"time":"2017-08-03T00:00:00","open":"169.3","high":"169.7","low":"168.25","close":"168.59","volume":1.051947E+7},{"time":"2017-08-04T00:00:00","open":"168.97","high":"170.06","low":"168.69","close":"169.62","volume":1.050598E+7},{"time":"2017-08-07T00:00:00","open":"169.95","high":"172.06","low":"169.66","close":"171.98","volume":1.276523E+7},{"time":"2017-08-08T00:00:00","open":"171.88","high":"173.05","low":"170.62","close":"171.23","volume":1.43172E+7},{"time":"2017-08-09T00:00:00","open":"169.98","high":"171.45","low":"169.56","close":"171.18","volume":1.080073E+7},{"time":"2017-08-10T00:00:00","open":"170.06","high":"170.59","low":"166.85","close":"167.4","volume":2.055172E+7},{"time":"2017-08-11T00:00:00","open":"167.95","high":"168.82","low":"166.85","close":"168.08","volume":1.377819E+7},{"time":"2017-08-14T00:00:00","open":"170.09","high":"171.08","low":"169.29","close":"170.75","volume":1.294014E+7},{"time":"2017-08-15T00:00:00","open":"171.49","high":"171.5","low":"170.01","close":"171.0","volume":8713651.0},{"time":"2017-08-16T00:00:00","open":"171.25","high":"171.38","low":"169.24","close":"170.0","volume":1.573284E+7},{"time":"2017-08-17T00:00:00","open":"169.34","high":"169.86","low":"166.85","close":"166.91","volume":1.700942E+7},{"time":"2017-08-18T00:00:00","open":"166.84","high":"168.67","low":"166.21","close":"167.41","volume":1.506559E+7}]}')
+        
+        addIndicator('{"name":"Exponential Moving Average  [1]","subchart":"false","MaxPriceIndicator":{"data":[{"time":"2017-05-24T00:00:00","value":"150.23"},{"time":"2017-05-25T00:00:00","value":"152.59"},{"time":"2017-05-26T00:00:00","value":"152.25"},{"time":"2017-05-30T00:00:00","value":"152.9"},{"time":"2017-05-31T00:00:00","value":"153.35"},{"time":"2017-06-01T00:00:00","value":"152.29"},{"time":"2017-06-02T00:00:00","value":"153.63"},{"time":"2017-06-05T00:00:00","value":"154.7088"},{"time":"2017-06-06T00:00:00","value":"154.52"},{"time":"2017-06-07T00:00:00","value":"153.75"},{"time":"2017-06-08T00:00:00","value":"154.73"},{"time":"2017-06-09T00:00:00","value":"155.59"},{"time":"2017-06-12T00:00:00","value":"149.195"},{"time":"2017-06-13T00:00:00","value":"151.18"},{"time":"2017-06-14T00:00:00","value":"152.4"},{"time":"2017-06-15T00:00:00","value":"150.0366"},{"time":"2017-06-16T00:00:00","value":"150.83"},{"time":"2017-06-19T00:00:00","value":"153.57"},{"time":"2017-06-20T00:00:00","value":"153.84"},{"time":"2017-06-21T00:00:00","value":"154.08"},{"time":"2017-06-22T00:00:00","value":"154.55"},{"time":"2017-06-23T00:00:00","value":"155.2"},{"time":"2017-06-26T00:00:00","value":"156.5"},{"time":"2017-06-27T00:00:00","value":"153.31"},{"time":"2017-06-28T00:00:00","value":"153.47"},{"time":"2017-06-29T00:00:00","value":"152.5"},{"time":"2017-06-30T00:00:00","value":"151.92"},{"time":"2017-07-03T00:00:00","value":"152.15"},{"time":"2017-07-05T00:00:00","value":"150.85"},{"time":"2017-07-06T00:00:00","value":"150.04"},{"time":"2017-07-07T00:00:00","value":"151.99"},{"time":"2017-07-10T00:00:00","value":"153.98"},{"time":"2017-07-11T00:00:00","value":"155.4225"},{"time":"2017-07-12T00:00:00","value":"159.16"},{"time":"2017-07-13T00:00:00","value":"159.78"},{"time":"2017-07-14T00:00:00","value":"160.32"},{"time":"2017-07-17T00:00:00","value":"160.78"},{"time":"2017-07-18T00:00:00","value":"163.73"},{"time":"2017-07-19T00:00:00","value":"165.7"},{"time":"2017-07-20T00:00:00","value":"165.0"},{"time":"2017-07-21T00:00:00","value":"165.05"},{"time":"2017-07-24T00:00:00","value":"166.17"},{"time":"2017-07-25T00:00:00","value":"165.54"},{"time":"2017-07-26T00:00:00","value":"166.01"},{"time":"2017-07-27T00:00:00","value":"175.49"},{"time":"2017-07-28T00:00:00","value":"173.43"},{"time":"2017-07-31T00:00:00","value":"172.72"},{"time":"2017-08-01T00:00:00","value":"170.47"},{"time":"2017-08-02T00:00:00","value":"170.55"},{"time":"2017-08-03T00:00:00","value":"169.7"},{"time":"2017-08-04T00:00:00","value":"170.06"},{"time":"2017-08-07T00:00:00","value":"172.06"},{"time":"2017-08-08T00:00:00","value":"173.05"},{"time":"2017-08-09T00:00:00","value":"171.45"},{"time":"2017-08-10T00:00:00","value":"170.59"},{"time":"2017-08-11T00:00:00","value":"168.82"},{"time":"2017-08-14T00:00:00","value":"171.08"},{"time":"2017-08-15T00:00:00","value":"171.5"},{"time":"2017-08-16T00:00:00","value":"171.38"},{"time":"2017-08-17T00:00:00","value":"169.86"},{"time":"2017-08-18T00:00:00","value":"168.67"}],"color":"#4ef442"},"EMA (High Price  [0], 5)":{"data":[{"time":"2017-05-24T00:00:00","value":"149.43395348974371914785257730984"},{"time":"2017-05-25T00:00:00","value":"150.48596899316247943190171820656"},{"time":"2017-05-26T00:00:00","value":"151.07397932877498628793447880437"},{"time":"2017-05-30T00:00:00","value":"151.68265288584999085862298586958"},{"time":"2017-05-31T00:00:00","value":"152.23843525723332723908199057972"},{"time":"2017-06-01T00:00:00","value":"152.25562350482221815938799371981"},{"time":"2017-06-02T00:00:00","value":"152.71374900321481210625866247987"},{"time":"2017-06-05T00:00:00","value":"153.37876600214320807083910831991"},{"time":"2017-06-06T00:00:00","value":"153.75917733476213871389273887994"},{"time":"2017-06-07T00:00:00","value":"153.75611822317475914259515925329"},{"time":"2017-06-08T00:00:00","value":"154.08074548211650609506343950219"},{"time":"2017-06-09T00:00:00","value":"154.58383032141100406337562633479"},{"time":"2017-06-12T00:00:00","value":"152.78755354760733604225041755653"},{"time":"2017-06-13T00:00:00","value":"152.25170236507155736150027837102"},{"time":"2017-06-14T00:00:00","value":"152.30113491004770490766685224735"},{"time":"2017-06-15T00:00:00","value":"151.54628994003180327177790149823"},{"time":"2017-06-16T00:00:00","value":"151.30752662668786884785193433215"},{"time":"2017-06-19T00:00:00","value":"152.06168441779191256523462288810"},{"time":"2017-06-20T00:00:00","value":"152.65445627852794171015641525873"},{"time":"2017-06-21T00:00:00","value":"153.12963751901862780677094350582"},{"time":"2017-06-22T00:00:00","value":"153.60309167934575187118062900388"},{"time":"2017-06-23T00:00:00","value":"154.13539445289716791412041933592"},{"time":"2017-06-26T00:00:00","value":"154.92359630193144527608027955728"},{"time":"2017-06-27T00:00:00","value":"154.38573086795429685072018637152"},{"time":"2017-06-28T00:00:00","value":"154.08048724530286456714679091435"},{"time":"2017-06-29T00:00:00","value":"153.55365816353524304476452727623"},{"time":"2017-06-30T00:00:00","value":"153.00910544235682869650968485082"},{"time":"2017-07-03T00:00:00","value":"152.72273696157121913100645656721"},{"time":"2017-07-05T00:00:00","value":"152.09849130771414608733763771147"},{"time":"2017-07-06T00:00:00","value":"151.41232753847609739155842514098"},{"time":"2017-07-07T00:00:00","value":"151.60488502565073159437228342732"},{"time":"2017-07-10T00:00:00","value":"152.39659001710048772958152228488"},{"time":"2017-07-11T00:00:00","value":"153.40522667806699181972101485659"},{"time":"2017-07-12T00:00:00","value":"155.32348445204466121314734323773"},{"time":"2017-07-13T00:00:00","value":"156.80898963469644080876489549182"},{"time":"2017-07-14T00:00:00","value":"157.97932642313096053917659699455"},{"time":"2017-07-17T00:00:00","value":"158.91288428208730702611773132970"},{"time":"2017-07-18T00:00:00","value":"160.51858952139153801741182088647"},{"time":"2017-07-19T00:00:00","value":"162.24572634759435867827454725765"},{"time":"2017-07-20T00:00:00","value":"163.16381756506290578551636483843"},{"time":"2017-07-21T00:00:00","value":"163.79254504337527052367757655895"},{"time":"2017-07-24T00:00:00","value":"164.58503002891684701578505103930"},{"time":"2017-07-25T00:00:00","value":"164.90335335261123134385670069287"},{"time":"2017-07-26T00:00:00","value":"165.27223556840748756257113379525"},{"time":"2017-07-27T00:00:00","value":"168.67815704560499170838075586350"},{"time":"2017-07-28T00:00:00","value":"170.26210469706999447225383724233"},{"time":"2017-07-31T00:00:00","value":"171.08140313137999631483589149489"},{"time":"2017-08-01T00:00:00","value":"170.87760208758666420989059432993"},{"time":"2017-08-02T00:00:00","value":"170.76840139172444280659372955329"},{"time":"2017-08-03T00:00:00","value":"170.41226759448296187106248636886"},{"time":"2017-08-04T00:00:00","value":"170.29484506298864124737499091257"},{"time":"2017-08-07T00:00:00","value":"170.88323004199242749824999394171"},{"time":"2017-08-08T00:00:00","value":"171.60548669466161833216666262781"},{"time":"2017-08-09T00:00:00","value":"171.55365779644107888811110841854"},{"time":"2017-08-10T00:00:00","value":"171.23243853096071925874073894569"},{"time":"2017-08-11T00:00:00","value":"170.42829235397381283916049263046"},{"time":"2017-08-14T00:00:00","value":"170.64552823598254189277366175364"},{"time":"2017-08-15T00:00:00","value":"170.93035215732169459518244116909"},{"time":"2017-08-16T00:00:00","value":"171.08023477154779639678829411273"},{"time":"2017-08-17T00:00:00","value":"170.67348984769853093119219607515"},{"time":"2017-08-18T00:00:00","value":"170.00565989846568728746146405010"}],"color":"green"},"Indicators":["MaxPriceIndicator","EMA (High Price  [0], 5)"]}')
+     
+        addIndicator('{"name":"Exponential Moving Average  [2]","subchart":"true","MaxPriceIndicator":{"data":[{"time":"2017-05-24T00:00:00","value":"150.23"},{"time":"2017-05-25T00:00:00","value":"152.59"},{"time":"2017-05-26T00:00:00","value":"152.25"},{"time":"2017-05-30T00:00:00","value":"152.9"},{"time":"2017-05-31T00:00:00","value":"153.35"},{"time":"2017-06-01T00:00:00","value":"152.29"},{"time":"2017-06-02T00:00:00","value":"153.63"},{"time":"2017-06-05T00:00:00","value":"154.7088"},{"time":"2017-06-06T00:00:00","value":"154.52"},{"time":"2017-06-07T00:00:00","value":"153.75"},{"time":"2017-06-08T00:00:00","value":"154.73"},{"time":"2017-06-09T00:00:00","value":"155.59"},{"time":"2017-06-12T00:00:00","value":"149.195"},{"time":"2017-06-13T00:00:00","value":"151.18"},{"time":"2017-06-14T00:00:00","value":"152.4"},{"time":"2017-06-15T00:00:00","value":"150.0366"},{"time":"2017-06-16T00:00:00","value":"150.83"},{"time":"2017-06-19T00:00:00","value":"153.57"},{"time":"2017-06-20T00:00:00","value":"153.84"},{"time":"2017-06-21T00:00:00","value":"154.08"},{"time":"2017-06-22T00:00:00","value":"154.55"},{"time":"2017-06-23T00:00:00","value":"155.2"},{"time":"2017-06-26T00:00:00","value":"156.5"},{"time":"2017-06-27T00:00:00","value":"153.31"},{"time":"2017-06-28T00:00:00","value":"153.47"},{"time":"2017-06-29T00:00:00","value":"152.5"},{"time":"2017-06-30T00:00:00","value":"151.92"},{"time":"2017-07-03T00:00:00","value":"152.15"},{"time":"2017-07-05T00:00:00","value":"150.85"},{"time":"2017-07-06T00:00:00","value":"150.04"},{"time":"2017-07-07T00:00:00","value":"151.99"},{"time":"2017-07-10T00:00:00","value":"153.98"},{"time":"2017-07-11T00:00:00","value":"155.4225"},{"time":"2017-07-12T00:00:00","value":"159.16"},{"time":"2017-07-13T00:00:00","value":"159.78"},{"time":"2017-07-14T00:00:00","value":"160.32"},{"time":"2017-07-17T00:00:00","value":"160.78"},{"time":"2017-07-18T00:00:00","value":"163.73"},{"time":"2017-07-19T00:00:00","value":"165.7"},{"time":"2017-07-20T00:00:00","value":"165.0"},{"time":"2017-07-21T00:00:00","value":"165.05"},{"time":"2017-07-24T00:00:00","value":"166.17"},{"time":"2017-07-25T00:00:00","value":"165.54"},{"time":"2017-07-26T00:00:00","value":"166.01"},{"time":"2017-07-27T00:00:00","value":"175.49"},{"time":"2017-07-28T00:00:00","value":"173.43"},{"time":"2017-07-31T00:00:00","value":"172.72"},{"time":"2017-08-01T00:00:00","value":"170.47"},{"time":"2017-08-02T00:00:00","value":"170.55"},{"time":"2017-08-03T00:00:00","value":"169.7"},{"time":"2017-08-04T00:00:00","value":"170.06"},{"time":"2017-08-07T00:00:00","value":"172.06"},{"time":"2017-08-08T00:00:00","value":"173.05"},{"time":"2017-08-09T00:00:00","value":"171.45"},{"time":"2017-08-10T00:00:00","value":"170.59"},{"time":"2017-08-11T00:00:00","value":"168.82"},{"time":"2017-08-14T00:00:00","value":"171.08"},{"time":"2017-08-15T00:00:00","value":"171.5"},{"time":"2017-08-16T00:00:00","value":"171.38"},{"time":"2017-08-17T00:00:00","value":"169.86"},{"time":"2017-08-18T00:00:00","value":"168.67"}],"color":"red"},"EMA (High Price  [0], 5)":{"data":[{"time":"2017-05-24T00:00:00","value":"149.43395348974371914785257730984"},{"time":"2017-05-25T00:00:00","value":"150.48596899316247943190171820656"},{"time":"2017-05-26T00:00:00","value":"151.07397932877498628793447880437"},{"time":"2017-05-30T00:00:00","value":"151.68265288584999085862298586958"},{"time":"2017-05-31T00:00:00","value":"152.23843525723332723908199057972"},{"time":"2017-06-01T00:00:00","value":"152.25562350482221815938799371981"},{"time":"2017-06-02T00:00:00","value":"152.71374900321481210625866247987"},{"time":"2017-06-05T00:00:00","value":"153.37876600214320807083910831991"},{"time":"2017-06-06T00:00:00","value":"153.75917733476213871389273887994"},{"time":"2017-06-07T00:00:00","value":"153.75611822317475914259515925329"},{"time":"2017-06-08T00:00:00","value":"154.08074548211650609506343950219"},{"time":"2017-06-09T00:00:00","value":"154.58383032141100406337562633479"},{"time":"2017-06-12T00:00:00","value":"152.78755354760733604225041755653"},{"time":"2017-06-13T00:00:00","value":"152.25170236507155736150027837102"},{"time":"2017-06-14T00:00:00","value":"152.30113491004770490766685224735"},{"time":"2017-06-15T00:00:00","value":"151.54628994003180327177790149823"},{"time":"2017-06-16T00:00:00","value":"151.30752662668786884785193433215"},{"time":"2017-06-19T00:00:00","value":"152.06168441779191256523462288810"},{"time":"2017-06-20T00:00:00","value":"152.65445627852794171015641525873"},{"time":"2017-06-21T00:00:00","value":"153.12963751901862780677094350582"},{"time":"2017-06-22T00:00:00","value":"153.60309167934575187118062900388"},{"time":"2017-06-23T00:00:00","value":"154.13539445289716791412041933592"},{"time":"2017-06-26T00:00:00","value":"154.92359630193144527608027955728"},{"time":"2017-06-27T00:00:00","value":"154.38573086795429685072018637152"},{"time":"2017-06-28T00:00:00","value":"154.08048724530286456714679091435"},{"time":"2017-06-29T00:00:00","value":"153.55365816353524304476452727623"},{"time":"2017-06-30T00:00:00","value":"153.00910544235682869650968485082"},{"time":"2017-07-03T00:00:00","value":"152.72273696157121913100645656721"},{"time":"2017-07-05T00:00:00","value":"152.09849130771414608733763771147"},{"time":"2017-07-06T00:00:00","value":"151.41232753847609739155842514098"},{"time":"2017-07-07T00:00:00","value":"151.60488502565073159437228342732"},{"time":"2017-07-10T00:00:00","value":"152.39659001710048772958152228488"},{"time":"2017-07-11T00:00:00","value":"153.40522667806699181972101485659"},{"time":"2017-07-12T00:00:00","value":"155.32348445204466121314734323773"},{"time":"2017-07-13T00:00:00","value":"156.80898963469644080876489549182"},{"time":"2017-07-14T00:00:00","value":"157.97932642313096053917659699455"},{"time":"2017-07-17T00:00:00","value":"158.91288428208730702611773132970"},{"time":"2017-07-18T00:00:00","value":"160.51858952139153801741182088647"},{"time":"2017-07-19T00:00:00","value":"162.24572634759435867827454725765"},{"time":"2017-07-20T00:00:00","value":"163.16381756506290578551636483843"},{"time":"2017-07-21T00:00:00","value":"163.79254504337527052367757655895"},{"time":"2017-07-24T00:00:00","value":"164.58503002891684701578505103930"},{"time":"2017-07-25T00:00:00","value":"164.90335335261123134385670069287"},{"time":"2017-07-26T00:00:00","value":"165.27223556840748756257113379525"},{"time":"2017-07-27T00:00:00","value":"168.67815704560499170838075586350"},{"time":"2017-07-28T00:00:00","value":"170.26210469706999447225383724233"},{"time":"2017-07-31T00:00:00","value":"171.08140313137999631483589149489"},{"time":"2017-08-01T00:00:00","value":"170.87760208758666420989059432993"},{"time":"2017-08-02T00:00:00","value":"170.76840139172444280659372955329"},{"time":"2017-08-03T00:00:00","value":"170.41226759448296187106248636886"},{"time":"2017-08-04T00:00:00","value":"170.29484506298864124737499091257"},{"time":"2017-08-07T00:00:00","value":"170.88323004199242749824999394171"},{"time":"2017-08-08T00:00:00","value":"171.60548669466161833216666262781"},{"time":"2017-08-09T00:00:00","value":"171.55365779644107888811110841854"},{"time":"2017-08-10T00:00:00","value":"171.23243853096071925874073894569"},{"time":"2017-08-11T00:00:00","value":"170.42829235397381283916049263046"},{"time":"2017-08-14T00:00:00","value":"170.64552823598254189277366175364"},{"time":"2017-08-15T00:00:00","value":"170.93035215732169459518244116909"},{"time":"2017-08-16T00:00:00","value":"171.08023477154779639678829411273"},{"time":"2017-08-17T00:00:00","value":"170.67348984769853093119219607515"},{"time":"2017-08-18T00:00:00","value":"170.00565989846568728746146405010"}],"color":"red"},"Indicators":["MaxPriceIndicator","EMA (High Price  [0], 5)"]}')
+        
+        addIndicator('{"name":"Exponential Moving Average  [3]","subchart":"true","MaxPriceIndicator":{"data":[{"time":"2017-05-24T00:00:00","value":"150.23"},{"time":"2017-05-25T00:00:00","value":"152.59"},{"time":"2017-05-26T00:00:00","value":"152.25"},{"time":"2017-05-30T00:00:00","value":"152.9"},{"time":"2017-05-31T00:00:00","value":"153.35"},{"time":"2017-06-01T00:00:00","value":"152.29"},{"time":"2017-06-02T00:00:00","value":"153.63"},{"time":"2017-06-05T00:00:00","value":"154.7088"},{"time":"2017-06-06T00:00:00","value":"154.52"},{"time":"2017-06-07T00:00:00","value":"153.75"},{"time":"2017-06-08T00:00:00","value":"154.73"},{"time":"2017-06-09T00:00:00","value":"155.59"},{"time":"2017-06-12T00:00:00","value":"149.195"},{"time":"2017-06-13T00:00:00","value":"151.18"},{"time":"2017-06-14T00:00:00","value":"152.4"},{"time":"2017-06-15T00:00:00","value":"150.0366"},{"time":"2017-06-16T00:00:00","value":"150.83"},{"time":"2017-06-19T00:00:00","value":"153.57"},{"time":"2017-06-20T00:00:00","value":"153.84"},{"time":"2017-06-21T00:00:00","value":"154.08"},{"time":"2017-06-22T00:00:00","value":"154.55"},{"time":"2017-06-23T00:00:00","value":"155.2"},{"time":"2017-06-26T00:00:00","value":"156.5"},{"time":"2017-06-27T00:00:00","value":"153.31"},{"time":"2017-06-28T00:00:00","value":"153.47"},{"time":"2017-06-29T00:00:00","value":"152.5"},{"time":"2017-06-30T00:00:00","value":"151.92"},{"time":"2017-07-03T00:00:00","value":"152.15"},{"time":"2017-07-05T00:00:00","value":"150.85"},{"time":"2017-07-06T00:00:00","value":"150.04"},{"time":"2017-07-07T00:00:00","value":"151.99"},{"time":"2017-07-10T00:00:00","value":"153.98"},{"time":"2017-07-11T00:00:00","value":"155.4225"},{"time":"2017-07-12T00:00:00","value":"159.16"},{"time":"2017-07-13T00:00:00","value":"159.78"},{"time":"2017-07-14T00:00:00","value":"160.32"},{"time":"2017-07-17T00:00:00","value":"160.78"},{"time":"2017-07-18T00:00:00","value":"163.73"},{"time":"2017-07-19T00:00:00","value":"165.7"},{"time":"2017-07-20T00:00:00","value":"165.0"},{"time":"2017-07-21T00:00:00","value":"165.05"},{"time":"2017-07-24T00:00:00","value":"166.17"},{"time":"2017-07-25T00:00:00","value":"165.54"},{"time":"2017-07-26T00:00:00","value":"166.01"},{"time":"2017-07-27T00:00:00","value":"175.49"},{"time":"2017-07-28T00:00:00","value":"173.43"},{"time":"2017-07-31T00:00:00","value":"172.72"},{"time":"2017-08-01T00:00:00","value":"170.47"},{"time":"2017-08-02T00:00:00","value":"170.55"},{"time":"2017-08-03T00:00:00","value":"169.7"},{"time":"2017-08-04T00:00:00","value":"170.06"},{"time":"2017-08-07T00:00:00","value":"172.06"},{"time":"2017-08-08T00:00:00","value":"173.05"},{"time":"2017-08-09T00:00:00","value":"171.45"},{"time":"2017-08-10T00:00:00","value":"170.59"},{"time":"2017-08-11T00:00:00","value":"168.82"},{"time":"2017-08-14T00:00:00","value":"171.08"},{"time":"2017-08-15T00:00:00","value":"171.5"},{"time":"2017-08-16T00:00:00","value":"171.38"},{"time":"2017-08-17T00:00:00","value":"169.86"},{"time":"2017-08-18T00:00:00","value":"168.67"}],"color":"red"},"EMA (High Price  [0], 5)":{"data":[{"time":"2017-05-24T00:00:00","value":"149.43395348974371914785257730984"},{"time":"2017-05-25T00:00:00","value":"150.48596899316247943190171820656"},{"time":"2017-05-26T00:00:00","value":"151.07397932877498628793447880437"},{"time":"2017-05-30T00:00:00","value":"151.68265288584999085862298586958"},{"time":"2017-05-31T00:00:00","value":"152.23843525723332723908199057972"},{"time":"2017-06-01T00:00:00","value":"152.25562350482221815938799371981"},{"time":"2017-06-02T00:00:00","value":"152.71374900321481210625866247987"},{"time":"2017-06-05T00:00:00","value":"153.37876600214320807083910831991"},{"time":"2017-06-06T00:00:00","value":"153.75917733476213871389273887994"},{"time":"2017-06-07T00:00:00","value":"153.75611822317475914259515925329"},{"time":"2017-06-08T00:00:00","value":"154.08074548211650609506343950219"},{"time":"2017-06-09T00:00:00","value":"154.58383032141100406337562633479"},{"time":"2017-06-12T00:00:00","value":"152.78755354760733604225041755653"},{"time":"2017-06-13T00:00:00","value":"152.25170236507155736150027837102"},{"time":"2017-06-14T00:00:00","value":"152.30113491004770490766685224735"},{"time":"2017-06-15T00:00:00","value":"151.54628994003180327177790149823"},{"time":"2017-06-16T00:00:00","value":"151.30752662668786884785193433215"},{"time":"2017-06-19T00:00:00","value":"152.06168441779191256523462288810"},{"time":"2017-06-20T00:00:00","value":"152.65445627852794171015641525873"},{"time":"2017-06-21T00:00:00","value":"153.12963751901862780677094350582"},{"time":"2017-06-22T00:00:00","value":"153.60309167934575187118062900388"},{"time":"2017-06-23T00:00:00","value":"154.13539445289716791412041933592"},{"time":"2017-06-26T00:00:00","value":"154.92359630193144527608027955728"},{"time":"2017-06-27T00:00:00","value":"154.38573086795429685072018637152"},{"time":"2017-06-28T00:00:00","value":"154.08048724530286456714679091435"},{"time":"2017-06-29T00:00:00","value":"153.55365816353524304476452727623"},{"time":"2017-06-30T00:00:00","value":"153.00910544235682869650968485082"},{"time":"2017-07-03T00:00:00","value":"152.72273696157121913100645656721"},{"time":"2017-07-05T00:00:00","value":"152.09849130771414608733763771147"},{"time":"2017-07-06T00:00:00","value":"151.41232753847609739155842514098"},{"time":"2017-07-07T00:00:00","value":"151.60488502565073159437228342732"},{"time":"2017-07-10T00:00:00","value":"152.39659001710048772958152228488"},{"time":"2017-07-11T00:00:00","value":"153.40522667806699181972101485659"},{"time":"2017-07-12T00:00:00","value":"155.32348445204466121314734323773"},{"time":"2017-07-13T00:00:00","value":"156.80898963469644080876489549182"},{"time":"2017-07-14T00:00:00","value":"157.97932642313096053917659699455"},{"time":"2017-07-17T00:00:00","value":"158.91288428208730702611773132970"},{"time":"2017-07-18T00:00:00","value":"160.51858952139153801741182088647"},{"time":"2017-07-19T00:00:00","value":"162.24572634759435867827454725765"},{"time":"2017-07-20T00:00:00","value":"163.16381756506290578551636483843"},{"time":"2017-07-21T00:00:00","value":"163.79254504337527052367757655895"},{"time":"2017-07-24T00:00:00","value":"164.58503002891684701578505103930"},{"time":"2017-07-25T00:00:00","value":"164.90335335261123134385670069287"},{"time":"2017-07-26T00:00:00","value":"165.27223556840748756257113379525"},{"time":"2017-07-27T00:00:00","value":"168.67815704560499170838075586350"},{"time":"2017-07-28T00:00:00","value":"170.26210469706999447225383724233"},{"time":"2017-07-31T00:00:00","value":"171.08140313137999631483589149489"},{"time":"2017-08-01T00:00:00","value":"170.87760208758666420989059432993"},{"time":"2017-08-02T00:00:00","value":"170.76840139172444280659372955329"},{"time":"2017-08-03T00:00:00","value":"170.41226759448296187106248636886"},{"time":"2017-08-04T00:00:00","value":"170.29484506298864124737499091257"},{"time":"2017-08-07T00:00:00","value":"170.88323004199242749824999394171"},{"time":"2017-08-08T00:00:00","value":"171.60548669466161833216666262781"},{"time":"2017-08-09T00:00:00","value":"171.55365779644107888811110841854"},{"time":"2017-08-10T00:00:00","value":"171.23243853096071925874073894569"},{"time":"2017-08-11T00:00:00","value":"170.42829235397381283916049263046"},{"time":"2017-08-14T00:00:00","value":"170.64552823598254189277366175364"},{"time":"2017-08-15T00:00:00","value":"170.93035215732169459518244116909"},{"time":"2017-08-16T00:00:00","value":"171.08023477154779639678829411273"},{"time":"2017-08-17T00:00:00","value":"170.67348984769853093119219607515"},{"time":"2017-08-18T00:00:00","value":"170.00565989846568728746146405010"}],"color":"red"},"Indicators":["MaxPriceIndicator","EMA (High Price  [0], 5)"]}')
+        
+        addIndicator('{"name":"Exponential Moving Average  [4]","subchart":"true","MaxPriceIndicator":{"data":[{"time":"2017-05-24T00:00:00","value":"150.23"},{"time":"2017-05-25T00:00:00","value":"152.59"},{"time":"2017-05-26T00:00:00","value":"152.25"},{"time":"2017-05-30T00:00:00","value":"152.9"},{"time":"2017-05-31T00:00:00","value":"153.35"},{"time":"2017-06-01T00:00:00","value":"152.29"},{"time":"2017-06-02T00:00:00","value":"153.63"},{"time":"2017-06-05T00:00:00","value":"154.7088"},{"time":"2017-06-06T00:00:00","value":"154.52"},{"time":"2017-06-07T00:00:00","value":"153.75"},{"time":"2017-06-08T00:00:00","value":"154.73"},{"time":"2017-06-09T00:00:00","value":"155.59"},{"time":"2017-06-12T00:00:00","value":"149.195"},{"time":"2017-06-13T00:00:00","value":"151.18"},{"time":"2017-06-14T00:00:00","value":"152.4"},{"time":"2017-06-15T00:00:00","value":"150.0366"},{"time":"2017-06-16T00:00:00","value":"150.83"},{"time":"2017-06-19T00:00:00","value":"153.57"},{"time":"2017-06-20T00:00:00","value":"153.84"},{"time":"2017-06-21T00:00:00","value":"154.08"},{"time":"2017-06-22T00:00:00","value":"154.55"},{"time":"2017-06-23T00:00:00","value":"155.2"},{"time":"2017-06-26T00:00:00","value":"156.5"},{"time":"2017-06-27T00:00:00","value":"153.31"},{"time":"2017-06-28T00:00:00","value":"153.47"},{"time":"2017-06-29T00:00:00","value":"152.5"},{"time":"2017-06-30T00:00:00","value":"151.92"},{"time":"2017-07-03T00:00:00","value":"152.15"},{"time":"2017-07-05T00:00:00","value":"150.85"},{"time":"2017-07-06T00:00:00","value":"150.04"},{"time":"2017-07-07T00:00:00","value":"151.99"},{"time":"2017-07-10T00:00:00","value":"153.98"},{"time":"2017-07-11T00:00:00","value":"155.4225"},{"time":"2017-07-12T00:00:00","value":"159.16"},{"time":"2017-07-13T00:00:00","value":"159.78"},{"time":"2017-07-14T00:00:00","value":"160.32"},{"time":"2017-07-17T00:00:00","value":"160.78"},{"time":"2017-07-18T00:00:00","value":"163.73"},{"time":"2017-07-19T00:00:00","value":"165.7"},{"time":"2017-07-20T00:00:00","value":"165.0"},{"time":"2017-07-21T00:00:00","value":"165.05"},{"time":"2017-07-24T00:00:00","value":"166.17"},{"time":"2017-07-25T00:00:00","value":"165.54"},{"time":"2017-07-26T00:00:00","value":"166.01"},{"time":"2017-07-27T00:00:00","value":"175.49"},{"time":"2017-07-28T00:00:00","value":"173.43"},{"time":"2017-07-31T00:00:00","value":"172.72"},{"time":"2017-08-01T00:00:00","value":"170.47"},{"time":"2017-08-02T00:00:00","value":"170.55"},{"time":"2017-08-03T00:00:00","value":"169.7"},{"time":"2017-08-04T00:00:00","value":"170.06"},{"time":"2017-08-07T00:00:00","value":"172.06"},{"time":"2017-08-08T00:00:00","value":"173.05"},{"time":"2017-08-09T00:00:00","value":"171.45"},{"time":"2017-08-10T00:00:00","value":"170.59"},{"time":"2017-08-11T00:00:00","value":"168.82"},{"time":"2017-08-14T00:00:00","value":"171.08"},{"time":"2017-08-15T00:00:00","value":"171.5"},{"time":"2017-08-16T00:00:00","value":"171.38"},{"time":"2017-08-17T00:00:00","value":"169.86"},{"time":"2017-08-18T00:00:00","value":"168.67"}],"color":"red"},"EMA (High Price  [0], 5)":{"data":[{"time":"2017-05-24T00:00:00","value":"149.43395348974371914785257730984"},{"time":"2017-05-25T00:00:00","value":"150.48596899316247943190171820656"},{"time":"2017-05-26T00:00:00","value":"151.07397932877498628793447880437"},{"time":"2017-05-30T00:00:00","value":"151.68265288584999085862298586958"},{"time":"2017-05-31T00:00:00","value":"152.23843525723332723908199057972"},{"time":"2017-06-01T00:00:00","value":"152.25562350482221815938799371981"},{"time":"2017-06-02T00:00:00","value":"152.71374900321481210625866247987"},{"time":"2017-06-05T00:00:00","value":"153.37876600214320807083910831991"},{"time":"2017-06-06T00:00:00","value":"153.75917733476213871389273887994"},{"time":"2017-06-07T00:00:00","value":"153.75611822317475914259515925329"},{"time":"2017-06-08T00:00:00","value":"154.08074548211650609506343950219"},{"time":"2017-06-09T00:00:00","value":"154.58383032141100406337562633479"},{"time":"2017-06-12T00:00:00","value":"152.78755354760733604225041755653"},{"time":"2017-06-13T00:00:00","value":"152.25170236507155736150027837102"},{"time":"2017-06-14T00:00:00","value":"152.30113491004770490766685224735"},{"time":"2017-06-15T00:00:00","value":"151.54628994003180327177790149823"},{"time":"2017-06-16T00:00:00","value":"151.30752662668786884785193433215"},{"time":"2017-06-19T00:00:00","value":"152.06168441779191256523462288810"},{"time":"2017-06-20T00:00:00","value":"152.65445627852794171015641525873"},{"time":"2017-06-21T00:00:00","value":"153.12963751901862780677094350582"},{"time":"2017-06-22T00:00:00","value":"153.60309167934575187118062900388"},{"time":"2017-06-23T00:00:00","value":"154.13539445289716791412041933592"},{"time":"2017-06-26T00:00:00","value":"154.92359630193144527608027955728"},{"time":"2017-06-27T00:00:00","value":"154.38573086795429685072018637152"},{"time":"2017-06-28T00:00:00","value":"154.08048724530286456714679091435"},{"time":"2017-06-29T00:00:00","value":"153.55365816353524304476452727623"},{"time":"2017-06-30T00:00:00","value":"153.00910544235682869650968485082"},{"time":"2017-07-03T00:00:00","value":"152.72273696157121913100645656721"},{"time":"2017-07-05T00:00:00","value":"152.09849130771414608733763771147"},{"time":"2017-07-06T00:00:00","value":"151.41232753847609739155842514098"},{"time":"2017-07-07T00:00:00","value":"151.60488502565073159437228342732"},{"time":"2017-07-10T00:00:00","value":"152.39659001710048772958152228488"},{"time":"2017-07-11T00:00:00","value":"153.40522667806699181972101485659"},{"time":"2017-07-12T00:00:00","value":"155.32348445204466121314734323773"},{"time":"2017-07-13T00:00:00","value":"156.80898963469644080876489549182"},{"time":"2017-07-14T00:00:00","value":"157.97932642313096053917659699455"},{"time":"2017-07-17T00:00:00","value":"158.91288428208730702611773132970"},{"time":"2017-07-18T00:00:00","value":"160.51858952139153801741182088647"},{"time":"2017-07-19T00:00:00","value":"162.24572634759435867827454725765"},{"time":"2017-07-20T00:00:00","value":"163.16381756506290578551636483843"},{"time":"2017-07-21T00:00:00","value":"163.79254504337527052367757655895"},{"time":"2017-07-24T00:00:00","value":"164.58503002891684701578505103930"},{"time":"2017-07-25T00:00:00","value":"164.90335335261123134385670069287"},{"time":"2017-07-26T00:00:00","value":"165.27223556840748756257113379525"},{"time":"2017-07-27T00:00:00","value":"168.67815704560499170838075586350"},{"time":"2017-07-28T00:00:00","value":"170.26210469706999447225383724233"},{"time":"2017-07-31T00:00:00","value":"171.08140313137999631483589149489"},{"time":"2017-08-01T00:00:00","value":"170.87760208758666420989059432993"},{"time":"2017-08-02T00:00:00","value":"170.76840139172444280659372955329"},{"time":"2017-08-03T00:00:00","value":"170.41226759448296187106248636886"},{"time":"2017-08-04T00:00:00","value":"170.29484506298864124737499091257"},{"time":"2017-08-07T00:00:00","value":"170.88323004199242749824999394171"},{"time":"2017-08-08T00:00:00","value":"171.60548669466161833216666262781"},{"time":"2017-08-09T00:00:00","value":"171.55365779644107888811110841854"},{"time":"2017-08-10T00:00:00","value":"171.23243853096071925874073894569"},{"time":"2017-08-11T00:00:00","value":"170.42829235397381283916049263046"},{"time":"2017-08-14T00:00:00","value":"170.64552823598254189277366175364"},{"time":"2017-08-15T00:00:00","value":"170.93035215732169459518244116909"},{"time":"2017-08-16T00:00:00","value":"171.08023477154779639678829411273"},{"time":"2017-08-17T00:00:00","value":"170.67348984769853093119219607515"},{"time":"2017-08-18T00:00:00","value":"170.00565989846568728746146405010"}],"color":"red"},"Indicators":["MaxPriceIndicator","EMA (High Price  [0], 5)"]}')
+        
+*/
+
+        
+    </script>    
+<script src="http://techanjs.org/techan.min.js"></script>
+</body>
+</html>

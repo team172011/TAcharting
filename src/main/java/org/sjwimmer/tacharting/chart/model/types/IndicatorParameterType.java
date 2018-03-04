@@ -35,6 +35,7 @@ public enum IndicatorParameterType{
     COLOR("Color"),
     SERIES("Series"),
     INDICATOR("Indicator"),
+    CHARTINDICATOR("ChartIndicator"),
     CHARTTYPE("ChartType");
 
     public final String name;

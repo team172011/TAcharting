@@ -24,7 +24,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
-import org.sjwimmer.tacharting.chart.controller.ChartController;
+import org.sjwimmer.tacharting.chart.controller.RootController;
 import org.sjwimmer.tacharting.chart.model.BaseIndicatorBox;
 import org.sjwimmer.tacharting.chart.model.IndicatorBox;
 import org.ta4j.core.Indicator;
@@ -47,14 +47,15 @@ public abstract class AbstractProgram extends Application {
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getClassLoader().getResource("fxml/charting-root.fxml"));
 
         Parent root = fxmlLoader.load();
-        ChartController controller = fxmlLoader.<ChartController>getController();
+        RootController controller = fxmlLoader.getController();
         final IndicatorBox indicatorBox = createIndicatorBox();
-        controller.setIndicatorBox(indicatorBox);
+        controller.addChart(indicatorBox);
         Scene rootScene = new Scene(root);
         URL stylesheetPath = getClass().getClassLoader().getResource(("fxml/charting-root.css"));
         if(stylesheetPath != null){
             rootScene.getStylesheets().add(stylesheetPath.toExternalForm());
         }
+        primaryStage.setMaximized(true);
         primaryStage.setScene(rootScene);
         primaryStage.setTitle("Ta4j-Charting");
         primaryStage.show();

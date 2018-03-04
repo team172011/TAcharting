@@ -33,7 +33,7 @@ public class Example {
     /**
      * launch the Application {@link ProgramStart} that extends the
      * {@link AbstractProgram AbstractProgram}
-     * @param args command line arguments
+     * @param args command LINE arguments
      */
     public static void main(String[] args){
         LauncherImpl.launchApplication(ProgramStart.class, Preloader.class, args);

@@ -20,8 +20,8 @@ package org.sjwimmer.tacharting.chart;
 
 import javafx.stage.Stage;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
-import org.sjwimmer.tacharting.chart.api.BaseIndicatorParameterManager;
-import org.sjwimmer.tacharting.chart.api.IndicatorParameterManager;
+import org.sjwimmer.tacharting.chart.controller.manager.BaseIndicatorParameterManager;
+import org.sjwimmer.tacharting.chart.controller.manager.IndicatorParameterManager;
 import org.sjwimmer.tacharting.chart.model.BaseIndicatorBox;
 import org.sjwimmer.tacharting.chart.model.IndicatorBox;
 import org.sjwimmer.tacharting.chart.model.TaTimeSeries;

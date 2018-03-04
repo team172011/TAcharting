@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.*?>
+<?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.*?>
 <fx:root type="javafx.scene.layout.BorderPane" fx:id="borderPane" xmlns:fx="http://javafx.com/fxml">
     <top>
@@ -9,18 +9,4 @@
     <center>
         <HBox BorderPane.alignment="CENTER" fx:id="hBox"/>
     </center>
-    <bottom>
-        <HBox BorderPane.alignment="CENTER">
-            <Button fx:id="btnSave" text="Save">
-                <tooltip><Tooltip text="Save current indicator settings"/></tooltip>
-            </Button>
-            <Button fx:id="btnDuplicate" text="Duplicate">
-                <tooltip><Tooltip text="Add another instance with current settings to the menu"/></tooltip>
-            </Button>
-            <Button fx:id="btnRemove" text="Remove">
-                <tooltip><Tooltip text="Remove this indicator from org.sjwimmer.tacharting.chart"/></tooltip>
-            </Button>
-        </HBox>
-    </bottom>
-
 </fx:root>

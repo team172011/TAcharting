@@ -4,8 +4,8 @@ import com.opencsv.CSVParser;
 import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
-import org.sjwimmer.tacharting.chart.api.settings.CsvSettingsManager;
-import org.sjwimmer.tacharting.chart.api.settings.YahooSettingsManager;
+import org.sjwimmer.tacharting.chart.controller.manager.CsvSettingsManager;
+import org.sjwimmer.tacharting.chart.controller.manager.YahooSettingsManager;
 import org.sjwimmer.tacharting.chart.model.TaTimeSeries;
 import org.sjwimmer.tacharting.chart.model.types.GeneralTimePeriod;
 import org.sjwimmer.tacharting.chart.model.types.TimeFormatType;
@@ -78,7 +78,7 @@ public class CSVConnector implements Connector<File> {
     }
 
     /**
-     * Reads a csv file with structure of yahoo api: No info line with name and timeFormatId, just header line and
+     * Reads a csv file with structure of yahoo api: No info LINE with name and timeFormatId, just header LINE and
      * {@link TimeFormatType timeFormat YAHOO}
      * @param name the name of this symbol
      * @param file the csv file with financial data in yahoo format
