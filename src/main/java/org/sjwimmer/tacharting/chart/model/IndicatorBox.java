@@ -23,6 +23,7 @@ import javafx.collections.ObservableMap;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.sjwimmer.tacharting.chart.api.IndicatorParameterManager;
 import org.sjwimmer.tacharting.chart.model.types.IndicatorCategory;
+import org.sjwimmer.tacharting.implementation.model.ChartIndicator;
 import org.ta4j.core.Indicator;
 import org.ta4j.core.Strategy;
 

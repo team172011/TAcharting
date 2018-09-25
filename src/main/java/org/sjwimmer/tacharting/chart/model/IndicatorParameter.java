@@ -8,7 +8,7 @@ import org.sjwimmer.tacharting.chart.model.types.ChartType;
 import org.sjwimmer.tacharting.chart.model.types.IndicatorParameterType;
 import org.sjwimmer.tacharting.chart.model.types.ShapeType;
 import org.sjwimmer.tacharting.chart.model.types.StrokeType;
-import org.sjwimmer.tacharting.chart.utils.ConverterUtils;
+import org.sjwimmer.tacharting.implementation.util.ConverterUtils;
 
 import java.util.Objects;
 

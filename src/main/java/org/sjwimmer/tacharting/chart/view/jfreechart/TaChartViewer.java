@@ -38,7 +38,7 @@ import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.ui.RectangleEdge;
 import org.jfree.chart.util.Args;
 import org.jfree.chart.util.ExportUtils;
-import org.sjwimmer.tacharting.chart.utils.CalculationUtils;
+import org.sjwimmer.tacharting.implementation.util.CalculationUtils;
 
 import java.awt.geom.Rectangle2D;
 import java.io.File;

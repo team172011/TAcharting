@@ -1,4 +1,4 @@
-package org.sjwimmer.tacharting.chart.model;
+package org.sjwimmer.tacharting.chart.model.key;
 
 public class Key {
 

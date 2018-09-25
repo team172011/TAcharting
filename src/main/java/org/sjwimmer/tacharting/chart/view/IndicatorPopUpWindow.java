@@ -35,8 +35,8 @@ import org.sjwimmer.tacharting.chart.model.IndicatorParameter;
 import org.sjwimmer.tacharting.chart.model.types.ChartType;
 import org.sjwimmer.tacharting.chart.model.types.ShapeType;
 import org.sjwimmer.tacharting.chart.model.types.StrokeType;
-import org.sjwimmer.tacharting.chart.utils.ConverterUtils;
-import org.sjwimmer.tacharting.chart.utils.FormatUtils;
+import org.sjwimmer.tacharting.implementation.util.ConverterUtils;
+import org.sjwimmer.tacharting.implementation.util.FormatUtils;
 
 import javax.xml.transform.TransformerException;
 import javax.xml.xpath.XPathException;

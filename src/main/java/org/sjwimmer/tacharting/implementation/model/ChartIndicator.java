@@ -17,7 +17,7 @@
  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.sjwimmer.tacharting.chart.model;
+package org.sjwimmer.tacharting.implementation.model;
 
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.time.Second;
@@ -25,8 +25,8 @@ import org.jfree.data.time.TimeSeriesCollection;
 import org.sjwimmer.tacharting.chart.model.types.ChartType;
 import org.sjwimmer.tacharting.chart.model.types.IndicatorCategory;
 import org.ta4j.core.Bar;
-import org.ta4j.core.Decimal;
 import org.ta4j.core.Indicator;
+import org.ta4j.core.num.Num;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -36,9 +36,9 @@ import java.util.List;
  * A Wrapper for the indicators displaying on a jfreeCharts org.sjwimmer.tacharting.chart panel.
  * An ChartIndicator can consist colorOf several ta4j-indiactors (e.g. bollinger bands...)
  */
-public class ChartIndicator {
+public class ChartIndicator<Type> {
 
-    private final List<Indicator> indicators;
+    private final List<Indicator<Type>> indicators;
     private final List<String> indicatorsNames;
     private final XYLineAndShapeRenderer renderer;
     private final String generalName;
@@ -51,8 +51,8 @@ public class ChartIndicator {
      * @param name the displayed name of the indicator
      * @param isSubchart false if the indicator should be plotted as overlay on candlesticks chart
      */
-    public ChartIndicator(Indicator indicator, String name, boolean isSubchart){
-        this(indicator,name, new XYLineAndShapeRenderer(), isSubchart,IndicatorCategory.CUSTOM);
+    public ChartIndicator(Indicator<Type> indicator, String name, boolean isSubchart){
+        this(indicator,name, new XYLineAndShapeRenderer(), isSubchart, IndicatorCategory.CUSTOM);
     }
 
     /**
@@ -62,7 +62,7 @@ public class ChartIndicator {
      * @param isSubchart false if the indicator should be plotted as overlay on candlesticks chart
      * @param c the {@link IndicatorCategory category} for the indicator
      */
-    public ChartIndicator(Indicator indicator, String name, boolean isSubchart, IndicatorCategory c){
+    public ChartIndicator(Indicator<Type> indicator, String name, boolean isSubchart, IndicatorCategory c){
         this(indicator,name, new XYLineAndShapeRenderer(), isSubchart,c);
     }
 
@@ -74,7 +74,7 @@ public class ChartIndicator {
      * @param isSubchart true if the ChartIndicator should be plotted as subchart
      * @param c the category colorOf the indicator in the menu colorOf this application
      */
-    public ChartIndicator(Indicator indicator, String name, XYLineAndShapeRenderer renderer, boolean isSubchart, IndicatorCategory c){
+    public ChartIndicator(Indicator<Type> indicator, String name, XYLineAndShapeRenderer renderer, boolean isSubchart, IndicatorCategory c){
         indicators = new ArrayList<>();
         indicatorsNames = new ArrayList<>();
         indicators.add(indicator);
@@ -93,7 +93,7 @@ public class ChartIndicator {
      * @param isSubchart true if the TaChartIndicators should be plotted as sub org.sjwimmer.tacharting.chart
      * @param c the category colorOf the ChartIndicator in the menu colorOf this application
      */
-    public ChartIndicator(List<Indicator> indicators, List<String> names, String generalName, XYLineAndShapeRenderer renderer, boolean isSubchart, IndicatorCategory c){
+    public ChartIndicator(List<Indicator<Type>> indicators, List<String> names, String generalName, XYLineAndShapeRenderer renderer, boolean isSubchart, IndicatorCategory c){
         this.indicators = indicators;
         indicatorsNames = names;
         this.generalName = generalName;
@@ -122,7 +122,7 @@ public class ChartIndicator {
     /**
      * @return a List of all {@link Indicator indicators} that represent this ChartIndicator
      */
-    public List<Indicator> getIndicatorList(){
+    public List<Indicator<Type>> getIndicatorList(){
         return this.indicators;
     }
 
@@ -130,7 +130,7 @@ public class ChartIndicator {
      *
      * @return the (first) indicator that represents this ChartIndicator
      */
-    public Indicator getIndicator(){
+    public Indicator<Type> getIndicator(){
         return getIndicator(0);
     }
 
@@ -139,7 +139,7 @@ public class ChartIndicator {
      * @param index index of the indicator
      * @return the indicator at index <code>index</code>
      */
-    public Indicator getIndicator(int index){
+    public Indicator<Type> getIndicator(int index){
         return indicators.get(index);
     }
 
@@ -165,18 +165,20 @@ public class ChartIndicator {
     }
 
     /**
-     * Extract a {@link org.jfree.data.time.TimeSeries Collection of jfreeCharts TimeSeries} for plotting this
+     * Extracts a {@link org.jfree.data.time.TimeSeries Collection of jfreeCharts TimeSeries} for plotting this
      * ChartIndicator
      * @return a TimeSeriesCollection
+     * @throws ClassCastException if the generic type of {@link ChartIndicator} is not in bounds of {@link Num} interface
      */
     public TimeSeriesCollection getDataSet(){
         TimeSeriesCollection dataset = new TimeSeriesCollection();
         for(int index = 0; index< this.getIndicatorsCount(); index++){
-            Indicator<Decimal> indicator = this.getIndicator(index);
+            Indicator<Type> indicator = this.getIndicator(index);
             org.jfree.data.time.TimeSeries chartTimeSeries = new org.jfree.data.time.TimeSeries(this.getName(index));
+            
             for(int i = 0; i<indicator.getTimeSeries().getBarCount(); i++){
                 Bar t = indicator.getTimeSeries().getBar(i);
-                chartTimeSeries.add(new Second(new Date(t.getEndTime().toEpochSecond() * 1000)), indicator.getValue(i).toDouble());
+                chartTimeSeries.add(new Second(new Date(t.getEndTime().toEpochSecond() * 1000)), ((Num)indicator.getValue(i)).doubleValue());
             }
             dataset.addSeries(chartTimeSeries);
         }
@@ -191,8 +193,8 @@ public class ChartIndicator {
     }
 
     // returns a new ChartIndicator instance of this indicator
-    public ChartIndicator clone(){
-        return new ChartIndicator(indicators,indicatorsNames,generalName,renderer,isSubchart,category);
+    public ChartIndicator<Type> clone(){
+        return new ChartIndicator<Type>(indicators,indicatorsNames,generalName,renderer,isSubchart,category);
     }
 
     /**

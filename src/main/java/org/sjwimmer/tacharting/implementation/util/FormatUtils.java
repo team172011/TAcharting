@@ -16,7 +16,7 @@
  COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-package org.sjwimmer.tacharting.chart.utils;
+package org.sjwimmer.tacharting.implementation.util;
 
 import org.sjwimmer.tacharting.chart.model.types.GeneralTimePeriod;
 import org.sjwimmer.tacharting.chart.model.types.IndicatorParameterType;
@@ -103,7 +103,7 @@ public class FormatUtils {
         if(headerMap.get(Parameter.Columns.VOLUME) != null){
             volume = Double.parseDouble(line[headerMap.get(Parameter.Columns.VOLUME)]);
         }
-        return new BaseBar(date, open, high, low, close, volume);
+        return new BaseBar(date, open, high, low, close, volume, Parameter.numFunction);
     }
 
     public static DateTimeFormatter getDateTimeFormatter(int id){

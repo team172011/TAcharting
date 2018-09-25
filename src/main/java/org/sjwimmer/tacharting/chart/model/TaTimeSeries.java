@@ -1,6 +1,7 @@
 package org.sjwimmer.tacharting.chart.model;
 
 import org.sjwimmer.tacharting.chart.model.types.GeneralTimePeriod;
+import org.sjwimmer.tacharting.implementation.model.api.key.SQLKey;
 import org.ta4j.core.Bar;
 import org.ta4j.core.BaseTimeSeries;
 import org.ta4j.core.TimeSeries;
@@ -8,9 +9,11 @@ import org.ta4j.core.TimeSeries;
 import java.util.Currency;
 import java.util.List;
 
-public class TaTimeSeries extends BaseTimeSeries{
+public class TaTimeSeries extends BaseTimeSeries implements ChartTimeSeries{
 
-    private final Currency currency;
+	private static final long serialVersionUID = 8968804460398253480L;
+	
+	private final Currency currency;
     private final GeneralTimePeriod periodType;
 
     public TaTimeSeries(String name, List<Bar> BarList, Currency currency, GeneralTimePeriod periodType){

@@ -16,15 +16,17 @@
  COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
-package org.sjwimmer.tacharting.chart.api;
+package org.sjwimmer.tacharting.implementation.service;
 
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
-import org.sjwimmer.tacharting.chart.api.settings.YahooSettingsManager;
+
 import org.sjwimmer.tacharting.chart.model.TaTimeSeries;
 import org.sjwimmer.tacharting.chart.model.types.TimeFormatType;
 import org.sjwimmer.tacharting.chart.model.types.YahooTimePeriod;
 import org.sjwimmer.tacharting.chart.parameters.Parameter;
+import org.sjwimmer.tacharting.implementation.model.api.CSVConnector;
+import org.sjwimmer.tacharting.implementation.model.api.YahooSettingsManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

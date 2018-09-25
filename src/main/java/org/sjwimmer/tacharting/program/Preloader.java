@@ -16,20 +16,21 @@
  COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-package org.sjwimmer.tacharting.chart;
+package org.sjwimmer.tacharting.program;
+
+import java.io.File;
+import java.io.IOException;
+
+import org.sjwimmer.tacharting.chart.parameters.Parameter;
+import org.sjwimmer.tacharting.implementation.util.InitUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import org.sjwimmer.tacharting.chart.parameters.Parameter;
-import org.sjwimmer.tacharting.chart.utils.InitUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.io.IOException;
 
 /**
  * Preloader Application for initial tasks

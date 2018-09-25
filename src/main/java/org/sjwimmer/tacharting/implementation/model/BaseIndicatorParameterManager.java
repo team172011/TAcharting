@@ -16,20 +16,20 @@
  COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-package org.sjwimmer.tacharting.chart.api;
+package org.sjwimmer.tacharting.implementation.model;
 
 import com.sun.org.apache.xml.internal.dtm.ref.DTMNodeList;
-import org.sjwimmer.tacharting.chart.controller.ChartController;
-import org.sjwimmer.tacharting.chart.model.BaseIndicatorBox;
-import org.sjwimmer.tacharting.chart.model.ChartIndicator;
+
+import org.sjwimmer.tacharting.chart.api.IndicatorParameterManager;
 import org.sjwimmer.tacharting.chart.model.IndicatorParameter;
 import org.sjwimmer.tacharting.chart.model.types.ChartType;
 import org.sjwimmer.tacharting.chart.model.types.IndicatorCategory;
 import org.sjwimmer.tacharting.chart.model.types.ShapeType;
 import org.sjwimmer.tacharting.chart.model.types.StrokeType;
 import org.sjwimmer.tacharting.chart.parameters.Parameter;
-import org.sjwimmer.tacharting.chart.utils.ConverterUtils;
-import org.sjwimmer.tacharting.chart.utils.FormatUtils;
+import org.sjwimmer.tacharting.implementation.controller.ChartController;
+import org.sjwimmer.tacharting.implementation.util.ConverterUtils;
+import org.sjwimmer.tacharting.implementation.util.FormatUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;

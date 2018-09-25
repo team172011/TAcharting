@@ -20,16 +20,22 @@ package org.sjwimmer.tacharting.chart.parameters;
 
 import javafx.stage.FileChooser;
 import org.sjwimmer.tacharting.chart.model.types.TimeFormatType;
+import org.ta4j.core.num.Num;
+import org.ta4j.core.num.PrecisionNum;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Locale;
+import java.util.function.Function;
 
 public  class Parameter {
 
 
     public final static String OS = System.getProperty("os.name").toLowerCase();
-
+    public final static Function<Number, Num> numFunction = PrecisionNum::valueOf;
+    
+    
+    
     /** Header names of financial org.sjwimmer.tacharting.data ********************************************************************************/
     public final static HashSet<String> HEADER_DATE = new HashSet<>(Arrays.asList("date", "timestamp"));
     public final static HashSet<String> HEADER_OPEN = new HashSet<>(Arrays.asList("open", "first", "open price", "first price"));
@@ -79,7 +85,8 @@ public  class Parameter {
     // Available api provider
         //TODO:Add more..
     public enum ApiProvider{
-        Yahoo,
+        IEX,
+    	Yahoo,
         AlphaVantage
     }
 

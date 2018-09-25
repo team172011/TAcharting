@@ -2,7 +2,7 @@ package org.sjwimmer.tacharting.chart.model.types;
 
 /**
  * Represents the available menu entries for the
- * {@link org.sjwimmer.tacharting.chart.model.ChartIndicator ChartIndicators}
+ * {@link org.sjwimmer.tacharting.implementation.model.ChartIndicator ChartIndicators}
  */
 public enum IndicatorCategory {
     CUSTOM(8),

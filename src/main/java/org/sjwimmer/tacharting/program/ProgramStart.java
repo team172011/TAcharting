@@ -16,28 +16,34 @@
  COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-package org.sjwimmer.tacharting.chart;
+package org.sjwimmer.tacharting.program;
 
-import javafx.stage.Stage;
+import java.awt.Color;
+import java.util.Arrays;
+import java.util.Currency;
+import java.util.List;
+
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.sjwimmer.tacharting.chart.api.IndicatorParameterManager;
-import org.sjwimmer.tacharting.chart.model.BaseIndicatorBox;
 import org.sjwimmer.tacharting.chart.model.TaTimeSeries;
 import org.sjwimmer.tacharting.chart.model.types.GeneralTimePeriod;
 import org.sjwimmer.tacharting.chart.model.types.IndicatorCategory;
 import org.sjwimmer.tacharting.chart.model.types.ShapeType;
 import org.sjwimmer.tacharting.example.Loader;
-import org.ta4j.core.*;
+import org.sjwimmer.tacharting.implementation.model.BaseIndicatorBox;
+import org.ta4j.core.BaseStrategy;
+import org.ta4j.core.Indicator;
+import org.ta4j.core.Rule;
+import org.ta4j.core.Strategy;
+import org.ta4j.core.TimeSeries;
+import org.ta4j.core.TradingRecord;
 import org.ta4j.core.indicators.EMAIndicator;
 import org.ta4j.core.indicators.MACDIndicator;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 import org.ta4j.core.trading.rules.CrossedDownIndicatorRule;
 import org.ta4j.core.trading.rules.CrossedUpIndicatorRule;
 
-import java.awt.*;
-import java.util.Arrays;
-import java.util.Currency;
-import java.util.List;
+import javafx.stage.Stage;
 
 
 public class ProgramStart extends AbstractProgram {

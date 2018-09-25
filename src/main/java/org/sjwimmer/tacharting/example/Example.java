@@ -19,10 +19,11 @@
 
 package org.sjwimmer.tacharting.example;
 
+import org.sjwimmer.tacharting.program.AbstractProgram;
+import org.sjwimmer.tacharting.program.Preloader;
+import org.sjwimmer.tacharting.program.ProgramStart;
+
 import com.sun.javafx.application.LauncherImpl;
-import org.sjwimmer.tacharting.chart.AbstractProgram;
-import org.sjwimmer.tacharting.chart.Preloader;
-import org.sjwimmer.tacharting.chart.ProgramStart;
 
 /**
  * Example class with main entry point that launch the charting application

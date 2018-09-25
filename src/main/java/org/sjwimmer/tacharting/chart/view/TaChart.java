@@ -40,10 +40,10 @@ import org.jfree.data.time.Minute;
 import org.jfree.data.xy.DefaultHighLowDataset;
 import org.jfree.data.xy.OHLCDataset;
 import org.jfree.data.xy.XYDataset;
-import org.sjwimmer.tacharting.chart.model.BaseIndicatorBox;
-import org.sjwimmer.tacharting.chart.model.ChartIndicator;
 import org.sjwimmer.tacharting.chart.model.IndicatorBox;
 import org.sjwimmer.tacharting.chart.view.jfreechart.TaChartViewer;
+import org.sjwimmer.tacharting.implementation.model.BaseIndicatorBox;
+import org.sjwimmer.tacharting.implementation.model.ChartIndicator;
 import org.ta4j.core.*;
 
 import java.awt.*;

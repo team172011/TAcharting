@@ -1,8 +1,8 @@
 package org.sjwimmer.tacharting.chart.api;
 
-import org.sjwimmer.tacharting.chart.model.SQLKey;
 import org.sjwimmer.tacharting.chart.model.TaTimeSeries;
 import org.sjwimmer.tacharting.chart.model.types.GeneralTimePeriod;
+import org.sjwimmer.tacharting.implementation.model.api.key.SQLKey;
 import org.ta4j.core.Bar;
 
 import java.sql.SQLException;
@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * Interface for connections to a database to store and receive financial data
  */
-public interface SQLConnector extends Connector<SQLKey> {
+public interface SQLConnector extends OHLCVDataSource<SQLKey, Void> {
 
     /**
      * Returns a list of all available symbol of a specific time period
@@ -40,16 +40,6 @@ public interface SQLConnector extends Connector<SQLKey> {
      * @throws SQLException SQLException
      */
     void insertData(TaTimeSeries series, boolean replace) throws SQLException;
-
-    /**
-     * Returns a time series object that stores the available data of the symbol,currency,period combination
-     * @param key the key for the series to load from database
-     * @param from date from
-     * @param to date to
-     * @return11
-     * @throws SQLException
-     */
-    TaTimeSeries getSeries(SQLKey key, ZonedDateTime from, ZonedDateTime to) throws SQLException;
 
     /**
      * Returns the last recent available bar of the time series with the <code>key</code>

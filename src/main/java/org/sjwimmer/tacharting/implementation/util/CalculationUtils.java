@@ -16,11 +16,12 @@
  COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-package org.sjwimmer.tacharting.chart.utils;
-
-import org.ta4j.core.Decimal;
+package org.sjwimmer.tacharting.implementation.util;
 
 import java.util.Currency;
+
+import org.sjwimmer.tacharting.chart.parameters.Parameter;
+import org.ta4j.core.num.Num;
 
 public class CalculationUtils {
 
@@ -29,22 +30,22 @@ public class CalculationUtils {
         return String.format("%."+d+"f",value);
     }
 
-    public static Decimal integerToCurrencyValue(int value, Currency currency){
+    public static Num integerToCurrencyValue(int value, Currency currency){
         int fractionDigits = currency.getDefaultFractionDigits();
         double base = Math.pow(10,fractionDigits);
 
-        return Decimal.valueOf(value/base);
+        return Parameter.numFunction.apply(value/base);
     }
 
-    public static Decimal stringToCurrencyValue(String stringValue, Currency currency){
+    public static Num stringToCurrencyValue(String stringValue, Currency currency){
         String value = stringValue.replaceAll("\\s","");
         return integerToCurrencyValue(Integer.parseInt(value), currency);
     }
 
-    public static int currencyValueToInteger(Decimal value, Currency currency){
+    public static int currencyValueToInteger(Num value, Currency currency){
         int fractionDigits = currency.getDefaultFractionDigits();
         int base = (int)Math.pow(10,fractionDigits);
 
-        return (int)value.toDouble()*base;
+        return (int)value.doubleValue()*base;
     }
 }

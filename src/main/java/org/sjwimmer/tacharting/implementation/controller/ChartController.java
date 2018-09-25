@@ -17,7 +17,7 @@
  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.sjwimmer.tacharting.chart.controller;
+package org.sjwimmer.tacharting.implementation.controller;
 
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -38,15 +38,28 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
+
 import org.sjwimmer.tacharting.chart.api.*;
-import org.sjwimmer.tacharting.chart.api.settings.CsvSettingsManager;
-import org.sjwimmer.tacharting.chart.api.settings.YahooSettingsManager;
 import org.sjwimmer.tacharting.chart.model.*;
+import org.sjwimmer.tacharting.chart.model.key.Key;
 import org.sjwimmer.tacharting.chart.model.types.GeneralTimePeriod;
 import org.sjwimmer.tacharting.chart.model.types.IndicatorCategory;
 import org.sjwimmer.tacharting.chart.parameters.Parameter;
 import org.sjwimmer.tacharting.chart.view.IndicatorPopUpWindow;
 import org.sjwimmer.tacharting.chart.view.TaChart;
+import org.sjwimmer.tacharting.implementation.model.BaseIndicatorBox;
+import org.sjwimmer.tacharting.implementation.model.ChartIndicator;
+import org.sjwimmer.tacharting.implementation.model.api.CSVConnector;
+import org.sjwimmer.tacharting.implementation.model.api.CsvSettingsManager;
+import org.sjwimmer.tacharting.implementation.model.api.ExcelConnector;
+import org.sjwimmer.tacharting.implementation.model.api.SqlLiteConnector;
+import org.sjwimmer.tacharting.implementation.model.api.YahooSettingsManager;
+import org.sjwimmer.tacharting.implementation.model.api.key.CSVKey;
+import org.sjwimmer.tacharting.implementation.model.api.key.ExcelKey;
+import org.sjwimmer.tacharting.implementation.model.api.key.IEXKey;
+import org.sjwimmer.tacharting.implementation.model.api.key.SQLKey;
+import org.sjwimmer.tacharting.implementation.service.IEXDataSource;
+import org.sjwimmer.tacharting.implementation.service.YahooService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.ta4j.core.Strategy;
@@ -66,7 +79,7 @@ import static org.sjwimmer.tacharting.chart.parameters.Parameter.EXTENSION_FILTE
 
 public class ChartController implements MapChangeListener<String, ChartIndicator>{
 
-    private final Logger logger = LoggerFactory.getLogger(ChartController.class);
+    private final Logger log = LoggerFactory.getLogger(ChartController.class);
     private TaChart chart;
     private final Map<String, CheckMenuItem> itemMap = new HashMap<>();
     private final ObservableMap<GeneralTimePeriod, List<SQLKey>> tableKey = FXCollections.observableHashMap();
@@ -109,7 +122,7 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
             ImageView strategyImage = new ImageView(new Image(getClass().getClassLoader().getResourceAsStream("icons/strategy.png")));
             strategyMenu.setGraphic(strategyImage);
         } catch (Exception e){
-            logger.error(e.getMessage());
+        	log.error(e.getMessage());
         }
 
         fieldSearch.textProperty().addListener((ov, oldValue, newValue) -> fieldSearch.setText(newValue.toUpperCase()));
@@ -132,7 +145,7 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
 
         // Bind tableView to output of SQLConnector
         if(this.sqlConnector == null){
-            logger.debug("No SQLConnector set. Create default SqlLiteConnector.");
+        	log.debug("No SQLConnector set. Create default SqlLiteConnector.");
             sqlConnector = new SqlLiteConnector();
         }
         DataRequestService requestService = new DataRequestService();
@@ -156,7 +169,7 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
         tvWatchlist.getSelectionModel().selectedItemProperty().addListener((observable, o, n)->{
             if(n.getValue() instanceof SQLKey){ // is symbol entry was selected
                 try {
-                    TaTimeSeries series = sqlConnector.getSeries(((SQLKey) n.getValue()));
+                    TaTimeSeries series = sqlConnector.getSymbolData((SQLKey) n.getValue());
                     chart.getChartIndicatorBox().setTimeSeries(series);
                     TableColumn header = new TableColumn("Strategies");
                 } catch (Exception sql){
@@ -193,11 +206,11 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
             TreeItem item = tvWatchlist.getSelectionModel().getSelectedItem();
                 if(item.getValue() instanceof SQLKey){
                     SQLKey key = (SQLKey) item.getValue();
-                    logger.debug("Remove {} from database", key);
+                    log.debug("Remove {} from database", key);
                     try{
                         sqlConnector.removeData(key);
                     }catch (Exception e){
-                        logger.error(e.getMessage());
+                    	log.error(e.getMessage());
                     }
 
                 }
@@ -439,7 +452,8 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
     private void addCSV(File file){
         try{
             CSVConnector csvConnector = new CSVConnector();
-            TaTimeSeries series = csvConnector.getSeries(file);
+            csvConnector.connect(file);
+            TaTimeSeries series = csvConnector.getSymbolData(CSVKey.DEFAULT_KEY);
             storeSeries(series);
             this.tableKey.get(series.getTimeFormatType()).add(series.getKey());
         } catch (Exception ioe){
@@ -463,8 +477,10 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
     public void addExcel(File file){
         try{
             ExcelConnector excelConnector = new ExcelConnector();
-            TaTimeSeries series = excelConnector.getSeries(file);
-            this.tableKey.get(series.getTimeFormatType()).add(series.getKey());
+            if(excelConnector.connect(file)) {
+            	TaTimeSeries series = excelConnector.getSymbolData(ExcelKey.DEFAULT_KEY);
+            	this.tableKey.get(series.getTimeFormatType()).add(series.getKey());
+            }
         } catch (Exception e){
             e.printStackTrace(); //TODO
         }
@@ -477,9 +493,10 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
                 loadYahooData(symbol);
                 break;}
             case AlphaVantage: {
+                log.error("AlphaVantage connection not implemented");
                 break;
             }
-            default: loadYahooData();
+            default: loadIEX(symbol);
         }
     }
 
@@ -489,7 +506,7 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
 
     private void loadYahooData(String... symbol){
 
-        logger.debug("Start Yahoo request...");
+    	log.debug("Start Yahoo request...");
         String[] cleanSymbols = Arrays.stream(symbol).map(e->e.replaceAll("\\s+","")).toArray(String[]::new);
 
         YahooService yahooConnector = new YahooService(cleanSymbols);
@@ -510,9 +527,31 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
             yahooConnector.exceptionProperty().get().printStackTrace();
         });
     }
+    
+    private void loadIEX(String... symbol){
+
+    	log.debug("Start IEX request...");
+        String[] cleanSymbols = Arrays.stream(symbol).map(e->e.replaceAll("\\s+","")).toArray(String[]::new);
+
+        IEXDataSource iexSource = new IEXDataSource();
+        for(String sym: symbol) {
+        	TaTimeSeries series;
+			try {
+				series = iexSource.getSymbolData(new IEXKey(sym));
+	            this.tableKey.get(series.getTimeFormatType()).add(series.getKey());
+	            if(tbnStoreData.isSelected()){
+	                storeSeries(series);
+	            }
+			} catch (Exception e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+
+        }
+    }
 
     public void addAlphaVantage(){
-        logger.debug("Start AlphaVantage request...");
+        log.debug("Start AlphaVantage request...");
        //TODO: https://www.alphavantage.co/
     }
 
@@ -558,7 +597,7 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
                             tableKey.put(table, keys);
                         }
                     } catch (SQLException e){
-                        logger.error("Error while requesting key list from database: {}"+e.getMessage());
+                        log.error("Error while requesting key list from database: {}"+e.getMessage());
                         e.printStackTrace();
                     }
                     return null;

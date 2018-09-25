@@ -21,6 +21,8 @@ package org.sjwimmer.tacharting.example;
 
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
+
+import org.sjwimmer.tacharting.chart.parameters.Parameter;
 import org.ta4j.core.Bar;
 import org.ta4j.core.BaseBar;
 import org.ta4j.core.BaseTimeSeries;
@@ -65,7 +67,7 @@ public class Loader {
                 double close = Double.parseDouble(line[5]);
                 double volume = Double.parseDouble(line[6]);
 
-                ticks.add(new BaseBar(date, open, high, low, close, volume));
+                ticks.add(new BaseBar(date, open, high, low, close, volume, Parameter.numFunction));
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -104,7 +106,7 @@ public class Loader {
                 double high = Double.parseDouble(line[4]);
                 double low = Double.parseDouble(line[5]);
 
-                ticks.add(new BaseBar(date, open, high, low, close, volume));
+                ticks.add(new BaseBar(date, open, high, low, close, volume, Parameter.numFunction));
             }
             bufferedReader.close();
         } catch (IOException e) {

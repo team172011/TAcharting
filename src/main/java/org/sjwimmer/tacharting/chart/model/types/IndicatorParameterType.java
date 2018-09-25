@@ -18,7 +18,7 @@
  */
 package org.sjwimmer.tacharting.chart.model.types;
 
-import org.sjwimmer.tacharting.chart.model.ChartIndicator;
+import org.sjwimmer.tacharting.implementation.model.ChartIndicator;
 
 /**
  * Enum for the types of parameters that could be needed to create an chart indicator instance

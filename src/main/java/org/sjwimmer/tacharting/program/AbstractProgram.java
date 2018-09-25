@@ -16,7 +16,15 @@
  COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-package org.sjwimmer.tacharting.chart;
+package org.sjwimmer.tacharting.program;
+
+import java.net.URL;
+
+import org.sjwimmer.tacharting.implementation.controller.ChartController;
+import org.sjwimmer.tacharting.implementation.model.BaseIndicatorBox;
+import org.ta4j.core.Indicator;
+import org.ta4j.core.Strategy;
+import org.ta4j.core.TradingRecord;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -24,13 +32,6 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
-import org.sjwimmer.tacharting.chart.controller.ChartController;
-import org.sjwimmer.tacharting.chart.model.BaseIndicatorBox;
-import org.ta4j.core.Indicator;
-import org.ta4j.core.Strategy;
-import org.ta4j.core.TradingRecord;
-
-import java.net.URL;
 
 public abstract class AbstractProgram extends Application {
 

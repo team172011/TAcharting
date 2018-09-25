@@ -1,5 +1,6 @@
-package org.sjwimmer.tacharting.chart.model;
+package org.sjwimmer.tacharting.implementation.model.api.key;
 
+import org.sjwimmer.tacharting.chart.model.key.Key;
 import org.sjwimmer.tacharting.chart.model.types.IndicatorType;
 
 /**

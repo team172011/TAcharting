@@ -17,26 +17,53 @@
  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.sjwimmer.tacharting.chart.model;
+package org.sjwimmer.tacharting.implementation.model;
 
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.value.ObservableObjectValue;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableMap;
+import java.awt.Color;
+import java.awt.Paint;
+import java.awt.Shape;
+import java.awt.Stroke;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
+import javax.xml.xpath.XPathException;
+import javax.xml.xpath.XPathExpressionException;
+
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
-import org.sjwimmer.tacharting.chart.api.BaseIndicatorParameterManager;
 import org.sjwimmer.tacharting.chart.api.IndicatorParameterManager;
+import org.sjwimmer.tacharting.chart.model.IndicatorBox;
+import org.sjwimmer.tacharting.chart.model.TaTimeSeries;
 import org.sjwimmer.tacharting.chart.model.types.ChartType;
 import org.sjwimmer.tacharting.chart.model.types.IndicatorCategory;
 import org.sjwimmer.tacharting.chart.model.types.ShapeType;
 import org.sjwimmer.tacharting.chart.model.types.StrokeType;
-import org.sjwimmer.tacharting.chart.utils.ConverterUtils;
-import org.ta4j.core.Decimal;
+import org.sjwimmer.tacharting.implementation.util.ConverterUtils;
 import org.ta4j.core.Indicator;
 import org.ta4j.core.Strategy;
 import org.ta4j.core.TimeSeries;
-import org.ta4j.core.indicators.*;
+import org.ta4j.core.indicators.AroonDownIndicator;
+import org.ta4j.core.indicators.AroonUpIndicator;
+import org.ta4j.core.indicators.CCIIndicator;
+import org.ta4j.core.indicators.CMOIndicator;
+import org.ta4j.core.indicators.EMAIndicator;
+import org.ta4j.core.indicators.HMAIndicator;
+import org.ta4j.core.indicators.KAMAIndicator;
+import org.ta4j.core.indicators.MACDIndicator;
+import org.ta4j.core.indicators.RAVIIndicator;
+import org.ta4j.core.indicators.ROCIndicator;
+import org.ta4j.core.indicators.RSIIndicator;
+import org.ta4j.core.indicators.SMAIndicator;
+import org.ta4j.core.indicators.StochasticOscillatorDIndicator;
+import org.ta4j.core.indicators.StochasticOscillatorKIndicator;
+import org.ta4j.core.indicators.StochasticRSIIndicator;
+import org.ta4j.core.indicators.TripleEMAIndicator;
+import org.ta4j.core.indicators.UlcerIndexIndicator;
+import org.ta4j.core.indicators.WMAIndicator;
+import org.ta4j.core.indicators.ZLEMAIndicator;
 import org.ta4j.core.indicators.adx.ADXIndicator;
 import org.ta4j.core.indicators.bollinger.BollingerBandsLowerIndicator;
 import org.ta4j.core.indicators.bollinger.BollingerBandsMiddleIndicator;
@@ -45,18 +72,28 @@ import org.ta4j.core.indicators.bollinger.PercentBIndicator;
 import org.ta4j.core.indicators.candles.LowerShadowIndicator;
 import org.ta4j.core.indicators.candles.RealBodyIndicator;
 import org.ta4j.core.indicators.candles.UpperShadowIndicator;
-import org.ta4j.core.indicators.helpers.*;
+import org.ta4j.core.indicators.helpers.AmountIndicator;
+import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
+import org.ta4j.core.indicators.helpers.MaxPriceIndicator;
+import org.ta4j.core.indicators.helpers.MinPriceIndicator;
+import org.ta4j.core.indicators.helpers.PreviousValueIndicator;
+import org.ta4j.core.indicators.helpers.TRIndicator;
 import org.ta4j.core.indicators.keltner.KeltnerChannelLowerIndicator;
 import org.ta4j.core.indicators.keltner.KeltnerChannelMiddleIndicator;
 import org.ta4j.core.indicators.keltner.KeltnerChannelUpperIndicator;
 import org.ta4j.core.indicators.statistics.StandardDeviationIndicator;
-import org.ta4j.core.indicators.volume.*;
+import org.ta4j.core.indicators.volume.MVWAPIndicator;
+import org.ta4j.core.indicators.volume.NVIIndicator;
+import org.ta4j.core.indicators.volume.OnBalanceVolumeIndicator;
+import org.ta4j.core.indicators.volume.PVIIndicator;
+import org.ta4j.core.indicators.volume.VWAPIndicator;
+import org.ta4j.core.num.Num;
 
-import javax.xml.xpath.XPathException;
-import javax.xml.xpath.XPathExpressionException;
-import java.awt.*;
-import java.util.*;
-import java.util.List;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.value.ObservableObjectValue;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableMap;
 
 /**
  * Represents the model for plotted time series with indicators.
@@ -64,12 +101,13 @@ import java.util.List;
  */
 public class BaseIndicatorBox implements IndicatorBox {
 
-    private final ObservableMap<String, ChartIndicator> indicartors; // currently loaded indicators
-    private final ObservableMap<String, Strategy> strategies; // stored strategies
-    private final ObservableMap<String, ChartIndicator> tempIndicators; // indicators that are dynamically added
+    
+	private final ObservableMap<String, ChartIndicator> indicartors;
+    private final ObservableMap<String, Strategy> strategies;
+    private final ObservableMap<String, ChartIndicator> tempIndicators;
     private final IndicatorParameterManager parameter;
     private final ObjectProperty<TaTimeSeries> series;
-    private final ObjectProperty<Indicator<Decimal>> closePriceIndicator;
+    private final ObjectProperty<Indicator<Num>> closePriceIndicator;
 
     /**
      * Constructor <p/>
@@ -268,7 +306,7 @@ public class BaseIndicatorBox implements IndicatorBox {
 
     public void loadPercentBIndicator(String key) throws XPathException{
         int timeFrame =Integer.parseInt(parameter.getParameter(key, "Time Frame"));
-        Decimal k = Decimal.valueOf(parameter.getParameter(key,"K Multiplier"));
+        double k = Double.valueOf(parameter.getParameter(key,"K Multiplier"));
         XYLineAndShapeRenderer renderer = createRenderer(key, "Color", "Shape", "Stroke");
         IndicatorCategory category = parameter.getCategory(key);
         ChartType type = parameter.getChartType(key);
@@ -463,7 +501,7 @@ public class BaseIndicatorBox implements IndicatorBox {
     public void loadKeltner(String key) throws XPathException{
 
         int timeFrame = Integer.parseInt(parameter.getParameter(key, "Time Frame"));
-        Decimal ratio = Decimal.valueOf(parameter.getParameter(key, "Ratio"));
+        double ratio = Double.valueOf(parameter.getParameter(key, "Ratio"));
         int atr = Integer.parseInt(parameter.getParameter(key, "Time Frame ATR"));
         Color colorU = ConverterUtils.ColorAWTConverter.fromString(parameter.getParameter(key, "Color Upper"));
         StrokeType strokeU = StrokeType.valueOf(parameter.getParameter(key, "Stroke Upper"));
@@ -677,7 +715,7 @@ public class BaseIndicatorBox implements IndicatorBox {
         IndicatorCategory category = parameter.getCategory(key);
         ChartType chartType = parameter.getChartType(key);
         addChartIndicator(key, new HMAIndicator(closePriceIndicator.get(), timeFrame),
-                String.format("%s [%s] (%s)",getIdentifier(key), getID(key), timeFrame), chartType.toBoolean(),
+                String.format("%s [%s] (%s)",getIdentifier(key), getID(key), timeFrame), renderer, chartType.toBoolean(),
                 category);
     }
 
@@ -1052,7 +1090,8 @@ public class BaseIndicatorBox implements IndicatorBox {
 
 
     }
-        */
+    */
+    
     private void addChartIndicator(String identifier, List<Indicator> indicators, List<String> names, String generalName,XYLineAndShapeRenderer renderer, boolean isSubchart, IndicatorCategory c){
         indicartors.put(identifier, new ChartIndicator(indicators,names,generalName,renderer,isSubchart,c));
     }
