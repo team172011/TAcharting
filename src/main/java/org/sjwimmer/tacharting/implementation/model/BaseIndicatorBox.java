@@ -19,51 +19,24 @@
 
 package org.sjwimmer.tacharting.implementation.model;
 
-import java.awt.Color;
-import java.awt.Paint;
-import java.awt.Shape;
-import java.awt.Stroke;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-
-import javax.xml.xpath.XPathException;
-import javax.xml.xpath.XPathExpressionException;
-
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.value.ObservableObjectValue;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableMap;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.sjwimmer.tacharting.chart.api.IndicatorParameterManager;
 import org.sjwimmer.tacharting.chart.model.IndicatorBox;
-import org.sjwimmer.tacharting.chart.model.TaTimeSeries;
+import org.sjwimmer.tacharting.chart.model.TaBarSeries;
 import org.sjwimmer.tacharting.chart.model.types.ChartType;
 import org.sjwimmer.tacharting.chart.model.types.IndicatorCategory;
 import org.sjwimmer.tacharting.chart.model.types.ShapeType;
 import org.sjwimmer.tacharting.chart.model.types.StrokeType;
 import org.sjwimmer.tacharting.implementation.util.ConverterUtils;
+import org.ta4j.core.BarSeries;
 import org.ta4j.core.Indicator;
 import org.ta4j.core.Strategy;
-import org.ta4j.core.TimeSeries;
-import org.ta4j.core.indicators.AroonDownIndicator;
-import org.ta4j.core.indicators.AroonUpIndicator;
-import org.ta4j.core.indicators.CCIIndicator;
-import org.ta4j.core.indicators.CMOIndicator;
-import org.ta4j.core.indicators.EMAIndicator;
-import org.ta4j.core.indicators.HMAIndicator;
-import org.ta4j.core.indicators.KAMAIndicator;
-import org.ta4j.core.indicators.MACDIndicator;
-import org.ta4j.core.indicators.RAVIIndicator;
-import org.ta4j.core.indicators.ROCIndicator;
-import org.ta4j.core.indicators.RSIIndicator;
-import org.ta4j.core.indicators.SMAIndicator;
-import org.ta4j.core.indicators.StochasticOscillatorDIndicator;
-import org.ta4j.core.indicators.StochasticOscillatorKIndicator;
-import org.ta4j.core.indicators.StochasticRSIIndicator;
-import org.ta4j.core.indicators.TripleEMAIndicator;
-import org.ta4j.core.indicators.UlcerIndexIndicator;
-import org.ta4j.core.indicators.WMAIndicator;
-import org.ta4j.core.indicators.ZLEMAIndicator;
+import org.ta4j.core.indicators.*;
 import org.ta4j.core.indicators.adx.ADXIndicator;
 import org.ta4j.core.indicators.bollinger.BollingerBandsLowerIndicator;
 import org.ta4j.core.indicators.bollinger.BollingerBandsMiddleIndicator;
@@ -72,28 +45,19 @@ import org.ta4j.core.indicators.bollinger.PercentBIndicator;
 import org.ta4j.core.indicators.candles.LowerShadowIndicator;
 import org.ta4j.core.indicators.candles.RealBodyIndicator;
 import org.ta4j.core.indicators.candles.UpperShadowIndicator;
-import org.ta4j.core.indicators.helpers.AmountIndicator;
-import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
-import org.ta4j.core.indicators.helpers.MaxPriceIndicator;
-import org.ta4j.core.indicators.helpers.MinPriceIndicator;
-import org.ta4j.core.indicators.helpers.PreviousValueIndicator;
-import org.ta4j.core.indicators.helpers.TRIndicator;
+import org.ta4j.core.indicators.helpers.*;
 import org.ta4j.core.indicators.keltner.KeltnerChannelLowerIndicator;
 import org.ta4j.core.indicators.keltner.KeltnerChannelMiddleIndicator;
 import org.ta4j.core.indicators.keltner.KeltnerChannelUpperIndicator;
 import org.ta4j.core.indicators.statistics.StandardDeviationIndicator;
-import org.ta4j.core.indicators.volume.MVWAPIndicator;
-import org.ta4j.core.indicators.volume.NVIIndicator;
-import org.ta4j.core.indicators.volume.OnBalanceVolumeIndicator;
-import org.ta4j.core.indicators.volume.PVIIndicator;
-import org.ta4j.core.indicators.volume.VWAPIndicator;
+import org.ta4j.core.indicators.volume.*;
 import org.ta4j.core.num.Num;
 
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.value.ObservableObjectValue;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableMap;
+import javax.xml.xpath.XPathException;
+import javax.xml.xpath.XPathExpressionException;
+import java.awt.*;
+import java.util.List;
+import java.util.*;
 
 /**
  * Represents the model for plotted time series with indicators.
@@ -106,15 +70,15 @@ public class BaseIndicatorBox implements IndicatorBox {
     private final ObservableMap<String, Strategy> strategies;
     private final ObservableMap<String, ChartIndicator> tempIndicators;
     private final IndicatorParameterManager parameter;
-    private final ObjectProperty<TaTimeSeries> series;
+    private final ObjectProperty<TaBarSeries> series;
     private final ObjectProperty<Indicator<Num>> closePriceIndicator;
 
     /**
      * Constructor <p/>
-     * @param series a {@link TaTimeSeries time series}
+     * @param series a {@link TaBarSeries time series}
      * @param parameterManager a {@link IndicatorParameterManager parameter manager} for indicator parameters
      */
-    public BaseIndicatorBox(TaTimeSeries series, IndicatorParameterManager parameterManager){
+    public BaseIndicatorBox(TaBarSeries series, IndicatorParameterManager parameterManager){
         Objects.requireNonNull(series);
         this.indicartors = FXCollections.observableMap(new HashMap<>());
         this.strategies = FXCollections.observableMap(new HashMap<>());
@@ -126,21 +90,21 @@ public class BaseIndicatorBox implements IndicatorBox {
 
     /**
      * Constructor <p/>
-     * @param series a {@link TaTimeSeries time series}
+     * @param series a {@link TaBarSeries time series}
      */
-    public BaseIndicatorBox(TaTimeSeries series){
+    public BaseIndicatorBox(TaBarSeries series){
         this(series, new BaseIndicatorParameterManager());
     }
 
     /**
-     * Sets (changes) the {@link TimeSeries time series} for this ChartIndicatorBox.
+     * Sets (changes) the {@link BarSeries time series} for this ChartIndicatorBox.
      * All currently loaded indicators in the {{@link #indicartors} indicartors} will be updated with the
      * new <tt>series</tt>
      * @apiNote  All dynamically added indicators will be deleted if <tt>series</tt> != this.series.get()
-     * @param series the new TimeSeries object for this indicator box
+     * @param series the new BarSeries object for this indicator box
      */
     @Override
-    public void setTimeSeries(TaTimeSeries series){
+    public void setBarSeries(TaBarSeries series){
         Objects.requireNonNull(series);
         if(series == this.series.get()){
             return;
@@ -167,12 +131,12 @@ public class BaseIndicatorBox implements IndicatorBox {
     }
 
     @Override
-    public TaTimeSeries getTimeSeries(){
+    public TaBarSeries getBarSeries(){
         return series.get();
     }
 
     @Override
-    public ObservableObjectValue<TaTimeSeries> getObservableTimeSeries(){
+    public ObservableObjectValue<TaBarSeries> getObservableBarSeries(){
         return series;
     }
 
@@ -772,7 +736,7 @@ public class BaseIndicatorBox implements IndicatorBox {
         StochasticOscillatorDIndicator stochD = new StochasticOscillatorDIndicator(closePriceIndicator.get());
 
         indicators.add(stochD);
-        indicators.add(new StochasticOscillatorKIndicator(stochD,timeFrame,new MaxPriceIndicator(series.get()), new MinPriceIndicator(series.get())));
+        indicators.add(new StochasticOscillatorKIndicator(stochD,timeFrame, new HighPriceIndicator(series.get()), new LowPriceIndicator(series.get())));
         names.add(String.format("%s [%s]", "Stoch. Oscillator D", getID(key)));
         names.add(String.format("%s [%s](Stoch. Oscillator D, %s","Stoch. Oscillator K",getID(key),timeFrame));
         addChartIndicator(key, indicators,names,String.format("Stoch. Oscillator K(%s, %s)","Stoch. Oscillator D",timeFrame),renderer,true,category);

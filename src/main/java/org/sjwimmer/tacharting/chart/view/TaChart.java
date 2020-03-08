@@ -79,7 +79,7 @@ public class TaChart extends StackPane implements MapChangeListener<String, Char
         mapTradingRecordMarker = new HashMap<>();
         this.chartIndicatorBox = box;
         this.chartIndicatorBox.getIndicartors().addListener(this);
-        XYDataset candlesBarData = createOHLCDataset(chartIndicatorBox.getTimeSeries());
+        XYDataset candlesBarData = createOHLCDataset(chartIndicatorBox.getBarSeries());
         this.mainPlot = createMainPlot(candlesBarData);
         this.combinedXYPlot = createCombinedDomainXYPlot(mainPlot);
         this.setCache(true);
@@ -95,7 +95,7 @@ public class TaChart extends StackPane implements MapChangeListener<String, Char
         Color legendBackground = new Color(0, 0, 0, 0);
         legend.setBackgroundPaint(legendBackground);
 
-        chartIndicatorBox.getObservableTimeSeries().addListener((ob, o, n) -> reloadTimeSeries(n));
+        chartIndicatorBox.getObservableBarSeries().addListener((ob, o, n) -> reloadBarSeries(n));
     }
 
     public IndicatorBox getChartIndicatorBox() {
@@ -143,7 +143,7 @@ public class TaChart extends StackPane implements MapChangeListener<String, Char
 
         Color entryColor = orderType==Order.OrderType.SELL ? Color.RED : Color.GREEN;
         Color exitColor = orderType==Order.OrderType.SELL ? Color.GREEN: Color.RED;
-        TimeSeries series = chartIndicatorBox.getTimeSeries();
+        BarSeries series = chartIndicatorBox.getBarSeries();
         for(Trade trade: trades){
             double entry = new Minute(Date.from(
                     series.getBar(trade.getEntry().getIndex()).getEndTime().toInstant())).getFirstMillisecond();
@@ -253,7 +253,7 @@ public class TaChart extends StackPane implements MapChangeListener<String, Char
         return plot;
     }
 
-    private void reloadTimeSeries(TimeSeries series){
+    private void reloadBarSeries(BarSeries series){
         mainPlot.setDataset(0, createOHLCDataset(series));
         mainPlot.setRenderer(0, new TaCandlestickRenderer(3,true));
         mainPlot.getDomainAxis().setAutoRange(true);
@@ -304,7 +304,7 @@ public class TaChart extends StackPane implements MapChangeListener<String, Char
      * @param series a time series
      * @return an Open-High-Low-Close dataset
      */
-    private static OHLCDataset createOHLCDataset(TimeSeries series) {
+    private static OHLCDataset createOHLCDataset(BarSeries series) {
         final int nbBars = series.getBarCount();
 
         Date[] dates = new Date[nbBars];
@@ -318,8 +318,8 @@ public class TaChart extends StackPane implements MapChangeListener<String, Char
             Bar Bar = series.getBar(i);
             dates[i] = new Date(Bar.getEndTime().toEpochSecond() * 1000);
             opens[i] = Bar.getOpenPrice().doubleValue();
-            highs[i] = Bar.getMaxPrice().doubleValue();
-            lows[i] = Bar.getMinPrice().doubleValue();
+            highs[i] = Bar.getHighPrice().doubleValue();
+            lows[i] = Bar.getLowPrice().doubleValue();
             closes[i] = Bar.getClosePrice().doubleValue();
             volumes[i] = Bar.getVolume().doubleValue();
         }

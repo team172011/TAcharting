@@ -4,10 +4,8 @@ import com.opencsv.CSVParser;
 import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
-
 import org.sjwimmer.tacharting.chart.api.OHLCVDataSource;
-import org.sjwimmer.tacharting.chart.model.TaTimeSeries;
-import org.sjwimmer.tacharting.chart.model.key.Key;
+import org.sjwimmer.tacharting.chart.model.TaBarSeries;
 import org.sjwimmer.tacharting.chart.model.types.GeneralTimePeriod;
 import org.sjwimmer.tacharting.chart.model.types.TimeFormatType;
 import org.sjwimmer.tacharting.chart.model.types.YahooTimePeriod;
@@ -17,8 +15,8 @@ import org.sjwimmer.tacharting.implementation.util.FormatUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.ta4j.core.Bar;
-import org.ta4j.core.BaseTimeSeries;
-import org.ta4j.core.TimeSeries;
+import org.ta4j.core.BarSeries;
+import org.ta4j.core.BaseBarSeries;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -90,7 +88,7 @@ public class CSVConnector implements OHLCVDataSource<CSVKey, File> {
      * @return the corresponding TimeSeries object
      * @throws IOException IOException
      */
-    public TaTimeSeries getSeriesFromYahooFile(String name, File file) throws IOException{
+    public TaBarSeries getSeriesFromYahooFile(String name, File file) throws IOException{
         CSVReader reader = new CSVReaderBuilder(new FileReader(file)).withCSVParser(new CSVParser()).build();
         String line[];
         line = reader.readNext();
@@ -106,7 +104,7 @@ public class CSVConnector implements OHLCVDataSource<CSVKey, File> {
         }
         String yahooIntervall = YahooSettingsManager.getProperties().getProperty(Parameter.PROPERTY_YAHOO_INTERVAL);
         GeneralTimePeriod timePeriod = YahooTimePeriod.of(yahooIntervall).generalTimePeriod;
-        return new TaTimeSeries(name==null?"unnamed":name.toUpperCase(),Bars,Currency.getInstance("USD"),timePeriod);
+        return new TaBarSeries(name==null?"unnamed":name.toUpperCase(),Bars,Currency.getInstance("USD"),timePeriod);
     }
 
 	@Override
@@ -115,7 +113,7 @@ public class CSVConnector implements OHLCVDataSource<CSVKey, File> {
 	}
 
 	@Override
-	public TaTimeSeries getSymbolData(CSVKey symbol, ZonedDateTime from, ZonedDateTime to) throws Exception {
+	public TaBarSeries getSymbolData(CSVKey symbol, ZonedDateTime from, ZonedDateTime to) throws Exception {
 		List<Bar> bars = new ArrayList<>();
 		Map<Parameter.Columns, Integer> headers = FormatUtils.getHeaderMap(Arrays.asList(lines.get(0)));
 		lines.remove(0); // remove line with header columns
@@ -128,20 +126,20 @@ public class CSVConnector implements OHLCVDataSource<CSVKey, File> {
         if(bars.get(bars.size()-1).getEndTime().isBefore(bars.get(0).getEndTime())){
             Collections.reverse(bars);
         }
-	    TimeSeries series = new BaseTimeSeries(name==null?"unnamed":name.toUpperCase(), bars);
+	    BarSeries series = new BaseBarSeries(name==null?"unnamed":name.toUpperCase(), bars);
         GeneralTimePeriod period =  FormatUtils.extractPeriod(series);
         log.debug("Extracted period: "+period);
-	    return new TaTimeSeries(series, currency, period);
+	    return new TaBarSeries(series, currency, period);
 	}
 
 	@Override
-	public TaTimeSeries getSymbolData(CSVKey symbol) throws Exception {
+	public TaBarSeries getSymbolData(CSVKey symbol) throws Exception {
 		return getSymbolData(symbol, ZonedDateTime.now().plusYears(1000), ZonedDateTime.now().minusYears(1000));
 	}
 
 	@Override
-	public List<TaTimeSeries> getSymbolData(List<CSVKey> symbols, ZonedDateTime from, ZonedDateTime to) throws Exception {
-		List<TaTimeSeries> series = new ArrayList<>();
+	public List<TaBarSeries> getSymbolData(List<CSVKey> symbols, ZonedDateTime from, ZonedDateTime to) throws Exception {
+		List<TaBarSeries> series = new ArrayList<>();
 		for(CSVKey key: symbols) {
 			series.add(getSymbolData(key, ZonedDateTime.now().plusYears(1000), ZonedDateTime.now().minusYears(1000)));
 		}

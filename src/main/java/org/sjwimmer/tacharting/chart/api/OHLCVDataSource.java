@@ -1,12 +1,11 @@
 package org.sjwimmer.tacharting.chart.api;
 
+import org.sjwimmer.tacharting.chart.model.TaBarSeries;
+import org.sjwimmer.tacharting.chart.model.key.Key;
+
 import java.sql.SQLException;
 import java.time.ZonedDateTime;
 import java.util.List;
-
-import org.sjwimmer.tacharting.chart.model.TaTimeSeries;
-import org.sjwimmer.tacharting.chart.model.key.Key;
-import org.ta4j.core.TimeSeries;
 
 /**
  * Api for a datasource of ohlc data with volume. This could be a 
@@ -23,11 +22,11 @@ public interface OHLCVDataSource<K extends Key, R> {
 	 */
 	List<String> getAllAvailableSymbols() throws Exception;
 	
-    TaTimeSeries getSymbolData(K symbol, ZonedDateTime from, ZonedDateTime to) throws Exception;
+    TaBarSeries getSymbolData(K symbol, ZonedDateTime from, ZonedDateTime to) throws Exception;
     
-    TaTimeSeries getSymbolData(K symbol) throws Exception;
+    TaBarSeries getSymbolData(K symbol) throws Exception;
     
-    List<TaTimeSeries> getSymbolData(List<K> symbols, ZonedDateTime from, ZonedDateTime to) throws Exception;
+    List<TaBarSeries> getSymbolData(List<K> symbols, ZonedDateTime from, ZonedDateTime to) throws Exception;
     
     boolean connect(R ressource);
     

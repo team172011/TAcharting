@@ -1,12 +1,11 @@
 package org.sjwimmer.tacharting.chart.api;
 
-import org.sjwimmer.tacharting.chart.model.TaTimeSeries;
+import org.sjwimmer.tacharting.chart.model.TaBarSeries;
 import org.sjwimmer.tacharting.chart.model.types.GeneralTimePeriod;
 import org.sjwimmer.tacharting.implementation.model.api.key.SQLKey;
 import org.ta4j.core.Bar;
 
 import java.sql.SQLException;
-import java.time.ZonedDateTime;
 import java.util.Currency;
 import java.util.List;
 
@@ -24,12 +23,12 @@ public interface SQLConnector extends OHLCVDataSource<SQLKey, Void> {
     List<SQLKey> getKeyList(GeneralTimePeriod table) throws SQLException;
 
     /**
-     * Removes all entries which had the key of the <tt>series</tt> key consists of {@link TaTimeSeries#getName()},
+     * Removes all entries which had the key of the <tt>series</tt> key consists of {@link TaBarSeries#getName()},
      * {@link Currency#getCurrencyCode()}, {@link GeneralTimePeriod}
      * @param series the series with the key (could be empty)
      * @throws SQLException SQLException
      */
-    boolean removeData(TaTimeSeries series) throws SQLException;
+    boolean removeData(TaBarSeries series) throws SQLException;
 
     boolean removeData(SQLKey key) throws SQLException;
 
@@ -39,7 +38,7 @@ public interface SQLConnector extends OHLCVDataSource<SQLKey, Void> {
      * @param replace if true existing entries will be overwritten
      * @throws SQLException SQLException
      */
-    void insertData(TaTimeSeries series, boolean replace) throws SQLException;
+    void insertData(TaBarSeries series, boolean replace) throws SQLException;
 
     /**
      * Returns the last recent available bar of the time series with the <code>key</code>

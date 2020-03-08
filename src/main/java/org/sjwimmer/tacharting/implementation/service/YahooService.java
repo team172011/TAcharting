@@ -21,7 +21,7 @@ package org.sjwimmer.tacharting.implementation.service;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 
-import org.sjwimmer.tacharting.chart.model.TaTimeSeries;
+import org.sjwimmer.tacharting.chart.model.TaBarSeries;
 import org.sjwimmer.tacharting.chart.model.types.TimeFormatType;
 import org.sjwimmer.tacharting.chart.model.types.YahooTimePeriod;
 import org.sjwimmer.tacharting.chart.parameters.Parameter;
@@ -46,7 +46,7 @@ import java.util.*;
  * Connector class to request financial data from yahoo
  * following https://github.com/sstrickx/yahoofinance-api>
  */
-public class YahooService extends Service<List<TaTimeSeries>> {
+public class YahooService extends Service<List<TaBarSeries>> {
 
     private final Logger log = LoggerFactory.getLogger(YahooService.class);
 
@@ -62,16 +62,16 @@ public class YahooService extends Service<List<TaTimeSeries>> {
     }
 
     @Override
-    protected Task<List<TaTimeSeries>> createTask() {
+    protected Task<List<TaBarSeries>> createTask() {
         return new RequestTimeSeries();
     }
 
 
 
-    class RequestTimeSeries extends Task<List<TaTimeSeries>>{
+    class RequestTimeSeries extends Task<List<TaBarSeries>>{
 
         @Override
-        protected List<TaTimeSeries> call() throws Exception {
+        protected List<TaBarSeries> call() throws Exception {
             String from = properties
                     .getProperty(Parameter.PROPERTY_YAHOO_FROM,
                             ZonedDateTime.now().minusYears(Parameter.DEFAULT_LOOK_BACK)
@@ -87,7 +87,7 @@ public class YahooService extends Service<List<TaTimeSeries>> {
             LocalDateTime dateTimeTo = localDateTo.atStartOfDay();
 
 
-            List<TaTimeSeries> seriesList = new ArrayList<>();
+            List<TaBarSeries> seriesList = new ArrayList<>();
             CSVConnector csvConnector = new CSVConnector();
             for(int i = 0; i < resources.length; i++) {
                 String interval = YahooTimePeriod.of(properties.getProperty(Parameter.PROPERTY_YAHOO_INTERVAL, "1d")).toYahooString();

@@ -1,7 +1,7 @@
 package org.sjwimmer.tacharting.implementation.model.api;
 
 import org.sjwimmer.tacharting.chart.api.SQLConnector;
-import org.sjwimmer.tacharting.chart.model.TaTimeSeries;
+import org.sjwimmer.tacharting.chart.model.TaBarSeries;
 import org.sjwimmer.tacharting.chart.model.types.GeneralTimePeriod;
 import org.sjwimmer.tacharting.chart.model.types.TimeFormatType;
 import org.sjwimmer.tacharting.chart.parameters.Parameter;
@@ -11,10 +11,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.ta4j.core.Bar;
 import org.ta4j.core.BaseBar;
-import org.ta4j.core.TimeSeries;
 import org.ta4j.core.num.Num;
 
 import java.sql.*;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -99,7 +99,7 @@ public class SqlLiteConnector implements SQLConnector {
     }
 
     @Override
-    public boolean removeData(TaTimeSeries series) throws SQLException {
+    public boolean removeData(TaBarSeries series) throws SQLException {
         return removeData(series.getKey());
     }
 
@@ -108,13 +108,13 @@ public class SqlLiteConnector implements SQLConnector {
     public boolean removeData(SQLKey key) throws SQLException {
         getConnection();
         PreparedStatement pstmt = con.prepareStatement("DELETE FROM ? WHERE SYMBOL = ? AND Currency = ?");
-        pstmt.setString(0,key.period.toString());
-        pstmt.setString(1,key.currency.toString());
+        pstmt.setString(1, key.period.toString());
+        pstmt.setString(2, key.currency.toString());
         return pstmt.execute();
     }
 
     @Override
-    public synchronized void insertData(TaTimeSeries series, boolean shouldReplace) throws SQLException{
+    public synchronized void insertData(TaBarSeries series, boolean shouldReplace) throws SQLException{
 
         Statement statement = con.createStatement();
         getConnection();
@@ -136,8 +136,8 @@ public class SqlLiteConnector implements SQLConnector {
                             series.getCurrency().getCurrencyCode(),
                             cd.getEndTime().toEpochSecond(),
                             cd.getOpenPrice().multipliedBy(base),
-                            cd.getMaxPrice().multipliedBy(base),
-                            cd.getMinPrice().multipliedBy(base),
+                            cd.getHighPrice().multipliedBy(base),
+                            cd.getLowPrice().multipliedBy(base),
                             cd.getClosePrice().multipliedBy(base),
                             cd.getVolume());
             statement.execute(procedure);
@@ -157,10 +157,10 @@ public class SqlLiteConnector implements SQLConnector {
     /**
      *
      * @param rset the result set
-     * @return a TimeSeries object
+     * @return a BarSeries object
      * @throws SQLException d
      */
-    private TaTimeSeries transformResultSet(ResultSet rset, GeneralTimePeriod timeFormatType) throws SQLException {
+    private TaBarSeries transformResultSet(ResultSet rset, GeneralTimePeriod timeFormatType) throws SQLException {
         List<Bar> ticks = new ArrayList<>();
 
         String name=null;
@@ -172,7 +172,7 @@ public class SqlLiteConnector implements SQLConnector {
                 ZonedDateTime time = ZonedDateTime.ofInstant(i, ZoneId.systemDefault());
                 name = rset.getString("Symbol");
                 currency = Currency.getInstance(rset.getString("Currency"));
-                BaseBar line = new BaseBar(time,
+                BaseBar line = new BaseBar(Duration.ZERO, time,
                     CalculationUtils.integerToCurrencyValue(rset.getInt("Open"), currency),
                     CalculationUtils.integerToCurrencyValue(rset.getInt("High"), currency),
                     CalculationUtils.integerToCurrencyValue(rset.getInt("Low"), currency),
@@ -188,7 +188,7 @@ public class SqlLiteConnector implements SQLConnector {
 
             }
         }
-        return new TaTimeSeries(name,ticks,currency,timeFormatType);
+        return new TaBarSeries(name,ticks,currency,timeFormatType);
     }
 
     private static String createTableStatement(String tableName){
@@ -216,7 +216,7 @@ public class SqlLiteConnector implements SQLConnector {
 	}
 
 	@Override
-	public TaTimeSeries getSymbolData(SQLKey key, ZonedDateTime from, ZonedDateTime to) throws Exception {
+	public TaBarSeries getSymbolData(SQLKey key, ZonedDateTime from, ZonedDateTime to) throws Exception {
         String table = key.period.toString();
         String query = String.format(
                 "SELECT * FROM %s WHERE Symbol = '%s' AND Currency = '%s' AND Date >= '%s' AND Date <= '%s' order by Date asc, Symbol desc;",
@@ -232,13 +232,13 @@ public class SqlLiteConnector implements SQLConnector {
 	}
 
 	@Override
-	public TaTimeSeries getSymbolData(SQLKey key) throws Exception {
+	public TaBarSeries getSymbolData(SQLKey key) throws Exception {
 		return getSymbolData(key, ZonedDateTime.now().minusYears(1000), ZonedDateTime.now().plusYears(1000));
 	}
 
 	@Override
-	public List<TaTimeSeries> getSymbolData(List<SQLKey> keys, ZonedDateTime from, ZonedDateTime to) throws Exception {
-		List<TaTimeSeries> series = new ArrayList<>();
+	public List<TaBarSeries> getSymbolData(List<SQLKey> keys, ZonedDateTime from, ZonedDateTime to) throws Exception {
+		List<TaBarSeries> series = new ArrayList<>();
 		for(SQLKey key: keys) {
 			series.add(getSymbolData(key, from, to));
 		}

@@ -176,8 +176,8 @@ public class ChartIndicator<Type> {
             Indicator<Type> indicator = this.getIndicator(index);
             org.jfree.data.time.TimeSeries chartTimeSeries = new org.jfree.data.time.TimeSeries(this.getName(index));
             
-            for(int i = 0; i<indicator.getTimeSeries().getBarCount(); i++){
-                Bar t = indicator.getTimeSeries().getBar(i);
+            for(int i = 0; i<indicator.getBarSeries().getBarCount(); i++){
+                Bar t = indicator.getBarSeries().getBar(i);
                 chartTimeSeries.add(new Second(new Date(t.getEndTime().toEpochSecond() * 1000)), ((Num)indicator.getValue(i)).doubleValue());
             }
             dataset.addSeries(chartTimeSeries);

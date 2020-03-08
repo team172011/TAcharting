@@ -33,20 +33,20 @@ import java.util.List;
 public interface IndicatorBox {
 
     /**
-     * Sets the current {@link TaTimeSeries series} of this indicator box
+     * Sets the current {@link TaBarSeries series} of this indicator box
      * All dynamical added indicators (via runtime through {@link #addIndicator(Indicator, boolean) addIndicator(...)}
      * will be deleted or updated // TODO: check if it is possible to update a custom indicator
      * All static added indicators (loaded fom xml file) will be reloaded so that they contain correct data
-     * @param series the {@link TaTimeSeries time series}
+     * @param series the {@link TaBarSeries time series}
      */
-    void setTimeSeries(TaTimeSeries series);
+    void setBarSeries(TaBarSeries series);
 
     /**
-     * Returns the {@link TaTimeSeries time series} stored in this indicator box
+     * Returns the {@link TaBarSeries time series} stored in this indicator box
      * @return the time series
      */
-    TaTimeSeries getTimeSeries();
-    ObservableObjectValue<TaTimeSeries> getObservableTimeSeries();
+    TaBarSeries getBarSeries();
+    ObservableObjectValue<TaBarSeries> getObservableBarSeries();
 
     /**
      * Adds a strategy to the indicator box

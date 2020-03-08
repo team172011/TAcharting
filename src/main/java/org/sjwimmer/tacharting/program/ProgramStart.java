@@ -18,32 +18,26 @@
  */
 package org.sjwimmer.tacharting.program;
 
-import java.awt.Color;
-import java.util.Arrays;
-import java.util.Currency;
-import java.util.List;
-
+import javafx.stage.Stage;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.sjwimmer.tacharting.chart.api.IndicatorParameterManager;
-import org.sjwimmer.tacharting.chart.model.TaTimeSeries;
+import org.sjwimmer.tacharting.chart.model.TaBarSeries;
 import org.sjwimmer.tacharting.chart.model.types.GeneralTimePeriod;
 import org.sjwimmer.tacharting.chart.model.types.IndicatorCategory;
 import org.sjwimmer.tacharting.chart.model.types.ShapeType;
 import org.sjwimmer.tacharting.example.Loader;
 import org.sjwimmer.tacharting.implementation.model.BaseIndicatorBox;
-import org.ta4j.core.BaseStrategy;
-import org.ta4j.core.Indicator;
-import org.ta4j.core.Rule;
-import org.ta4j.core.Strategy;
-import org.ta4j.core.TimeSeries;
-import org.ta4j.core.TradingRecord;
+import org.ta4j.core.*;
 import org.ta4j.core.indicators.EMAIndicator;
 import org.ta4j.core.indicators.MACDIndicator;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 import org.ta4j.core.trading.rules.CrossedDownIndicatorRule;
 import org.ta4j.core.trading.rules.CrossedUpIndicatorRule;
 
-import javafx.stage.Stage;
+import java.awt.*;
+import java.util.Arrays;
+import java.util.Currency;
+import java.util.List;
 
 
 public class ProgramStart extends AbstractProgram {
@@ -57,7 +51,7 @@ public class ProgramStart extends AbstractProgram {
     @Override
     public BaseIndicatorBox createIndicatorBox() {
 
-        TimeSeries series = Loader.getDailyTimeSeries("fb_daily.csv");
+        BarSeries series = Loader.getDailyBarSeries("fb_daily.csv");
 
         // define indicators
         ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
@@ -71,7 +65,7 @@ public class ProgramStart extends AbstractProgram {
 
 
         // initialize and add your indicators to the ChartIndicatorBox
-        TaTimeSeries taTimeSeries = new TaTimeSeries(series, Currency.getInstance("USD"), GeneralTimePeriod.DAY);
+        TaBarSeries taTimeSeries = new TaBarSeries(series, Currency.getInstance("USD"), GeneralTimePeriod.DAY);
         BaseIndicatorBox chartIndicatorBox = new BaseIndicatorBox(taTimeSeries);
 
         // two indicators in one subplot:

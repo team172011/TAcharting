@@ -1,8 +1,6 @@
 # TAcharting
 ### An application for downloading, plotting and analysing financial data
 
-### _Note:_ Currently focused on switching from JFreeChart to javascript with d3 in [d3 branch](https://github.com/team172011/TAcharting/tree/d3)
-
 ## Features
 - [x] Supports all (Decimal based) indicators from [Ta4j](https://github.com/ta4j/ta4j).
 - [x] Add Strategies and run them on several securities
@@ -59,5 +57,4 @@ java -jar target/jfx/app/tacharting-*.jar
 
 ### Ta4j, d3 and jFreeChart
 * https://github.com/ta4j/ta4j/
-* https://github.com/d3/d3
 * https://github.com/jfree/jfreechart

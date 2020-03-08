@@ -25,11 +25,12 @@ import com.opencsv.CSVReaderBuilder;
 import org.sjwimmer.tacharting.chart.parameters.Parameter;
 import org.ta4j.core.Bar;
 import org.ta4j.core.BaseBar;
-import org.ta4j.core.BaseTimeSeries;
-import org.ta4j.core.TimeSeries;
+import org.ta4j.core.BaseBarSeries;
+import org.ta4j.core.BarSeries;
 
 import java.io.*;
 import java.net.URL;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -47,7 +48,7 @@ public class Loader {
     private static final DateTimeFormatter DATE_FORMAT_Daily = DateTimeFormatter.ofPattern("yyyy/MM/dd");
 
 
-    public static TimeSeries getHourlyTimeSeries(URL file, String name){
+    public static BarSeries getHourlyBarSeries(URL file, String name){
 
         List<Bar> ticks = new ArrayList<>();
         CSVReader reader;
@@ -67,7 +68,7 @@ public class Loader {
                 double close = Double.parseDouble(line[5]);
                 double volume = Double.parseDouble(line[6]);
 
-                ticks.add(new BaseBar(date, open, high, low, close, volume, Parameter.numFunction));
+                ticks.add(new BaseBar(Duration.ZERO, date, open, high, low, close, volume, 0, 0, Parameter.numFunction));
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -76,15 +77,15 @@ public class Loader {
         if (ticks.get(0).getEndTime().isAfter(ticks.get(ticks.size()-1).getEndTime()))
             Collections.reverse(ticks);
 
-        return new BaseTimeSeries(nameInCSV, ticks);
+        return new BaseBarSeries(nameInCSV, ticks);
     }
 
-    public static TimeSeries getMinuteTimeSeries(URL file, String name){
-        return getHourlyTimeSeries(file, name);
+    public static BarSeries getMinuteBarSeries(URL file, String name){
+        return getHourlyBarSeries(file, name);
     }
 
-    public static TimeSeries getDailyTimeSeries(String fileName){
-        // load a TimeSeries
+    public static BarSeries getDailyBarSeries(String fileName){
+        // load a BarSeries
         InputStream inputStream = Loader.class.getClassLoader().getResourceAsStream(fileName);
         BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
 
@@ -106,7 +107,7 @@ public class Loader {
                 double high = Double.parseDouble(line[4]);
                 double low = Double.parseDouble(line[5]);
 
-                ticks.add(new BaseBar(date, open, high, low, close, volume, Parameter.numFunction));
+                ticks.add(new BaseBar(Duration.ZERO, date, open, high, low, close, volume, 0, 0, Parameter.numFunction));
             }
             bufferedReader.close();
         } catch (IOException e) {
@@ -115,7 +116,7 @@ public class Loader {
 
         if (ticks.get(0).getEndTime().isAfter(ticks.get(ticks.size()-1).getEndTime()))
             Collections.reverse(ticks);
-        return new BaseTimeSeries(nameInCSV, ticks);
+        return new BaseBarSeries(nameInCSV, ticks);
     }
 
 	

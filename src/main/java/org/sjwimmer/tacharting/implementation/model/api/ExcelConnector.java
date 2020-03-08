@@ -6,7 +6,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.sjwimmer.tacharting.chart.api.OHLCVDataSource;
-import org.sjwimmer.tacharting.chart.model.TaTimeSeries;
+import org.sjwimmer.tacharting.chart.model.TaBarSeries;
 import org.sjwimmer.tacharting.chart.model.types.GeneralTimePeriod;
 import org.sjwimmer.tacharting.chart.model.types.TimeFormatType;
 import org.sjwimmer.tacharting.chart.parameters.Parameter;
@@ -15,8 +15,8 @@ import org.sjwimmer.tacharting.implementation.util.FormatUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.ta4j.core.Bar;
-import org.ta4j.core.BaseTimeSeries;
-import org.ta4j.core.TimeSeries;
+import org.ta4j.core.BarSeries;
+import org.ta4j.core.BaseBarSeries;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -74,7 +74,7 @@ public class ExcelConnector implements OHLCVDataSource<ExcelKey, File> {
 	}
 
 	@Override
-	public TaTimeSeries getSymbolData(ExcelKey symbol, ZonedDateTime from, ZonedDateTime to) throws Exception {
+	public TaBarSeries getSymbolData(ExcelKey symbol, ZonedDateTime from, ZonedDateTime to) throws Exception {
 		 // second row with header description
         Row infoRow = rowIterator.next();
         Iterator<Cell> cellIterator = infoRow.cellIterator();
@@ -100,19 +100,19 @@ public class ExcelConnector implements OHLCVDataSource<ExcelKey, File> {
         if(ticks.get(ticks.size()-1).getEndTime().isBefore(ticks.get(0).getEndTime())){
             Collections.reverse(ticks);
         }
-        TimeSeries series = new BaseTimeSeries(name==null?"unnamed":name,ticks);
+        BarSeries series = new BaseBarSeries(name==null?"unnamed":name,ticks);
         GeneralTimePeriod period = FormatUtils.extractPeriod(series);
-        return new TaTimeSeries(series,currency,period);
+        return new TaBarSeries(series,currency,period);
 	}
 
 	@Override
-	public TaTimeSeries getSymbolData(ExcelKey symbol) throws Exception {
+	public TaBarSeries getSymbolData(ExcelKey symbol) throws Exception {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public List<TaTimeSeries> getSymbolData(List<ExcelKey> symbols, ZonedDateTime from, ZonedDateTime to)
+	public List<TaBarSeries> getSymbolData(List<ExcelKey> symbols, ZonedDateTime from, ZonedDateTime to)
 			throws Exception {
 		// TODO Auto-generated method stub
 		return null;

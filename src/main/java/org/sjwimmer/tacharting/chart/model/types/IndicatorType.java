@@ -55,8 +55,8 @@ public enum IndicatorType {
     KELTNER_LOWER("Keltener Lower Chanel", KeltnerChannelLowerIndicator.class),
     LOWER_SHADOW("Lower Shadow", LowerShadowIndicator.class),
     MACD("MACD", MACDIndicator.class),
-    MAX("High Price", MaxPriceIndicator.class),
-    MIN("Low Price", MinPriceIndicator.class),
+    MAX("High Price", HighPriceIndicator.class),
+    MIN("Low Price", LowPriceIndicator.class),
     MVWAP("MVWAP", MVWAPIndicator.class),
     NVI("NVI", NVIIndicator.class),
 

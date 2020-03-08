@@ -1,12 +1,12 @@
 package org.sjwimmer.tacharting.chart.model;
 
-import java.util.Currency;
-
 import org.sjwimmer.tacharting.chart.model.types.GeneralTimePeriod;
 import org.sjwimmer.tacharting.implementation.model.api.key.SQLKey;
-import org.ta4j.core.TimeSeries;
+import org.ta4j.core.BarSeries;
 
-public interface ChartTimeSeries extends TimeSeries {
+import java.util.Currency;
+
+public interface ChartBarSeries extends BarSeries {
 	
 	/**
 	 * Returns the {@link Currency} of this time series

@@ -24,7 +24,7 @@ import org.sjwimmer.tacharting.chart.model.types.TimeFormatType;
 import org.sjwimmer.tacharting.chart.parameters.Parameter;
 import org.ta4j.core.Bar;
 import org.ta4j.core.BaseBar;
-import org.ta4j.core.TimeSeries;
+import org.ta4j.core.BarSeries;
 
 import java.awt.*;
 import java.time.Duration;
@@ -103,7 +103,7 @@ public class FormatUtils {
         if(headerMap.get(Parameter.Columns.VOLUME) != null){
             volume = Double.parseDouble(line[headerMap.get(Parameter.Columns.VOLUME)]);
         }
-        return new BaseBar(date, open, high, low, close, volume, Parameter.numFunction);
+        return new BaseBar(Duration.ZERO, date, open, high, low, close, volume, 0, 0, Parameter.numFunction);
     }
 
     public static DateTimeFormatter getDateTimeFormatter(int id){
@@ -131,7 +131,7 @@ public class FormatUtils {
      * @return the underlying {@link GeneralTimePeriod} (minimum gap between end time of two consecutive Bars of the
      * complete time series or the minimum gap of at least 20 percent of consecutive Bars of the <tt>series</tt>
      */
-    public static GeneralTimePeriod extractPeriod(TimeSeries series){
+    public static GeneralTimePeriod extractPeriod(BarSeries series){
         long minDiff = Long.MAX_VALUE;
         int counter=0;
         double threshold = series.getBarCount()*0.2;

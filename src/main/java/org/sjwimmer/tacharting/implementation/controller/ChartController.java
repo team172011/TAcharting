@@ -63,7 +63,7 @@ import org.sjwimmer.tacharting.implementation.service.YahooService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.ta4j.core.Strategy;
-import org.ta4j.core.TimeSeriesManager;
+import org.ta4j.core.BarSeriesManager;
 import org.ta4j.core.TradingRecord;
 
 import javax.xml.xpath.XPathException;
@@ -169,8 +169,8 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
         tvWatchlist.getSelectionModel().selectedItemProperty().addListener((observable, o, n)->{
             if(n.getValue() instanceof SQLKey){ // is symbol entry was selected
                 try {
-                    TaTimeSeries series = sqlConnector.getSymbolData((SQLKey) n.getValue());
-                    chart.getChartIndicatorBox().setTimeSeries(series);
+                    TaBarSeries series = sqlConnector.getSymbolData((SQLKey) n.getValue());
+                    chart.getChartIndicatorBox().setBarSeries(series);
                     TableColumn header = new TableColumn("Strategies");
                 } catch (Exception sql){
                     sql.printStackTrace();
@@ -228,17 +228,17 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
 
     /**
      * This function has to be called before showing the stage. It allows the user to add a customized <t>ChartIndicatorBox</t>
-     * @param box the {@link BaseIndicatorBox ChartIndicatorBox} with ChartIndicators, TimeSeries
+     * @param box the {@link BaseIndicatorBox ChartIndicatorBox} with ChartIndicators, BarSeries
      *            and TradingRecords for the org.sjwimmer.tacharting.chart
      */
     public void setIndicatorBox(IndicatorBox box){
-        Objects.requireNonNull(box);
+        Objects.requireNonNull(box, "IndicatorBox cannot be null");
         chart = new TaChart(box);
         VBox.setVgrow(chart, Priority.ALWAYS);
         vbxChart.getChildren().add(chart);
         box.getIndicartors().addListener(this);
         buildMenuEntries(box);
-        TaTimeSeries series = box.getTimeSeries();
+        TaBarSeries series = box.getBarSeries();
         storeSeries(series);
 
     }
@@ -255,9 +255,9 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
 
     /**
      *
-     * @param series the TaTimeSeries that should be stored in DB
+     * @param series the TaBarSeries that should be stored in DB
      */
-    public synchronized void storeSeries(final TaTimeSeries series){
+    public synchronized void storeSeries(final TaBarSeries series){
             new Thread(()-> {
                 try{
                     sqlConnector.insertData(series, false);
@@ -299,7 +299,7 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
     private void addToStrategies(String key, Strategy strategy) {
         CheckMenuItem item = new CheckMenuItem(key);
         item.setOnAction(event -> {
-            TimeSeriesManager seriesManager = new TimeSeriesManager(chart.getChartIndicatorBox().getTimeSeries());
+            BarSeriesManager seriesManager = new BarSeriesManager(chart.getChartIndicatorBox().getBarSeries());
             TradingRecord value = seriesManager.run(strategy);
             chart.plotTradingRecord(value, item.isSelected()); });
         strategyMenu.getItems().add(item);
@@ -420,7 +420,7 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
     }
 
     /**
-     * Opens a FileChooser dialog and adds excel or csv ohlc org.sjwimmer.tacharting.data as TimeSeries to the current watchlist
+     * Opens a FileChooser dialog and adds excel or csv ohlc org.sjwimmer.tacharting.data as BarSeries to the current watchlist
      */
     public void openCsvExcelDialog(){
         FileChooser fileChooser = new FileChooser();
@@ -453,7 +453,7 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
         try{
             CSVConnector csvConnector = new CSVConnector();
             csvConnector.connect(file);
-            TaTimeSeries series = csvConnector.getSymbolData(CSVKey.DEFAULT_KEY);
+            TaBarSeries series = csvConnector.getSymbolData(CSVKey.DEFAULT_KEY);
             storeSeries(series);
             this.tableKey.get(series.getTimeFormatType()).add(series.getKey());
         } catch (Exception ioe){
@@ -478,7 +478,7 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
         try{
             ExcelConnector excelConnector = new ExcelConnector();
             if(excelConnector.connect(file)) {
-            	TaTimeSeries series = excelConnector.getSymbolData(ExcelKey.DEFAULT_KEY);
+            	TaBarSeries series = excelConnector.getSymbolData(ExcelKey.DEFAULT_KEY);
             	this.tableKey.get(series.getTimeFormatType()).add(series.getKey());
             }
         } catch (Exception e){
@@ -514,7 +514,7 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
         priProgress.progressProperty().bind(yahooConnector.progressProperty());
         yahooConnector.start();
         yahooConnector.setOnSucceeded(value->{
-            for(TaTimeSeries series: yahooConnector.getValue()){
+            for(TaBarSeries series: yahooConnector.getValue()){
                 this.tableKey.get(series.getTimeFormatType()).add(series.getKey());
                 if(tbnStoreData.isSelected()){
                     storeSeries(series);
@@ -535,7 +535,7 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
 
         IEXDataSource iexSource = new IEXDataSource();
         for(String sym: symbol) {
-        	TaTimeSeries series;
+        	TaBarSeries series;
 			try {
 				series = iexSource.getSymbolData(new IEXKey(sym));
 	            this.tableKey.get(series.getTimeFormatType()).add(series.getKey());
@@ -561,7 +561,7 @@ public class ChartController implements MapChangeListener<String, ChartIndicator
      * Symbol table cell (not needed at the moment)
      * @param <T>
      */
-    class  SymbolTableCell <T extends String> extends  TableCell<TaTimeSeries, T>{
+    class  SymbolTableCell <T extends String> extends  TableCell<TaBarSeries, T>{
 
         @Override
         protected void updateItem(T item, boolean empty){
